@@ -20,7 +20,8 @@ import {
   ShoppingBag,
   Bike,
   Info,
-  MapPin
+  MapPin,
+  Trash2
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
@@ -68,6 +69,103 @@ const Footer = () => (
 );
 
 // --- Views ---
+
+const SuperAdminView = ({ establishments, onCreate }: { establishments: Establishment[], onCreate: (name: string, initials: string) => void }) => {
+  const [name, setName] = useState("");
+  const [initials, setInitials] = useState("");
+
+  return (
+    <div className="max-w-4xl mx-auto py-12 px-6 space-y-12">
+      <div className="text-center space-y-2">
+        <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">Master Console</span>
+        <h1 className="text-4xl font-black">Gestão de Canais</h1>
+      </div>
+
+      <div className="card-main space-y-8">
+        <h2 className="text-xl font-black flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Criar Novo Local</h2>
+        <form onSubmit={(e) => { e.preventDefault(); onCreate(name, initials); setName(""); setInitials(""); }} className="space-y-6">
+          <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="Nome do Estabelecimento" required />
+          <input value={initials} onChange={e => setInitials(e.target.value.toUpperCase())} className="input-field" placeholder="Iniciais (EX: KF)" maxLength={3} required />
+          <button type="submit" className="w-full btn-primary py-6">CADASTRAR LOCAL</button>
+        </form>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {establishments.map(est => (
+          <div key={est.id} className="bg-white p-8 rounded-[32px] border border-outline hover:border-primary transition-all flex justify-between items-center group">
+             <div>
+                <h3 className="font-black text-lg">{est.name}</h3>
+                <span className="text-[10px] font-bold text-on-surface-variant">{est.code}</span>
+             </div>
+             <div className="bg-primary/5 text-primary px-4 py-2 rounded-xl text-xs font-black">{est.initials}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Establishment, onNext: () => void }) => {
+  const currentCustomer = (establishment.customers || []).find(c => c.status === "called");
+
+  return (
+    <div className="max-w-5xl mx-auto py-12 px-6 space-y-12">
+      <div className="text-center space-y-4">
+        <h1 className="text-5xl font-black">{establishment.name}</h1>
+        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Painel Administrativo Real-Time</span>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+           <button 
+             onClick={onNext}
+             disabled={!establishment.customers || establishment.customers.length === 0}
+             className="w-full p-12 bg-primary text-white rounded-[48px] shadow-elevated transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-6 group disabled:opacity-30 disabled:cursor-not-allowed"
+           >
+              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-active:scale-95 transition-transform"><Bell className="w-10 h-10" /></div>
+              <span className="text-2xl font-black uppercase tracking-widest leading-none">Chamar Próximo Cliente</span>
+           </button>
+
+           <div className="space-y-4">
+              <h2 className="text-xl font-black uppercase px-2">Fila de Espera ({(establishment.customers || []).length})</h2>
+              {establishment.customers && establishment.customers.length > 0 ? establishment.customers.map((c, i) => (
+                <div key={c.id} className="bg-surface-container p-6 rounded-[32px] flex items-center justify-between border border-outline/50 transition-all hover:bg-white hover:shadow-ambient">
+                   <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 bg-white text-on-surface rounded-2xl flex flex-col items-center justify-center font-black shadow-sm border border-outline">
+                        <span className="text-[10px] opacity-40 uppercase leading-none mb-1">POS</span>
+                        <span className="text-lg leading-none">{i + 1}</span>
+                      </div>
+                      <div>
+                        <p className="text-lg font-black">{c.phone}</p>
+                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">{c.ticket_number}</span>
+                      </div>
+                   </div>
+                   <div className="px-4 py-2 bg-on-surface/5 text-on-surface-variant rounded-full text-[10px] font-black uppercase">{c.status}</div>
+                </div>
+              )) : <div className="p-12 text-center text-on-surface-variant font-bold">Fila Vazia</div>}
+           </div>
+        </div>
+
+        <div className="space-y-8">
+           <div className="bg-primary text-white p-10 rounded-[40px] shadow-elevated space-y-6">
+              <span className="text-[10px] font-black uppercase opacity-60 tracking-widest">Sendo Atendido Agora</span>
+              {currentCustomer ? (
+                <div className="space-y-4">
+                   <h3 className="text-6xl font-black">{currentCustomer.ticket_number.split('-').pop()}</h3>
+                   <p className="text-sm font-bold opacity-80">{currentCustomer.phone}</p>
+                </div>
+              ) : <p className="text-xl font-black opacity-40">Nenhum chamado</p>}
+           </div>
+           
+           <div className="bg-surface-container p-8 rounded-[40px] border border-outline/50 text-center space-y-6">
+              <QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${establishment.code}`} size={160} />
+              <p className="text-[10px] font-black uppercase tracking-widest">QR Code de Entrada</p>
+           </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Establishment, onJoin: (phone: string) => void, onLeave: (id: string) => void }) => {
   const [phone, setPhone] = useState("");
@@ -138,7 +236,6 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
 
       <div className="card-main space-y-12">
         <div className="space-y-8">
-           {/* Code Info */}
            <div className="space-y-4">
               <div className="flex items-center gap-2">
                  <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
@@ -152,7 +249,6 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
               </div>
            </div>
 
-           {/* Phone Input */}
            <div className="space-y-4">
               <div className="flex items-center gap-2">
                  <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
@@ -166,7 +262,6 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
               </div>
            </div>
 
-           {/* Methods */}
            <div className="space-y-4">
               <div className="flex items-center gap-2">
                  <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
@@ -237,7 +332,6 @@ export default function App() {
     return () => clearInterval(interval);
   }, []);
 
-  // Deep linking
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const estCode = params.get("est");
@@ -249,12 +343,12 @@ export default function App() {
 
   const handleJoin = async (phone: string) => {
     if (!selectedEst) return;
-    const res = await fetch("/api/queue/join", {
+    await fetch("/api/queue/join", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ phone, estCode: selectedEst.code }),
     });
-    if (res.ok) fetchData();
+    fetchData();
   };
 
   const handleLeave = async (id: string) => {
@@ -266,13 +360,19 @@ export default function App() {
     fetchData();
   };
 
+  const handleNext = async () => {
+    if (!selectedEst) return;
+    await fetch(`/api/establishments/${selectedEst.code}/next`, { method: "POST" });
+    fetchData();
+  };
+
   if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
     <div className="min-h-screen bg-white">
       <Header 
         onLogoClick={() => { setView("landing"); setSelectedEst(null); }} 
-        onAdminClick={() => setView("admin")}
+        onAdminClick={() => { setView("admin"); setSelectedEst(null); }}
       />
       
       <main className="pt-24 min-h-screen flex flex-col items-center">
@@ -309,14 +409,13 @@ export default function App() {
             </motion.div>
           )}
 
-          {view === "customer" && selectedEst && <CustomerView key="customer-status" establishment={selectedEst} onJoin={handleJoin} onLeave={handleLeave} />}
+          {view === "customer" && selectedEst && (
+            <CustomerView establishment={selectedEst} onJoin={handleJoin} onLeave={handleLeave} />
+          )}
 
           {view === "admin" && (
-            <motion.div key="admin-temp" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto py-20 px-8 text-center space-y-12">
-               <div className="space-y-4">
-                 <h2 className="text-5xl font-black">Área Administrativa</h2>
-                 <p className="text-on-surface-variant font-medium">Selecione o local para gerir as senhas em tempo real.</p>
-               </div>
+            <motion.div key="admin-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto py-20 px-8 text-center space-y-12">
+               <h2 className="text-5xl font-black">Área de <span className="text-primary">Gestão</span></h2>
                <div className="grid gap-4">
                  {establishments.map(est => (
                    <button key={est.id} onClick={() => { setSelectedEst(est); setView("superadmin"); }} className="p-8 bg-surface-container rounded-[36px] border-2 border-outline hover:border-primary transition-all flex justify-between items-center group">
@@ -324,11 +423,23 @@ export default function App() {
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">{est.code}</span>
                         <h3 className="text-2xl font-black text-on-surface">{est.name}</h3>
                       </div>
-                      <LayoutDashboard className="w-6 h-6 text-outline group-hover:text-primary transition-colors" />
+                      <ChevronRight className="w-6 h-6 text-outline group-hover:text-primary transition-colors" />
                    </button>
                  ))}
                </div>
+               <button onClick={() => setView("superadmin")} className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant/40 hover:text-primary">Master Console</button>
             </motion.div>
+          )}
+
+          {view === "superadmin" && !selectedEst && (
+            <SuperAdminView establishments={establishments} onCreate={async (name, initials) => {
+              await fetch("/api/admin/establishments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, initials }) });
+              fetchData();
+            }} />
+          )}
+
+          {view === "superadmin" && selectedEst && (
+            <EstablishmentAdminView establishment={selectedEst} onNext={handleNext} />
           )}
         </AnimatePresence>
       </main>

@@ -1,25 +1,26 @@
 @import "tailwindcss";
 
 @theme {
-  /* Premium Modern Red/White Theme */
+  /* Alinhamento final com o design Vermelho/Branco */
   --color-primary: #E11D48;
-  --color-on-primary: #ffffff;
-  --color-primary-container: #FFF1F2;
-  --color-on-primary-container: #9F1239;
-
-  --color-background: #ffffff;
+  --color-primary-600: #BE123C;
+  --color-primary-50: #FFF1F2;
+  
   --color-surface: #ffffff;
-  --color-surface-container: #FAFAFA;
+  --color-surface-variant: #FAFAFA;
   --color-on-surface: #111827;
   --color-on-surface-variant: #6B7280;
   
   --color-outline: #E5E7EB;
   --color-outline-variant: #F3F4F6;
+  
+  --shadow-ambient: 0 4px 30px rgba(0, 0, 0, 0.03);
+  --shadow-elevated: 0 20px 50px rgba(225, 29, 72, 0.08);
 }
 
 @layer base {
   body {
-    @apply bg-background text-on-surface antialiased;
+    @apply bg-white text-on-surface antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
   }
@@ -29,41 +30,39 @@
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
-
-  .shadow-ambient {
-    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.03);
-  }
-  
-  .shadow-elevated {
-    box-shadow: 0 20px 50px rgba(225, 29, 72, 0.08);
-  }
 }
 
 @layer components {
+  /* Botões Arredondados estilo referência */
   .btn-primary {
-    @apply bg-primary text-white font-bold py-4 px-8 rounded-full shadow-lg hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-wider text-xs;
+    @apply bg-primary text-white font-bold py-4 px-8 rounded-full shadow-lg 
+           hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-wider text-[10px];
   }
   
   .btn-outline {
-    @apply border-2 border-outline text-on-surface font-bold py-4 px-8 rounded-full hover:bg-surface-container transition-all text-center uppercase tracking-wider text-xs;
+    @apply border-2 border-outline text-on-surface font-bold py-4 px-8 rounded-full 
+           hover:bg-surface-variant transition-all text-center uppercase tracking-wider text-[10px];
   }
 
   .card-main {
-    @apply bg-white p-10 rounded-[40px] shadow-ambient border border-outline/50 w-full max-w-lg mx-auto;
+    @apply bg-white p-10 rounded-[48px] shadow-ambient border border-outline/50 w-full max-w-lg mx-auto;
   }
   
   .input-field {
-    @apply w-full bg-surface-container p-5 rounded-2xl border-none font-bold text-lg focus:ring-2 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/30;
+    @apply w-full bg-surface-variant p-5 rounded-2xl border-none font-bold text-lg 
+           focus:ring-2 focus:ring-primary/10 outline-none transition-all placeholder:text-on-surface-variant/30;
   }
   
   .badge-category {
-    @apply bg-surface-container border border-outline/50 p-4 rounded-3xl flex flex-col items-center justify-center gap-2 hover:border-primary/30 transition-all text-on-surface-variant font-bold text-xs uppercase tracking-tighter;
+    @apply bg-surface-variant border border-outline/50 p-4 rounded-3xl flex flex-col items-center justify-center 
+           gap-2 hover:border-primary/30 transition-all text-on-surface-variant font-bold text-[10px] uppercase;
   }
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.8; transform: scale(0.98); }
+  0% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(0.98); opacity: 0.8; }
+  100% { transform: scale(1); opacity: 1; }
 }
 
 .animate-pulse-subtle {
