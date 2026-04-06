@@ -4,7 +4,8 @@ import router from "./backend.ts";
 const app = express();
 app.use(express.json());
 
-// Mount the API router on /api
-app.use("/api", router);
+// Em vez de montar em /api (o que duplicaria a rota), 
+// montamos na raiz do Handler da Vercel.
+app.use("/", router);
 
 export default app;
