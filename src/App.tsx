@@ -274,9 +274,24 @@ const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Esta
                 <h2 className="text-3xl font-black tracking-tight">{establishment.name}</h2>
               </div>
               <div className="bg-surface-container-low p-8 rounded-[32px] inline-block shadow-inner border-4 border-surface">
-                <QRCodeSVG value={`${window.location.origin}?est=${establishment.code}`} size={200} includeMargin={false} />
+                <QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${establishment.code}`} size={200} includeMargin={false} />
               </div>
-              <button onClick={() => setShowQR(false)} className="bg-on-surface text-white w-full py-4 rounded-2xl font-bold">Fechar</button>
+              <button 
+                onClick={() => {
+                   const canvas = document.querySelector('canvas');
+                   if (canvas) {
+                     const url = canvas.toDataURL("image/png");
+                     const link = document.createElement("a");
+                     link.download = `QR-${establishment.code}.png`;
+                     link.href = url;
+                     link.click();
+                   }
+                }} 
+                className="w-full text-primary font-bold text-sm bg-primary/5 py-4 rounded-2xl mb-2"
+              >
+                Descarregar QR Code
+              </button>
+              <button onClick={() => setShowQR(false)} className="bg-on-surface text-white w-full py-4 rounded-2xl font-bold text-sm">Fechar</button>
             </motion.div>
           </motion.div>
         )}
@@ -288,6 +303,7 @@ const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Esta
 const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Establishment, onJoin: (phone: string) => void, onLeave: (id: string) => void }) => {
   const [phone, setPhone] = useState("");
   const [myCustomer, setMyCustomer] = useState<Customer | null>(null);
+  const [showEntryForm, setShowEntryForm] = useState(false);
 
   useEffect(() => {
     const savedPhone = localStorage.getItem(`kwikfilas_phone_${establishment.code}`);
@@ -350,11 +366,41 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
     );
   }
 
+  if (!showEntryForm) {
+    return (
+      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-lg mx-auto py-12 px-6 flex flex-col items-center text-center space-y-12">
+        <div className="space-y-4">
+          <div className="w-20 h-20 bg-primary/10 rounded-[28px] flex items-center justify-center mx-auto mb-6">
+            <Store className="text-primary w-10 h-10" />
+          </div>
+          <h1 className="text-5xl font-black tracking-tight">{establishment.name}</h1>
+          <p className="text-on-surface-variant text-lg font-medium px-4">Você está pronto para entrar na fila digital deste estabelecimento.</p>
+        </div>
+
+        <button 
+          onClick={() => setShowEntryForm(true)}
+          className="w-full bg-primary text-white py-8 rounded-[36px] text-2xl font-black shadow-2xl shadow-primary/30 flex items-center justify-center gap-4 hover:scale-[1.02] transition-all active:scale-[0.98]"
+        >
+          ENTRAR NA FILA <ArrowRight className="w-8 h-8" />
+        </button>
+
+        <div className="pt-8 flex items-center gap-4 text-on-surface-variant/40">
+           <div className="h-px w-12 bg-current opacity-20"></div>
+           <span className="text-[10px] font-black uppercase tracking-[0.3em]">KwikFilas Experience</span>
+           <div className="h-px w-12 bg-current opacity-20"></div>
+        </div>
+      </motion.div>
+    );
+  }
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-lg mx-auto py-8 px-6 flex flex-col items-center">
-      <div className="w-full mb-12 text-center">
-        <h1 className="text-5xl font-black tracking-tighter mb-4">Entrar na Fila</h1>
-        <p className="text-on-surface-variant text-lg font-medium leading-relaxed">Simplifique seu atendimento. Digite seu número.</p>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-lg mx-auto py-8 px-6 flex flex-col items-center">
+      <div className="w-full mb-12 text-center relative">
+        <button onClick={() => setShowEntryForm(false)} className="absolute left-0 top-0 w-10 h-10 bg-surface-container rounded-full flex items-center justify-center hover:bg-primary/10 transition-colors">
+          <ChevronRight className="w-5 h-5 rotate-180" />
+        </button>
+        <h1 className="text-5xl font-black tracking-tighter mb-4">Seu Contacto</h1>
+        <p className="text-on-surface-variant text-lg font-medium">Digite seu número para receber o ticket via SMS.</p>
       </div>
 
       <div className="w-full bg-surface-container-lowest rounded-[40px] p-10 shadow-ambient relative overflow-hidden border-2 border-outline-variant/10">
@@ -364,11 +410,11 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
               <div className="flex items-center gap-2 px-5 py-4 border-r border-outline-variant/30">
                 <span className="font-black text-on-surface-variant text-lg">+244</span>
               </div>
-              <input value={phone} onChange={e => setPhone(e.target.value)} className="flex-grow bg-transparent border-none focus:ring-0 text-2xl font-black px-6 py-4" placeholder="9xx xxx xxx" type="tel" required />
+              <input value={phone} onChange={e => setPhone(e.target.value)} className="flex-grow bg-transparent border-none focus:ring-0 text-2xl font-black px-6 py-4" placeholder="9xx xxx xxx" type="tel" autoFocus required />
             </div>
           </div>
           <button type="submit" className="w-full bg-on-surface text-white py-6 rounded-3xl text-xl font-black shadow-2xl flex items-center justify-center gap-4 hover:bg-primary transition-all active:scale-[0.98]">
-            ENTRAR AGORA <ArrowRight className="w-6 h-6" />
+            CONFIRMAR TICKET <ArrowRight className="w-6 h-6" />
           </button>
         </form>
       </div>
@@ -405,7 +451,22 @@ export default function App() {
     fetchData();
     const interval = setInterval(fetchData, 3000);
     return () => clearInterval(interval);
-  }, [selectedEst?.code]);
+  }, []);
+
+  // Deep linking logic for QR code
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const estCode = params.get("est");
+    if (estCode && establishments.length > 0) {
+       const found = establishments.find(e => e.code === estCode);
+       if (found) {
+         setSelectedEst(found);
+         setView("customer");
+         // Keep param for now, or clear if desired
+         // window.history.replaceState({}, '', '/');
+       }
+    }
+  }, [establishments]);
 
   const handleJoin = async (phone: string) => {
     if (!selectedEst) return;
@@ -447,7 +508,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-surface pb-24">
-      <Header onLogoClick={() => { setView("landing"); setSelectedEst(null); }} />
+      <Header onLogoClick={() => { setView("landing"); setSelectedEst(null); window.history.replaceState({}, '', '/'); }} />
       
       <AnimatePresence>
         {error && (
