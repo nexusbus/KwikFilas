@@ -124,19 +124,50 @@ app.post("/api/queue/join", async (req, res) => {
   res.json(data);
 });
 
-// 6. CHAMAR PRÓXIMO 
+// 6. CHAMAR PRÓXIMO + DISPARO SMS
 app.post("/api/establishments/:code/next", async (req, res) => {
   const { code } = req.params;
-  const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
+  
+  // 1. Get Establishment Details
+  const { data: est } = await supabase.from("establishments").select("id, name").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
+  // 2. Clear current 'called' tickets
   const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
   if (current) await supabase.from("queues").delete().eq("id", current.id);
 
+  // 3. Find and call the next customer
   const { data: next } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "waiting").order("joined_at").limit(1).single();
-  if (next) await supabase.from("queues").update({ status: "called" }).eq("id", next.id);
+  
+  if (next) {
+    await supabase.from("queues").update({ status: "called" }).eq("id", next.id);
 
-  res.json({ success: true });
+    // --- SMS DISPATCH (SMSHUB ANGOLA) ---
+    const smsId = process.env.SMSHUB_ID_KEY;
+    const smsToken = process.env.SMSHUB_API_TOKEN;
+    const smsUrl = process.env.SMSHUB_BASE_URL;
+
+    if (smsId && smsToken && smsUrl && next.phone) {
+       const message = `KwikFilas: Sua senha ${next.ticket_number.split('-').pop()} de ${est.name} foi chamada. Por favor dirija-se ao local.`;
+       try {
+         await fetch(smsUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              id: smsId,
+              api_key: smsToken,
+              telemo: next.phone,
+              sms: message
+            })
+         });
+       } catch (e) {
+          console.error("SMS Hub Fail", e);
+       }
+    }
+  }
+
+  res.json({ success: true, next: next || null });
 });
 
 export default app;
+
