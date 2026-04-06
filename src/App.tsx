@@ -63,6 +63,19 @@ const SectionHeader = ({ title, subtitle }: { title: string, subtitle?: string }
   </div>
 );
 
+const Footer = () => (
+  <footer className="py-12 mt-auto text-center space-y-4">
+    <div className="flex items-center justify-center gap-2 mb-6">
+       <div className="h-px w-8 bg-[#2563EB]/20"></div>
+       <span className="text-[9px] font-bold text-[#2563EB] uppercase tracking-[0.4em]">Premium Queue System</span>
+       <div className="h-px w-8 bg-[#2563EB]/20"></div>
+    </div>
+    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">
+      © 2026 <span className="text-[#2563EB]">KwikFilas Angola.</span>
+    </p>
+  </footer>
+);
+
 // --- High Density Views ---
 
 const SuperAdminView = ({ establishments, onCreate, onBack }: { establishments: Establishment[], onCreate: (name: string, initials: string) => void, onBack: () => void }) => {
@@ -345,10 +358,26 @@ export default function App() {
     fetchData();
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="w-8 h-8 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin"></div>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-white pb-12 selection:bg-primary/10">
+    <div className="min-h-screen bg-white pb-12 selection:bg-[#2563EB]/10">
+      <style>{`
+        :root {
+          --primary: #2563EB;
+          --on-surface: #0F172A;
+          --surface-variant: #F1F5F9;
+        }
+        body { background-color: #ffffff; color: #0F172A; }
+        .btn-primary { background-color: #2563EB !important; color: #ffffff !important; }
+        .text-primary { color: #2563EB !important; }
+        .bg-primary { background-color: #2563EB !important; }
+        .border-primary { border-color: #2563EB !important; }
+      `}</style>
       <Header 
         onLogoClick={() => { setView("landing"); setSelectedEst(null); window.history.replaceState({}, '', '/'); }} 
         onAdminClick={() => { setView("admin"); setSelectedEst(null); }}
