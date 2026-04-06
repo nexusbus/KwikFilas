@@ -266,6 +266,26 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
      setLoading(false);
   };
 
+  const handlePrintQR = () => {
+    if (!est) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    const qrSvg = document.getElementById('main-qr-canvas')?.innerHTML || '';
+    
+    printWindow.document.write(`
+      <html>
+        <head><title>Imprimir QR - ${est.name}</title></head>
+        <body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center;">
+          <h1 style="font-family: sans-serif; font-size: 38px; font-weight: 900; margin-bottom: 20px; text-transform: uppercase; color: #2563EB;">${est.name}</h1>
+          <div style="transform: scale(2.8); margin: 70px 0;">${qrSvg}</div>
+          <h2 style="font-family: sans-serif; font-size: 18px; font-weight: 800; color: #64748b; letter-spacing: 0.3em; margin-top: 50px;">KWIKFILAS - FILA DIGITAL</h2>
+          <script>setTimeout(() => { window.print(); window.close(); }, 800);</script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
   if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-10 h-10 border-4 border-[#2563EB] border-t-transparent animate-spin rounded-full"></div></div>;
 
   const current = (est.queues || []).find(q => q.status === "called");
@@ -273,59 +293,83 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
 
   return (
     <ContentWrapper>
-       <div className="w-full pt-8 pb-20 space-y-6">
-          <div className="flex justify-between items-center bg-white p-4 rounded-[32px] border border-outline/10 h-14 shadow-sm">
-             <div className="flex items-center gap-3 px-2">
-                <div className="w-10 h-10 bg-slate-50 rounded-xl overflow-hidden border border-outline/5 shadow-inner">
-                   {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-slate-100" />}
-                </div>
-                <div className="leading-none"><h4 className="font-black text-[12px] uppercase text-[#2563EB] mb-0.5">{est.name}</h4><span className="text-[9px] font-bold text-slate-300 uppercase">{est.code}</span></div>
+       <div className="w-full pt-8 pb-32 space-y-8 flex flex-col items-center">
+          {/* Top Info Centralizado */}
+          <div className="flex flex-col items-center text-center space-y-4">
+             <div className="w-24 h-24 bg-white rounded-[40px] shadow-sm border border-outline/10 flex items-center justify-center overflow-hidden">
+                <img src={est.logo_url} className="w-full h-full object-cover" />
              </div>
-             <button onClick={onLogout} className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center border border-outline/10"><LogOut className="w-4.5 h-4.5 text-slate-400" /></button>
+             <div>
+                <h4 className="font-black text-xl uppercase text-[#2563EB] mb-1 leading-none">{est.name}</h4>
+                <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-none">{est.code}</span>
+             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("col-span-2 p-12 rounded-[64px] flex flex-col items-center gap-6 transition-all", waiting.length > 0 ? "bg-[#2563EB] text-white shadow-elevated" : "bg-slate-50 opacity-40 border border-dashed border-slate-200")}>
+          {/* Painéis Verticalizados */}
+          <div className="w-full space-y-4 flex flex-col items-center">
+             
+             {/* CHAMAR PRÓXIMO */}
+             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full p-12 rounded-[64px] flex flex-col items-center gap-6 transition-all", waiting.length > 0 ? "bg-[#2563EB] text-white shadow-elevated" : "bg-slate-50 opacity-40 border border-dashed border-slate-200")}>
                 <div className={cn("w-14 h-14 rounded-full flex items-center justify-center", waiting.length > 0 ? "bg-white/20 animate-pulse" : "bg-slate-200")}>
                    <Bell className="w-7 h-7 fill-white" />
                 </div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "CHAMANDO..." : "CHAMAR PRÓXIMO") : "SEM FILA"}</h2>
+                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "PROCESSANDO..." : "CHAMAR PRÓXIMO") : "FILA DIGITAL LIMPA"}</h2>
              </button>
-             <div className="bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/10"><span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-widest leading-none">Em Espera</span><span className="text-2xl font-black text-[#0F172A]">{waiting.length}</span></div>
-             <div className="bg-[#2563EB]/5 p-8 rounded-[48px] text-center border border-[#2563EB]/5"><span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 block mb-1 tracking-widest leading-none">No Painel</span><span className="text-2xl font-black text-[#2563EB]">{current ? current.ticket_number.split('-').pop() : '--'}</span></div>
-          </div>
 
-          <div className="card-main w-full p-8 space-y-4">
-             <div className="flex items-center gap-3 mb-2 px-2"><Ticket className="w-4 h-4 text-[#2563EB]" /><span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 tracking-widest">Senha Manual</span></div>
-             <form onSubmit={handleManualJoin} className="flex gap-2">
-                <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="flex-grow bg-slate-50 p-5 rounded-[24px] text-[16px] font-bold outline-none border-none shadow-inner" placeholder="9XX XXX XXX" />
-                <button type="submit" disabled={loading} className="bg-[#2563EB] text-white px-6 rounded-[24px] shadow-sm"><Plus className="w-6 h-6"/></button>
-             </form>
-          </div>
-
-          <div className="space-y-4 w-full">
-             <div className="flex justify-between items-center px-4"><span className="text-[10px] font-black uppercase text-[#2563EB]/30 tracking-[0.4em]">Monitorização</span><Users className="w-4 h-4 text-slate-100" /></div>
-             {waiting.length > 0 ? (
-               waiting.map((q, i) => (
-                <div key={q.id} className="bg-white p-5 rounded-[44px] border border-outline/10 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all animate-in slide-in-from-bottom-2">
-                   <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-slate-50 text-[#2563EB] font-black rounded-3xl flex flex-col items-center justify-center border border-outline/10">
-                         <span className="text-[10px] opacity-20">#{i+1}</span>
-                         <span className="text-base">{q.ticket_number.split('-').pop()}</span>
-                      </div>
-                      <div className="text-left leading-none"><h4 className="font-black text-[16px] text-[#0F172A] mb-1">{q.phone}</h4><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Aguardando no Local</p></div>
-                   </div>
-                   <div className="p-3 bg-white border border-outline/10 rounded-2xl"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={32} /></div>
+             {/* INDICADORES EM PILHA */}
+             <div className="w-full flex flex-col gap-3">
+                <div className="w-full bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/5">
+                   <span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-[0.2em] leading-none">Aguardando Agora</span>
+                   <span className="text-4xl font-black text-[#0F172A]">{waiting.length}</span>
                 </div>
-               ))
-             ) : (
-                <div className="py-24 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-10 h-10 mb-4" /><span className="text-[10px] font-black uppercase tracking-widest leading-none">Fila Digital Limpa</span></div>
-             )}
+                <div className="w-full bg-[#2563EB]/5 p-8 rounded-[48px] text-center border border-[#2563EB]/5">
+                   <span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 block mb-1 tracking-[0.2em] leading-none">No Painel</span>
+                   <span className="text-4xl font-black text-[#2563EB]">{current ? current.ticket_number.split('-').pop() : '--'}</span>
+                </div>
+             </div>
+
+             {/* SENHA MANUAL */}
+             <div className="card-main w-full p-8 space-y-4 flex flex-col items-center text-center">
+                <div className="flex items-center gap-3 mb-2 px-2"><Ticket className="w-4 h-4 text-[#2563EB]" /><span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 tracking-widest">Senha Manual</span></div>
+                <form onSubmit={handleManualJoin} className="w-full flex flex-col gap-3">
+                   <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="w-full bg-slate-50 p-6 rounded-[28px] text-[18px] font-black outline-none text-center shadow-inner" placeholder="Pelo Telemóvel" />
+                   <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-6 rounded-[28px] shadow-sm font-black uppercase text-[11px] tracking-widest">GERAR SENHA AGORA</button>
+                </form>
+             </div>
+
+             {/* QR CODE COM LOGO NO MEIO */}
+             <div className="card-main w-full p-10 flex flex-col items-center space-y-8 bg-white shadow-sm">
+                <div className="flex flex-col items-center gap-2">
+                   <QrCode className="w-6 h-6 text-[#2563EB] opacity-20" />
+                   <span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 tracking-widest leading-none">Seu QR de Fila</span>
+                </div>
+                
+                <div id="main-qr-canvas" className="p-8 bg-white border-4 border-slate-50 rounded-[56px] shadow-inner relative">
+                   <QRCodeSVG 
+                      value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
+                      size={180} 
+                      level="H"
+                      imageSettings={{
+                         src: est.logo_url,
+                         x: undefined, y: undefined,
+                         height: 48, width: 48,
+                         excavate: true,
+                      }}
+                   />
+                </div>
+
+                <button onClick={handlePrintQR} className="w-full bg-slate-50 text-slate-400 py-6 rounded-[28px] flex items-center justify-center gap-3 font-black uppercase text-[10px] tracking-[0.2em] hover:bg-[#2563EB] hover:text-white transition-all">
+                   IMPRIMIR QR COM MARCA <ExternalLink className="w-4 h-4" />
+                </button>
+             </div>
+
+             <button onClick={onLogout} className="text-[10px] font-black text-slate-200 uppercase tracking-[0.5em] pt-12 hover:text-red-500 transition-all">Sair do Painel</button>
           </div>
        </div>
     </ContentWrapper>
   );
 };
+
 
 // --- 4. CLIENTE: ENTRADA VIA QR ---
 
