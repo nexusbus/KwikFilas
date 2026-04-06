@@ -11,14 +11,18 @@ import {
   User,
   Plus,
   History,
-  Phone,
+  Phone as PhoneIcon,
   ChevronRight,
   X,
   CheckCircle2,
   AlertCircle,
   Info,
   MapPin,
-  Trash2
+  Trash2,
+  Smartphone,
+  Timer,
+  ExternalLink,
+  ChevronLeft
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
@@ -29,144 +33,142 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// --- Icons / Brand ---
+// --- Brand Assets ---
 const KLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={cn("fill-primary w-12 h-12", className)}>
-    <path d="M20 10 L20 90 M20 50 L75 10 M20 50 L75 90 M70 10 L80 10 M70 90 L80 90" stroke="currentColor" strokeWidth="8" strokeLinecap="round" />
+  <svg viewBox="0 0 100 100" className={cn("fill-primary w-10 h-10", className)}>
+    <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="6" strokeLinecap="round" />
   </svg>
 );
 
-// --- Components ---
+// --- Fluid Components ---
 
 const Header = ({ onLogoClick, onAdminClick }: { onLogoClick?: () => void, onAdminClick?: () => void }) => (
-  <header className="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-xl flex items-center justify-between px-8 h-20 border-b border-outline/30">
-    <button onClick={onLogoClick} className="flex items-center gap-3 group transition-all">
-       <KLogo className="w-8 h-8 group-hover:scale-105 transition-transform" />
-       <span className="text-xl font-black text-on-surface tracking-tighter">Kwik<span className="text-primary">Filas</span></span>
+  <header className="fixed top-0 w-full z-[100] bg-white/90 backdrop-blur-xl border-b border-outline/30 px-6 h-14 flex items-center justify-between">
+    <button onClick={onLogoClick} className="flex items-center gap-2 group transition-all active:scale-95">
+       <KLogo className="w-6 h-6 group-hover:scale-105" />
+       <span className="text-base font-bold text-on-surface tracking-tighter">Kwik<span className="text-primary">Filas</span></span>
     </button>
-    <div className="flex items-center gap-3">
-      <button className="text-[10px] font-black uppercase tracking-[0.2em] bg-primary text-white px-6 py-3 rounded-full hover:shadow-lg transition-all hidden md:block">Sobre Nós</button>
-      <button onClick={onAdminClick} className="text-[10px] font-black uppercase tracking-[0.2em] border-2 border-outline px-6 py-3 rounded-full hover:bg-surface-container transition-all">Admin</button>
+    <div className="flex items-center gap-2">
+      <button onClick={onAdminClick} className="text-[9px] font-bold uppercase tracking-wider border border-outline px-4 py-2 rounded-xl bg-surface-variant/50 hover:bg-white active:scale-95 transition-all flex items-center gap-1.5">
+        <Smartphone className="w-3 h-3" /> Painel
+      </button>
     </div>
   </header>
 );
 
-const Footer = () => (
-  <footer className="py-16 text-center space-y-4">
-    <div className="flex items-center justify-center gap-2 mb-6">
-       <div className="h-px w-8 bg-primary/20"></div>
-       <span className="text-[10px] font-black text-primary uppercase tracking-[0.4em]">Premium Queue System</span>
-       <div className="h-px w-8 bg-primary/20"></div>
-    </div>
-    <p className="text-[10px] font-bold text-on-surface-variant uppercase tracking-widest">
-      © 2026 <span className="text-primary">KwikFilas Angola.</span> Todos os direitos reservados.
-    </p>
-    <p className="text-[9px] font-black text-on-surface uppercase tracking-[0.2em] pt-2">Privacidade & Termos Legais</p>
-  </footer>
+const SectionHeader = ({ title, subtitle }: { title: string, subtitle?: string }) => (
+  <div className="space-y-1 text-left w-full mb-6">
+    <h2 className="text-2xl font-black tracking-tight text-on-surface">{title}</h2>
+    {subtitle && <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-widest leading-none">{subtitle}</p>}
+  </div>
 );
 
-// --- Views ---
+// --- High Density Views ---
 
-const SuperAdminView = ({ establishments, onCreate }: { establishments: Establishment[], onCreate: (name: string, initials: string) => void }) => {
+const SuperAdminView = ({ establishments, onCreate, onBack }: { establishments: Establishment[], onCreate: (name: string, initials: string) => void, onBack: () => void }) => {
   const [name, setName] = useState("");
   const [initials, setInitials] = useState("");
 
   return (
-    <div className="max-w-4xl mx-auto py-12 px-6 space-y-12">
-      <div className="text-center space-y-2">
-        <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">Master Console</span>
-        <h1 className="text-4xl font-black">Gestão de Canais</h1>
+    <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="w-full max-w-sm mx-auto py-6 px-4 space-y-6">
+      <button onClick={onBack} className="flex items-center gap-2 text-[10px] font-bold uppercase text-primary hover:opacity-70"><ChevronLeft className="w-3 h-3" /> Voltar</button>
+      <SectionHeader title="Controle Maestro" subtitle="Gerador de Canais" />
+
+      <div className="bg-white p-6 rounded-3xl border border-outline/50 shadow-ambient space-y-4">
+        <div className="space-y-3">
+          <input value={name} onChange={e => setName(e.target.value)} className="w-full bg-surface-variant p-4 rounded-xl text-sm font-bold placeholder:opacity-30 border-none outline-none focus:ring-1 focus:ring-primary/20" placeholder="Nome do Local" required />
+          <input value={initials} onChange={e => setInitials(e.target.value.toUpperCase())} className="w-full bg-surface-variant p-4 rounded-xl text-sm font-bold placeholder:opacity-30 border-none outline-none focus:ring-1 focus:ring-primary/20" placeholder="Iniciais (EX: KF)" maxLength={3} required />
+        </div>
+        <button onClick={() => { if(name && initials) { onCreate(name, initials); setName(""); setInitials(""); } }} className="w-full btn-primary py-4">Criar Novo</button>
       </div>
 
-      <div className="card-main space-y-8">
-        <h2 className="text-xl font-black flex items-center gap-2"><Plus className="w-5 h-5 text-primary" /> Criar Novo Local</h2>
-        <form onSubmit={(e) => { e.preventDefault(); onCreate(name, initials); setName(""); setInitials(""); }} className="space-y-6">
-          <input value={name} onChange={e => setName(e.target.value)} className="input-field" placeholder="Nome do Estabelecimento" required />
-          <input value={initials} onChange={e => setInitials(e.target.value.toUpperCase())} className="input-field" placeholder="Iniciais (EX: KF)" maxLength={3} required />
-          <button type="submit" className="w-full btn-primary py-6">CADASTRAR LOCAL</button>
-        </form>
+      <div className="space-y-2">
+         {establishments.map(est => (
+           <div key={est.id} className="bg-white/50 p-4 rounded-2xl border border-outline/30 flex justify-between items-center group active:scale-[0.98] transition-all">
+              <div className="flex items-center gap-3">
+                 <div className="w-10 h-10 bg-primary/5 text-primary rounded-xl flex items-center justify-center font-black text-xs">{est.initials}</div>
+                 <div>
+                    <h3 className="font-bold text-sm leading-tight text-on-surface">{est.name}</h3>
+                    <span className="text-[9px] font-bold text-on-surface-variant font-mono">{est.code}</span>
+                 </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-outline" />
+           </div>
+         ))}
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {establishments.map(est => (
-          <div key={est.id} className="bg-white p-8 rounded-[32px] border border-outline hover:border-primary transition-all flex justify-between items-center group">
-             <div>
-                <h3 className="font-black text-lg">{est.name}</h3>
-                <span className="text-[10px] font-bold text-on-surface-variant">{est.code}</span>
-             </div>
-             <div className="bg-primary/5 text-primary px-4 py-2 rounded-xl text-xs font-black">{est.initials}</div>
-          </div>
-        ))}
-      </div>
-    </div>
+    </motion.div>
   );
 };
 
-const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Establishment, onNext: () => void }) => {
+const EstablishmentAdminView = ({ establishment, onNext, onBack }: { establishment: Establishment, onNext: () => void, onBack: () => void }) => {
   const currentCustomer = (establishment.customers || []).find(c => c.status === "called");
 
   return (
-    <div className="max-w-5xl mx-auto py-12 px-6 space-y-12">
-      <div className="text-center space-y-4">
-        <h1 className="text-5xl font-black">{establishment.name}</h1>
-        <span className="text-[10px] font-black uppercase tracking-widest text-on-surface-variant">Painel Administrativo Real-Time</span>
+    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="w-full max-w-sm mx-auto py-6 px-4 space-y-6">
+      <div className="flex justify-between items-center">
+        <button onClick={onBack} className="flex items-center gap-1.5 text-[10px] font-bold uppercase text-on-surface-variant active:scale-90 transition-all"><ChevronLeft className="w-3 h-3" /> Dashboard</button>
+        <span className="text-[9px] font-bold px-2 py-1 bg-primary/5 text-primary rounded-lg uppercase tracking-widest">{establishment.code}</span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-           <button 
-             onClick={onNext}
-             disabled={!establishment.customers || establishment.customers.length === 0}
-             className="w-full p-12 bg-primary text-white rounded-[48px] shadow-elevated transition-all active:scale-[0.98] flex flex-col items-center justify-center gap-6 group disabled:opacity-30 disabled:cursor-not-allowed"
-           >
-              <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center group-active:scale-95 transition-transform"><Bell className="w-10 h-10" /></div>
-              <span className="text-2xl font-black uppercase tracking-widest leading-none">Chamar Próximo Cliente</span>
-           </button>
+      <SectionHeader title={establishment.name} subtitle="Gestão em Tempo Real" />
 
-           <div className="space-y-4">
-              <h2 className="text-xl font-black uppercase px-2">Fila de Espera ({(establishment.customers || []).length})</h2>
-              {establishment.customers && establishment.customers.length > 0 ? establishment.customers.map((c, i) => (
-                <div key={c.id} className="bg-surface-variant p-6 rounded-[32px] flex items-center justify-between border border-outline/50 transition-all hover:bg-white hover:shadow-ambient">
-                   <div className="flex items-center gap-6">
-                      <div className="w-14 h-14 bg-white text-on-surface rounded-2xl flex flex-col items-center justify-center font-black shadow-sm border border-outline">
-                        <span className="text-[10px] opacity-40 uppercase leading-none mb-1">POS</span>
-                        <span className="text-lg leading-none">{i + 1}</span>
-                      </div>
-                      <div>
-                        <p className="text-lg font-black">{c.phone}</p>
-                        <span className="text-[10px] font-black text-primary uppercase tracking-widest">{c.ticket_number}</span>
-                      </div>
+      {/* Main Call Action */}
+      <div className="bg-primary text-white p-8 rounded-[40px] shadow-elevated flex flex-col items-center gap-6 relative overflow-hidden active:scale-[0.98] transition-all cursor-pointer group" onClick={onNext}>
+         <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -mr-16 -mt-16 group-hover:scale-110 transition-transform"></div>
+         <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center group-hover:bg-white/30 transition-colors animate-pulse-subtle">
+            <Bell className="w-6 h-6 fill-white" />
+         </div>
+         <div className="text-center">
+            <span className="text-sm font-black uppercase tracking-[0.2em] opacity-80 leading-none">Chamar Próximo</span>
+            <h3 className="text-4xl font-black mt-2">Pronto!</h3>
+         </div>
+         {currentCustomer && (
+            <div className="flex items-center gap-3 bg-white/10 px-4 py-2 rounded-full mt-2">
+               <span className="text-[10px] font-bold">Ticket: {currentCustomer.ticket_number.split('-').pop()}</span>
+            </div>
+         )}
+      </div>
+
+      {/* Waiting List */}
+      <div className="space-y-3">
+         <div className="flex justify-between items-center px-2">
+            <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Lista de Espera</span>
+            <span className="text-[9px] font-bold px-3 py-1 bg-surface-variant rounded-full text-on-surface-variant">{(establishment.customers || []).length} pessoas</span>
+         </div>
+         <AnimatePresence mode="popLayout">
+           {(establishment.customers || []).map((c, i) => (
+             <motion.div key={c.id} layout initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-white p-4 rounded-3xl border border-outline/30 flex items-center justify-between group active:bg-surface-variant transition-all">
+                <div className="flex items-center gap-4">
+                   <div className="w-10 h-10 bg-surface-variant rounded-xl flex flex-col items-center justify-center font-black">
+                      <span className="text-[8px] opacity-30 leading-none mb-0.5">#{i + 1}</span>
+                      <span className="text-sm leading-none">{c.ticket_number.split('-').pop()}</span>
                    </div>
-                   <div className="px-4 py-2 bg-on-surface/5 text-on-surface-variant rounded-full text-[10px] font-black uppercase">{c.status}</div>
+                   <div>
+                      <p className="text-sm font-bold text-on-surface">{c.phone}</p>
+                      <span className="text-[9px] font-bold text-on-surface-variant uppercase tracking-widest">{c.status === 'called' ? 'Atendendo' : 'Esperando'}</span>
+                   </div>
                 </div>
-              )) : <div className="p-12 text-center text-on-surface-variant font-bold">Fila Vazia</div>}
-           </div>
-        </div>
-
-        <div className="space-y-8">
-           <div className="bg-primary text-white p-10 rounded-[40px] shadow-elevated space-y-6">
-              <span className="text-[10px] font-black uppercase opacity-60 tracking-widest">Sendo Atendido Agora</span>
-              {currentCustomer ? (
-                <div className="space-y-4">
-                   <h3 className="text-6xl font-black">{currentCustomer.ticket_number.split('-').pop()}</h3>
-                   <p className="text-sm font-bold opacity-80">{currentCustomer.phone}</p>
+                <div className={cn("w-6 h-6 rounded-full flex items-center justify-center", c.status === 'called' ? "bg-primary/20 text-primary animate-pulse" : "bg-outline/20 text-outline")}>
+                   <CheckCircle2 className="w-3.5 h-3.5" />
                 </div>
-              ) : <p className="text-xl font-black opacity-40">Nenhum chamado</p>}
-           </div>
-           
-           <div className="bg-surface-variant p-8 rounded-[40px] border border-outline/50 text-center space-y-6">
-              <QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${establishment.code}`} size={160} />
-              <p className="text-[10px] font-black uppercase tracking-widest">QR Code de Entrada</p>
-           </div>
-        </div>
+             </motion.div>
+           ))}
+         </AnimatePresence>
+         {(establishment.customers || []).length === 0 && (
+            <div className="py-12 flex flex-col items-center text-center space-y-3 opacity-30">
+               <Users className="w-8 h-8" />
+               <p className="text-xs font-bold uppercase tracking-widest leading-none">Ninguém na fila</p>
+            </div>
+         )}
       </div>
-    </div>
+    </motion.div>
   );
 };
 
 const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Establishment, onJoin: (phone: string) => void, onLeave: (id: string) => void }) => {
   const [phone, setPhone] = useState("");
   const [myCustomer, setMyCustomer] = useState<Customer | null>(null);
+  const [step, setStep] = useState<"welcome" | "input">("welcome");
 
   useEffect(() => {
     const savedPhone = localStorage.getItem(`kwikfilas_phone_${establishment.code}`);
@@ -191,88 +193,95 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
     const isCalled = myCustomer.status === "called";
 
     return (
-      <div className="max-w-xl mx-auto space-y-8 py-12 px-6 text-center">
-        <KLogo className="w-16 h-16 mx-auto mb-4" />
-        <h1 className="text-4xl font-black tracking-tight">{establishment.name}</h1>
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="w-full max-w-sm mx-auto py-12 px-6 flex flex-col items-center text-center space-y-12">
+        <SectionHeader title={establishment.name} subtitle="Status da Sua Vez" />
         
-        <div className="bg-white rounded-[40px] p-12 shadow-elevated border border-outline/50 space-y-10">
-          <div className="space-y-2">
-            <span className="text-[10px] font-black uppercase text-primary tracking-[0.3em]">Seu Ticket</span>
-            <div className="text-8xl font-black text-primary tracking-tighter">
-              {myCustomer.ticket_number.split('-').pop()}
-            </div>
-          </div>
-          
-          <div className="space-y-4 pt-6 border-t border-outline/50">
-             <h3 className="text-2xl font-black">{isCalled ? "Sua vez chegou!" : `Posição na Fila: ${position}º`}</h3>
-             <p className="text-on-surface-variant font-bold text-sm">
-               {isCalled ? "Dirija-se ao local agora." : `A sua vez está quase a chegar. Acompanhe em tempo real.`}
-             </p>
-          </div>
+        <div className="w-full bg-white rounded-[48px] p-10 shadow-elevated border border-outline/30 space-y-8 flex flex-col items-center">
+           <div className="relative w-44 h-44 flex items-center justify-center">
+              <div className={cn("absolute inset-0 rounded-full border-4 border-dashed transition-all", isCalled ? "border-green-500 animate-spin-slow" : "border-primary/20 animate-spin-slow-reverse")}></div>
+              <div className="text-center">
+                 <span className="text-xs font-black uppercase text-on-surface-variant tracking-widest block opacity-40">Ticket</span>
+                 <span className={cn("text-6xl font-black tracking-tighter leading-none transition-colors", isCalled ? "text-green-600" : "text-primary")}>
+                   {myCustomer.ticket_number.split('-').pop()}
+                 </span>
+              </div>
+           </div>
+           
+           <div className="space-y-2">
+              <h3 className="text-2xl font-black">{isCalled ? "Chegou a sua vez!" : `Você é o ${position}º`}</h3>
+              <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
+                 {isCalled ? "Dirija-se ao guichê imediatamente." : `Aguarde aprox. ${position * 5} minutos.`}
+              </p>
+           </div>
         </div>
 
-        <button onClick={() => { onLeave(myCustomer.id); localStorage.removeItem(`kwikfilas_phone_${establishment.code}`); }} className="text-on-surface-variant font-black text-[10px] uppercase tracking-[0.2em] flex items-center justify-center gap-2 hover:text-primary transition-colors">
-          <LogOut className="w-3 h-3" /> Cancelar Minha Vez
+        <button onClick={() => { onLeave(myCustomer.id); localStorage.removeItem(`kwikfilas_phone_${establishment.code}`); }} className="group flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-on-surface-variant/50 hover:text-red-500 hover:opacity-100 transition-all">
+          <LogOut className="w-3 h-3 group-hover:-translate-x-1 transition-transform" /> Cancelar Ticket
         </button>
-      </div>
+      </motion.div>
+    );
+  }
+
+  if (step === "welcome") {
+    return (
+      <motion.div key="welcome" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm mx-auto py-16 px-8 flex flex-col items-center text-center space-y-12">
+        <div className="space-y-4">
+          <div className="w-16 h-16 bg-primary/5 rounded-[22px] flex items-center justify-center mx-auto mb-8 shadow-inner">
+             <Store className="text-primary w-8 h-8" />
+          </div>
+          <h1 className="text-5xl font-black tracking-tight text-on-surface leading-[1.1]">{establishment.name}</h1>
+          <p className="text-on-surface-variant text-sm font-medium tracking-tight px-4 leading-relaxed opacity-70">
+            Junte-se à fila digital premium e acompanhe o seu lugar diretamente no smartphone.
+          </p>
+        </div>
+
+        <button onClick={() => setStep("input")} className="w-full btn-primary py-7 text-base flex items-center justify-center gap-4 active:scale-95 transition-all">
+          ENTRAR NA FILA <ArrowRight className="w-5 h-5" />
+        </button>
+
+        <div className="flex items-center gap-3 text-on-surface-variant/20 uppercase font-black text-[9px] tracking-[0.4em]">
+           <span className="h-px w-6 bg-current"></span> Premium <span className="h-px w-6 bg-current"></span>
+        </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="max-w-2xl mx-auto py-20 px-6 flex flex-col items-center">
-      <div className="w-full text-center space-y-6 mb-16">
-        <KLogo className="w-20 h-20 mx-auto mb-8 animate-pulse-subtle" />
-        <h1 className="text-6xl font-black tracking-tight text-on-surface leading-[1.1]">
-          Sua vez sem filas,<br/><span className="text-primary">sem stress.</span>
-        </h1>
-        <p className="text-on-surface-variant text-lg font-medium max-w-sm mx-auto">
-          Junte-se à nossa fila digital premium e acompanhe o seu lugar em tempo real.
-        </p>
+    <motion.div key="input" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-sm mx-auto py-12 px-6 flex flex-col items-center text-center">
+      <div className="w-full mb-10 flex items-center justify-between">
+         <button onClick={() => setStep("welcome")} className="w-10 h-10 rounded-full border border-outline flex items-center justify-center active:scale-90"><ChevronLeft className="w-4 h-4" /></button>
+         <div className="text-right">
+            <h3 className="text-2xl font-black text-on-surface leading-none">Telemóvel</h3>
+            <span className="text-[9px] font-bold text-primary uppercase tracking-widest">Confirmação via SMS</span>
+         </div>
       </div>
 
-      <div className="card-main space-y-12">
-        <div className="space-y-8">
-           <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
-                    <MapPin className="text-primary w-3 h-3" />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Código do Local</span>
-              </div>
-              <div className="flex justify-between items-center bg-surface-variant p-6 rounded-3xl border border-outline/50 group hover:border-primary/20 transition-all">
-                <span className="text-2xl font-black tracking-[0.5em] text-on-surface">{establishment.code}</span>
-                <span className="text-[10px] font-black text-primary uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-lg">{establishment.initials}</span>
-              </div>
-           </div>
-
-           <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
-                    <Phone className="text-primary w-3 h-3" />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Seu Telemóvel</span>
-              </div>
-              <div className="flex items-center bg-surface-variant p-2 rounded-3xl border border-outline/50 focus-within:border-primary/20 transition-all">
-                <div className="px-5 py-4 border-r border-outline/30 font-black text-on-surface-variant">AO <span className="text-on-surface ml-1">+244</span></div>
-                <input value={phone} onChange={e => setPhone(e.target.value)} className="flex-grow bg-transparent border-none focus:ring-0 text-xl font-black px-6 py-4" placeholder="9XX XXX XXX" type="tel" required />
-              </div>
-           </div>
-        </div>
-
+      <div className="card-main space-y-10">
         <form onSubmit={handleJoin} className="space-y-8">
-           <div className="flex items-center gap-3 px-2">
-              <input type="checkbox" id="terms" className="w-5 h-5 rounded border-outline text-primary focus:ring-primary/20" required />
-              <label htmlFor="terms" className="text-[11px] font-bold text-on-surface-variant">Li e aceito os <span className="text-primary hover:underline cursor-pointer">Termos e Condições</span></label>
+           <div className="space-y-6">
+              <div className="flex items-center bg-surface-variant p-2 rounded-2xl border border-outline/30 focus-within:border-primary/20 focus-within:bg-white transition-all shadow-inner">
+                 <div className="px-5 py-4 border-r border-outline/30 font-black text-on-surface-variant text-base">AO <span className="text-on-surface ml-1">+244</span></div>
+                 <input value={phone} onChange={e => setPhone(e.target.value)} className="flex-grow bg-transparent border-none focus:ring-0 text-xl font-bold px-6 py-4" placeholder="9XX XXX XXX" type="tel" autoFocus required />
+              </div>
+
+              <div className="flex items-start gap-3 p-4 bg-primary/5 rounded-2xl text-left border border-primary/5">
+                 <Info className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                 <p className="text-[10px] font-bold text-on-surface-variant leading-relaxed">
+                    Você receberá um SMS automático quando estiver no topo da fila. Certifique-se de que o número está correto.
+                 </p>
+              </div>
            </div>
-           <button type="submit" className="w-full btn-primary py-7 text-lg">ENTRAR NA FILA AGORA</button>
+
+           <button type="submit" className="w-full btn-primary py-6 flex items-center justify-center gap-3">
+             GERAR TICKET AGORA <CheckCircle2 className="w-4 h-4" />
+           </button>
         </form>
       </div>
 
-      <div className="mt-12 flex items-start gap-4 p-6 bg-primary/5 rounded-3xl max-w-sm">
-         <div className="p-2 bg-primary text-white rounded-xl"><Info className="w-4 h-4" /></div>
-         <p className="text-[11px] font-bold text-on-surface-variant leading-relaxed uppercase tracking-tight">Iremos enviar-lhe uma notificação via SMS assim que o seu ticket estiver no topo da fila.</p>
-      </div>
-    </div>
+      <p className="mt-12 text-[10px] font-medium text-on-surface-variant/40 max-w-[200px] leading-relaxed">
+        Ao prosseguir, você concorda com nossos <span className="text-primary hover:underline cursor-pointer">Termos de Uso</span> e nossa política de privacidade.
+      </p>
+    </motion.div>
   );
 };
 
@@ -336,43 +345,49 @@ export default function App() {
     fetchData();
   };
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin"></div></div>;
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white pb-12 selection:bg-primary/10">
       <Header 
-        onLogoClick={() => { setView("landing"); setSelectedEst(null); }} 
+        onLogoClick={() => { setView("landing"); setSelectedEst(null); window.history.replaceState({}, '', '/'); }} 
         onAdminClick={() => { setView("admin"); setSelectedEst(null); }}
       />
       
-      <main className="pt-24 min-h-screen flex flex-col items-center">
+      <main className="pt-14 min-h-screen">
         <AnimatePresence mode="wait">
           {view === "landing" && (
-            <motion.div key="landing" initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} className="pt-20 px-8 text-center space-y-16">
-                <div className="space-y-8">
-                  <KLogo className="w-24 h-24 mx-auto mb-10" />
-                  <h1 className="text-7xl font-black tracking-tight text-on-surface leading-tight">Gestão de filas<br/><span className="text-primary italic">sem stress.</span></h1>
-                  <p className="text-on-surface-variant text-xl font-medium max-w-md mx-auto">Experiência premium para clientes em espera digital.</p>
+            <motion.div key="landing" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} className="pt-24 px-8 text-center space-y-12">
+                <div className="space-y-6">
+                  <KLogo className="w-16 h-16 mx-auto mb-8 animate-pulse-subtle" />
+                  <h1 className="text-4xl font-black tracking-tight text-on-surface leading-[1.1]">Gestão de filas<br/><span className="text-primary">inteligente.</span></h1>
+                  <p className="text-on-surface-variant text-base font-medium max-w-[280px] mx-auto opacity-70 leading-relaxed">Experiência ágil para clientes e administradores em movimento.</p>
                 </div>
                 
-                <div className="grid grid-cols-1 gap-4 max-w-xs mx-auto">
-                   <button onClick={() => setView("customer")} className="btn-primary py-8 text-lg flex items-center justify-center gap-4">
-                      SOU CLIENTE <ArrowRight className="w-6 h-6" />
+                <div className="grid grid-cols-1 gap-3 max-w-[240px] mx-auto">
+                   <button onClick={() => setView("customer")} className="btn-primary py-5 text-sm flex items-center justify-center gap-3">
+                      SOU CLIENTE <ArrowRight className="w-4 h-4" />
                    </button>
-                   <button onClick={() => setView("admin")} className="btn-outline py-8 text-lg">PAINEL ADMIN</button>
+                   <button onClick={() => setView("admin")} className="btn-outline py-5 text-sm">PAINEL ADMIN</button>
+                </div>
+                
+                <div className="pt-12 grid grid-cols-3 gap-6 max-w-[280px] mx-auto opacity-20">
+                   <div className="h-px bg-on-surface grow"></div>
+                   <div className="text-[8px] font-black uppercase tracking-[0.4em] shrink-0 -mt-1.5">Mobile First</div>
+                   <div className="h-px bg-on-surface grow"></div>
                 </div>
             </motion.div>
           )}
 
           {view === "customer" && !selectedEst && (
-            <motion.div key="customer-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-lg mx-auto py-12 px-6 w-full space-y-10">
-              <h2 className="text-4xl font-black tracking-tight text-center">Escolha o <span className="text-primary">Local</span></h2>
-              <div className="grid gap-4">
+            <motion.div key="customer-list" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="max-w-sm mx-auto py-8 px-6 space-y-8">
+              <SectionHeader title="Onde você está?" subtitle="Selecione o Local" />
+              <div className="grid gap-2.5">
                 {establishments.map(est => (
-                  <button key={est.id} onClick={() => setSelectedEst(est)} className="w-full bg-white p-6 rounded-[32px] border-2 border-outline hover:border-primary transition-all flex items-center gap-6 group text-left">
-                    <div className="w-16 h-16 bg-surface-variant rounded-[24px] flex items-center justify-center font-black text-xl group-hover:bg-primary group-hover:text-white transition-all">{est.initials}</div>
-                    <div className="flex-grow"><h3 className="font-black text-2xl leading-none mb-1">{est.name}</h3><span className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase">{est.customers?.length || 0} na fila agora</span></div>
-                    <ChevronRight className="text-outline group-hover:text-primary" />
+                  <button key={est.id} onClick={() => setSelectedEst(est)} className="w-full bg-white p-4 pr-6 rounded-3xl border border-outline/30 flex items-center gap-5 hover:border-primary active:bg-surface-variant transition-all group">
+                    <div className="w-12 h-12 bg-surface-variant rounded-2xl flex items-center justify-center font-black text-lg group-hover:bg-primary group-hover:text-white transition-all">{est.initials}</div>
+                    <div className="flex-grow text-left leading-none"><h3 className="font-bold text-base mb-1">{est.name}</h3><span className="text-[9px] font-black tracking-widest text-on-surface-variant uppercase">{est.customers?.length || 0} na fila</span></div>
+                    <ChevronRight className="w-4 h-4 text-outline group-hover:text-primary" />
                   </button>
                 ))}
               </div>
@@ -384,37 +399,39 @@ export default function App() {
           )}
 
           {view === "admin" && (
-            <motion.div key="admin-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="max-w-2xl mx-auto py-20 px-8 text-center space-y-12">
-               <h2 className="text-5xl font-black">Área de <span className="text-primary">Gestão</span></h2>
-               <div className="grid gap-4">
+            <motion.div key="admin-list" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="max-w-sm mx-auto py-8 px-6 space-y-8">
+               <SectionHeader title="Área Administrativa" subtitle="Escolha seu Canal" />
+               <div className="grid gap-2.5">
                  {establishments.map(est => (
-                   <button key={est.id} onClick={() => { setSelectedEst(est); setView("superadmin"); }} className="p-8 bg-surface-variant rounded-[36px] border-2 border-outline hover:border-primary transition-all flex justify-between items-center group">
-                      <div className="text-left">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">{est.code}</span>
-                        <h3 className="text-2xl font-black text-on-surface">{est.name}</h3>
+                   <button key={est.id} onClick={() => { setSelectedEst(est); setView("superadmin"); }} className="p-5 bg-white rounded-3xl border border-outline/40 hover:border-primary active:bg-surface-variant transition-all flex justify-between items-center group">
+                      <div className="text-left leading-none">
+                        <span className="text-[8px] font-black uppercase tracking-widest text-primary mb-1.5 block opacity-60 font-mono">{est.code}</span>
+                        <h3 className="text-base font-bold text-on-surface">{est.name}</h3>
                       </div>
-                      <ChevronRight className="w-6 h-6 text-outline group-hover:text-primary transition-colors" />
+                      <LayoutDashboard className="w-5 h-5 text-outline group-hover:text-primary transition-colors" />
                    </button>
                  ))}
+                 <button onClick={() => setView("superadmin")} className="mt-8 text-[9px] font-black uppercase tracking-[0.3em] text-on-surface-variant/30 hover:text-primary text-center w-full active:scale-95 transition-all">
+                    + Master Console
+                 </button>
                </div>
-               <button onClick={() => setView("superadmin")} className="text-[10px] font-black uppercase tracking-[0.3em] text-on-surface-variant/40 hover:text-primary">Master Console</button>
             </motion.div>
           )}
 
           {view === "superadmin" && !selectedEst && (
-            <SuperAdminView establishments={establishments} onCreate={async (name, initials) => {
+            <SuperAdminView establishments={establishments} onBack={() => setView("admin")} onCreate={async (name, initials) => {
               await fetch("/api/admin/establishments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name, initials }) });
               fetchData();
             }} />
           )}
 
           {view === "superadmin" && selectedEst && (
-            <EstablishmentAdminView establishment={selectedEst} onNext={handleNext} />
+            <EstablishmentAdminView establishment={selectedEst} onBack={() => { setView("admin"); setSelectedEst(null); }} onNext={handleNext} />
           )}
         </AnimatePresence>
       </main>
       
-      {!loading && <Footer />}
+      {!loading && <div className="mt-auto"><Footer /></div>}
     </div>
   );
 }
