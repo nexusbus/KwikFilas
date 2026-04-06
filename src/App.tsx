@@ -16,9 +16,6 @@ import {
   X,
   CheckCircle2,
   AlertCircle,
-  UtensilsCrossed,
-  ShoppingBag,
-  Bike,
   Info,
   MapPin,
   Trash2
@@ -129,7 +126,7 @@ const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Esta
            <div className="space-y-4">
               <h2 className="text-xl font-black uppercase px-2">Fila de Espera ({(establishment.customers || []).length})</h2>
               {establishment.customers && establishment.customers.length > 0 ? establishment.customers.map((c, i) => (
-                <div key={c.id} className="bg-surface-container p-6 rounded-[32px] flex items-center justify-between border border-outline/50 transition-all hover:bg-white hover:shadow-ambient">
+                <div key={c.id} className="bg-surface-variant p-6 rounded-[32px] flex items-center justify-between border border-outline/50 transition-all hover:bg-white hover:shadow-ambient">
                    <div className="flex items-center gap-6">
                       <div className="w-14 h-14 bg-white text-on-surface rounded-2xl flex flex-col items-center justify-center font-black shadow-sm border border-outline">
                         <span className="text-[10px] opacity-40 uppercase leading-none mb-1">POS</span>
@@ -157,7 +154,7 @@ const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Esta
               ) : <p className="text-xl font-black opacity-40">Nenhum chamado</p>}
            </div>
            
-           <div className="bg-surface-container p-8 rounded-[40px] border border-outline/50 text-center space-y-6">
+           <div className="bg-surface-variant p-8 rounded-[40px] border border-outline/50 text-center space-y-6">
               <QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${establishment.code}`} size={160} />
               <p className="text-[10px] font-black uppercase tracking-widest">QR Code de Entrada</p>
            </div>
@@ -170,7 +167,6 @@ const EstablishmentAdminView = ({ establishment, onNext }: { establishment: Esta
 const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Establishment, onJoin: (phone: string) => void, onLeave: (id: string) => void }) => {
   const [phone, setPhone] = useState("");
   const [myCustomer, setMyCustomer] = useState<Customer | null>(null);
-  const [selectedMethod, setSelectedMethod] = useState<string>("eat-in");
 
   useEffect(() => {
     const savedPhone = localStorage.getItem(`kwikfilas_phone_${establishment.code}`);
@@ -243,7 +239,7 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Código do Local</span>
               </div>
-              <div className="flex justify-between items-center bg-surface-container p-6 rounded-3xl border border-outline/50 group hover:border-primary/20 transition-all">
+              <div className="flex justify-between items-center bg-surface-variant p-6 rounded-3xl border border-outline/50 group hover:border-primary/20 transition-all">
                 <span className="text-2xl font-black tracking-[0.5em] text-on-surface">{establishment.code}</span>
                 <span className="text-[10px] font-black text-primary uppercase tracking-widest px-3 py-1 bg-primary/5 rounded-lg">{establishment.initials}</span>
               </div>
@@ -256,35 +252,9 @@ const CustomerView = ({ establishment, onJoin, onLeave }: { establishment: Estab
                  </div>
                  <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Seu Telemóvel</span>
               </div>
-              <div className="flex items-center bg-surface-container p-2 rounded-3xl border border-outline/50 focus-within:border-primary/20 transition-all">
+              <div className="flex items-center bg-surface-variant p-2 rounded-3xl border border-outline/50 focus-within:border-primary/20 transition-all">
                 <div className="px-5 py-4 border-r border-outline/30 font-black text-on-surface-variant">AO <span className="text-on-surface ml-1">+244</span></div>
                 <input value={phone} onChange={e => setPhone(e.target.value)} className="flex-grow bg-transparent border-none focus:ring-0 text-xl font-black px-6 py-4" placeholder="9XX XXX XXX" type="tel" required />
-              </div>
-           </div>
-
-           <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                 <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
-                    <UtensilsCrossed className="text-primary w-3 h-3" />
-                 </div>
-                 <span className="text-[10px] font-black uppercase tracking-widest text-on-surface">Tipo de Atendimento</span>
-              </div>
-              <div className="grid grid-cols-3 gap-3">
-                 {[
-                   { id: "eat-in", label: "Vou Comer Aqui", icon: UtensilsCrossed },
-                   { id: "takeaway", label: "Vou Levar", icon: ShoppingBag },
-                   { id: "delivery", label: "Entrega-me", icon: Bike }
-                 ].map(m => (
-                   <button 
-                     key={m.id}
-                     type="button"
-                     onClick={() => setSelectedMethod(m.id)}
-                     className={cn("badge-category", selectedMethod === m.id && "border-primary bg-primary/5 text-primary")}
-                    >
-                     <m.icon className={cn("w-5 h-5", selectedMethod === m.id ? "text-primary" : "text-on-surface-variant/40")} />
-                     <span className="leading-tight">{m.label}</span>
-                   </button>
-                 ))}
               </div>
            </div>
         </div>
@@ -400,7 +370,7 @@ export default function App() {
               <div className="grid gap-4">
                 {establishments.map(est => (
                   <button key={est.id} onClick={() => setSelectedEst(est)} className="w-full bg-white p-6 rounded-[32px] border-2 border-outline hover:border-primary transition-all flex items-center gap-6 group text-left">
-                    <div className="w-16 h-16 bg-surface-container rounded-[24px] flex items-center justify-center font-black text-xl group-hover:bg-primary group-hover:text-white transition-all">{est.initials}</div>
+                    <div className="w-16 h-16 bg-surface-variant rounded-[24px] flex items-center justify-center font-black text-xl group-hover:bg-primary group-hover:text-white transition-all">{est.initials}</div>
                     <div className="flex-grow"><h3 className="font-black text-2xl leading-none mb-1">{est.name}</h3><span className="text-[10px] font-black tracking-widest text-on-surface-variant uppercase">{est.customers?.length || 0} na fila agora</span></div>
                     <ChevronRight className="text-outline group-hover:text-primary" />
                   </button>
@@ -418,7 +388,7 @@ export default function App() {
                <h2 className="text-5xl font-black">Área de <span className="text-primary">Gestão</span></h2>
                <div className="grid gap-4">
                  {establishments.map(est => (
-                   <button key={est.id} onClick={() => { setSelectedEst(est); setView("superadmin"); }} className="p-8 bg-surface-container rounded-[36px] border-2 border-outline hover:border-primary transition-all flex justify-between items-center group">
+                   <button key={est.id} onClick={() => { setSelectedEst(est); setView("superadmin"); }} className="p-8 bg-surface-variant rounded-[36px] border-2 border-outline hover:border-primary transition-all flex justify-between items-center group">
                       <div className="text-left">
                         <span className="text-[10px] font-black uppercase tracking-widest text-primary mb-2 block">{est.code}</span>
                         <h3 className="text-2xl font-black text-on-surface">{est.name}</h3>
