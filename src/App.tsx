@@ -13,10 +13,10 @@ import { Customer, Establishment } from "./types";
 
 function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 
-// --- Initialization: Supabase Cloud Client ---
+// --- Initialization: Supabase Cloud Client with Vite types fix ---
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || "",
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ""
+  (import.meta as any).env.VITE_SUPABASE_URL || "",
+  (import.meta as any).env.VITE_SUPABASE_ANON_KEY || ""
 );
 
 // --- Auth Context Simulation ---
@@ -71,10 +71,10 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
          const user = await res.json();
          onLogin({ id: user.id, name: user.name, role: user.role, email: user.admin_email, estId: user.id });
       } else {
-         setError("Dados incorretos. Contacte o Super Admin.");
+         setError("Credenciais inválidas. Verifique os seus dados.");
       }
     } catch (e) {
-      setError("Falha de rede ao tentar entrar no portal.");
+      setError("Incapaz de conectar ao servidor principal.");
     }
     setLoading(false);
   };
@@ -85,16 +85,16 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
           <div className="text-center space-y-4">
             <KLogo className="w-20 h-20 mb-8 mx-auto animate-pulse-subtle" />
             <h1 className="text-4xl font-black text-on-surface uppercase tracking-tighter">KwikFilas<br/><span className="text-primary italic font-medium tracking-normal">Portal.</span></h1>
-            <p className="text-[9px] font-black uppercase text-slate-300 tracking-[0.6em] mt-2 leading-none">Acesso Registado para Operação Local.</p>
+            <p className="text-[9px] font-black uppercase text-slate-300 tracking-[0.6em] mt-2 leading-none">Gestão de Canais e Filas Activas.</p>
           </div>
 
           <div className="card-main w-full space-y-6">
             <form onSubmit={handleLogin} className="space-y-1">
                <BaseInput icon={Mail} value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="Email Corporativo" type="email" required />
-               <BaseInput icon={Lock} value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="Senha Master" type="password" required />
+               <BaseInput icon={Lock} value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="Senha Mestre" type="password" required />
                {error && <p className="text-[9px] font-bold text-red-500 text-center py-2 px-4 bg-red-50 rounded-lg">{error}</p>}
                <button type="submit" disabled={loading} className="w-full btn-primary py-7 mt-4 flex items-center justify-center gap-3 disabled:opacity-50">
-                {loading ? "CONECTANDO..." : "ACESSAR PORTAL" } <ArrowRight className="w-4 h-4"/>
+                {loading ? "PROCURANDO..." : "ABRIR PAINEL" } <ArrowRight className="w-4 h-4"/>
                </button>
             </form>
           </div>
@@ -131,7 +131,7 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
       const { data, error: upError } = await supabase.storage.from('logos').upload(fileName, file);
 
       if (upError) {
-         setError("Erro de Bucket: " + upError.message);
+         setError("Erro de Cloud Bucket: " + upError.message);
       } else {
          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(data.path);
          setFormData({ ...formData, logo_url: publicUrl });
@@ -144,7 +144,7 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.logo_url) return setError("É obrigatório carregar um logótipo!");
+    if (!formData.logo_url) return setError("O logótipo é obrigatório!");
     
     setLoading(true);
     setError(null);
@@ -160,16 +160,16 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
          refresh();
       } else {
          const badData = await res.json();
-         setError(badData.error || "Erro ao criar parceiro. Verifique NIF e Email.");
+         setError(badData.error || "Submissão rejeitada pelo servidor.");
       }
     } catch (e) {
-      setError("Incapaz de alcançar o servidor de registro.");
+      setError("Incapaz de completar o registro.");
     }
     setLoading(false);
   };
 
   const handleDelete = async (targetId: string) => {
-    const pass = prompt("Confirme a Senha Mestra (Super Admin):");
+    const pass = prompt("Senha Master necessária para exclusão:");
     if (!pass) return;
     const res = await fetch("/api/admin/establishments/delete", {
       method: "POST",
@@ -177,7 +177,7 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
       body: JSON.stringify({ targetId, superPassword: pass }),
     });
     if (res.ok) refresh();
-    else alert("Erro! Senha invalidada.");
+    else alert("Senha incorrecta.");
   };
 
   return (
@@ -192,16 +192,16 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
           </div>
 
           <div className="flex bg-[#F1F5F9] p-1 rounded-2xl w-full">
-             <button onClick={() => { setView("list"); setError(null); }} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "list" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Rede Activa</button>
-             <button onClick={() => { setView("create"); setError(null); }} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "create" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Registar Novo</button>
+             <button onClick={() => { setView("list"); setError(null); }} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "list" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Gerir Parceiros</button>
+             <button onClick={() => { setView("create"); setError(null); }} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "create" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Adicionar</button>
           </div>
 
           {view === "list" ? (
-             <div className="space-y-3 w-full animate-in fade-in">
+             <div className="space-y-3 w-full">
                 {establishments.map(est => (
                    <div key={est.id} className="w-full bg-white p-4 rounded-[32px] border border-outline/20 flex items-center justify-between group active:scale-[0.98] transition-all">
                       <div className="flex items-center gap-4">
-                         <div className="w-12 h-12 bg-slate-50 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center border border-outline/10">
+                         <div className="w-12 h-12 bg-slate-50 rounded-[20px] overflow-hidden shadow-inner flex items-center justify-center border border-outline/5">
                             {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-slate-200" />}
                          </div>
                          <div className="text-left"><h4 className="font-black text-sm text-on-surface uppercase leading-none mb-1">{est.name}</h4><span className="text-[9px] font-bold text-primary uppercase tracking-widest opacity-50">{est.initials} • {est.code}</span></div>
@@ -214,23 +214,23 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
              <div className="card-main w-full space-y-6 pt-10">
                 <form onSubmit={handleCreate} className="space-y-1">
                    <div className="flex flex-col items-center mb-10">
-                      <div className="w-24 h-24 bg-white rounded-[44px] shadow-sm border-2 border-dashed border-primary/20 flex items-center justify-center overflow-hidden relative group">
+                      <div className="w-24 h-24 bg-white rounded-[48px] shadow-sm border-2 border-dashed border-primary/20 flex items-center justify-center overflow-hidden relative group">
                          {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : (loading ? <Timer className="w-6 h-6 text-primary animate-spin" /> : <ImageIcon className="w-8 h-8 text-primary/10" />)}
                          <label className="absolute inset-0 bg-primary/80 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all"><Camera className="w-6 h-6 text-white" />
                             <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={loading} />
                          </label>
                       </div>
-                      <span className="text-[10px] font-black uppercase text-primary tracking-[.2em] mt-3">PNG ou JPG Obrigatório</span>
+                      <span className="text-[10px] font-black uppercase text-primary tracking-[.2em] mt-3">Identidade Visual</span>
                    </div>
 
                    {error && <div className="p-4 mb-6 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3"><AlertCircle className="w-4 h-4 text-red-500" /><p className="text-[9px] font-bold text-red-600 leading-tight uppercase">{error}</p></div>}
 
-                   <BaseInput value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} placeholder="Nome Profissional" required />
-                   <BaseInput value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} placeholder="NIF da Empresa" required />
-                   <BaseInput value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} placeholder="Email Corporativo" type="email" required />
-                   <BaseInput value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} placeholder="Senha de Gestão" type="password" required />
+                   <BaseInput value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} placeholder="Estabelecimento" required />
+                   <BaseInput value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} placeholder="NIF Oficial" required />
+                   <BaseInput value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} placeholder="Email Registrado" type="email" required />
+                   <BaseInput value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} placeholder="Palavra-passe" type="password" required />
                    <button type="submit" disabled={loading} className="w-full btn-primary py-7 mt-6 shadow-elevated disabled:opacity-50 tracking-widest text-[11px] font-black">
-                      {loading ? "OPERANDO..." : "ACTIVAR PARCEIRO"}
+                      {loading ? "PROCESSANDO..." : "CONCLUIR CADASTRO"}
                    </button>
                 </form>
              </div>
@@ -301,16 +301,16 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
                 <div className={cn("w-14 h-14 rounded-full flex items-center justify-center transition-all", waiting.length > 0 ? "bg-white/20 animate-pulse-subtle" : "bg-slate-200")}>
                    <Bell className="w-7 h-7 fill-white" />
                 </div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "CHAMANDO..." : "CHAMAR") : "SEM FILA"}</h2>
+                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "CHAMANDO..." : "NOTIFICAR") : "SEM FILA"}</h2>
              </button>
-             <div className="bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/10"><span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-widest leading-none">Espera</span><span className="text-2xl font-black text-on-surface">{waiting.length}</span></div>
+             <div className="bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/10"><span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-widest leading-none">Em Espera</span><span className="text-2xl font-black text-on-surface">{waiting.length}</span></div>
              <div className="bg-primary/5 p-8 rounded-[48px] text-center border border-primary/5"><span className="text-[10px] font-black uppercase text-primary opacity-40 block mb-1 tracking-widest leading-none">Painel</span><span className="text-2xl font-black text-primary">{current ? current.ticket_number.split('-').pop() : '--'}</span></div>
           </div>
 
           <div className="card-main w-full p-8 space-y-4">
              <div className="flex items-center gap-3 mb-2 px-2"><Ticket className="w-4 h-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary opacity-40 tracking-widest">Senha Manual</span></div>
              <form onSubmit={handleManualJoin} className="flex gap-2">
-                <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="flex-grow bg-slate-50 p-4.5 rounded-[24px] text-[16px] font-bold outline-none border-none shadow-inner" placeholder="9XX XXX XXX" />
+                <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="flex-grow bg-slate-50 p-4.5 rounded-[24px] text-[16px] font-bold outline-none border-none shadow-inner" placeholder="Pelo Telemóvel" />
                 <button type="submit" disabled={loading} className="bg-primary text-white px-6 rounded-[24px] shadow-sm"><Plus className="w-6 h-6"/></button>
              </form>
           </div>
@@ -324,14 +324,14 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
                          <span className="text-[10px] opacity-20">#{i+1}</span>
                          <span className="text-base">{q.ticket_number.split('-').pop()}</span>
                       </div>
-                      <div className="text-left leading-none"><h4 className="font-black text-[16px] text-on-surface mb-1">{q.phone}</h4><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Em Espera no Local</p></div>
+                      <div className="text-left leading-none"><h4 className="font-black text-[16px] text-on-surface mb-1">{q.phone}</h4><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Aguardando no Local</p></div>
                    </div>
                    <div className="p-3 bg-white border border-outline/10 rounded-2xl"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={32} /></div>
                 </div>
              )) : (
               <div className="py-24 flex flex-col items-center opacity-10 grayscale text-center">
                  <Timer className="w-10 h-10 mb-4" />
-                 <span className="text-[10px] font-black uppercase tracking-widest leading-none">Quadro de Operação Vazio</span>
+                 <span className="text-[10px] font-black uppercase tracking-widest leading-none">Fila Digital Limpa</span>
               </div>
              )}
           </div>
@@ -377,13 +377,13 @@ const ClientView = ({ estCode }: { estCode: string }) => {
        localStorage.setItem(`kw_phone_${estCode}`, phone);
        refresh();
     } else {
-       alert("Número já registado ou fila fechada.");
+       alert("Este contacto já possui senha activa.");
     }
     setLoading(false);
   };
 
   if (loading && !est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-4 border-primary border-t-transparent animate-spin rounded-full"></div></div>;
-  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-16 text-center space-y-10"><Info className="w-12 h-12 text-slate-100" /><p className="text-[10px] font-black uppercase opacity-20 tracking-widest leading-relaxed">Infraestrutura não Reconhecida.<br/>Escanear outro QR Code do Parceiro.</p></div>;
+  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-16 text-center space-y-10"><Info className="w-12 h-12 text-slate-100" /><p className="text-[10px] font-black uppercase opacity-20 tracking-widest leading-relaxed">Página não encontrada.<br/>Efetue a leitura do QR Code novamente.</p></div>;
 
   if (myTicket) {
      const position = (est.queues || []).filter((q: any) => q.status === "waiting" && new Date(q.joined_at).getTime() < new Date(myTicket.joined_at).getTime()).length + 1;
@@ -392,11 +392,11 @@ const ClientView = ({ estCode }: { estCode: string }) => {
      return (
        <ContentWrapper>
          <div className="py-20 space-y-16 w-full flex flex-col items-center">
-            <div className="w-28 h-28 bg-white rounded-[48px] shadow-sm flex items-center justify-center overflow-hidden border border-outline/10 relative">
+            <div className="w-24 h-24 bg-white rounded-[44px] shadow-sm flex items-center justify-center overflow-hidden border border-outline/10 relative">
                <img src={est.logo_url} className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-primary/5"></div>
             </div>
-            <div className="bg-white rounded-[80px] p-16 shadow-elevated border border-outline/5 flex flex-col items-center gap-10 w-full">
+            <div className="bg-white rounded-[80px] p-16 shadow-elevated border border-outline/5 flex flex-col items-center gap-10 w-full relative">
                <div className="relative w-52 h-52 flex items-center justify-center">
                   <div className={cn("absolute inset-0 rounded-full border-[6px] border-dashed transition-all", isCalled ? "border-green-500 animate-spin-slow scale-110" : "border-primary/5 animate-spin-slow-reverse")}></div>
                   <div className="text-center pt-3">
@@ -406,8 +406,8 @@ const ClientView = ({ estCode }: { estCode: string }) => {
                   </div>
                </div>
                <div className="text-center space-y-3">
-                  <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">{isCalled ? "SUA VEZ!" : `${position}º LUGARE`}</h3>
-                  <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] leading-relaxed px-8">{isCalled ? "ATENDIMENTO IMEDIATO SOLICITADO NO LOCAL." : "GESTÃO DIGITAL ACTIVA NO SEU SMARPHONE."}</p>
+                  <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">{isCalled ? "SUA VEZ!" : `${position}º NA Fila`}</h3>
+                  <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] leading-relaxed px-8">{isCalled ? "DIRIJA-SE À RECEPÇÃO PARA INICIAR O ATENDIMENTO." : "ESTE É O SEU TICKET VIRTUAL. AGUARDE NO LOCAL."}</p>
                </div>
             </div>
             <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); }} className="text-[11px] font-black text-slate-200 uppercase tracking-[0.4em] hover:text-red-500 active:scale-95 transition-all">Sair do Canal</button>
@@ -429,13 +429,13 @@ const ClientView = ({ estCode }: { estCode: string }) => {
           </div>
           <div className="card-main w-full space-y-12 p-12 bg-white mt-12">
              <div className="text-center space-y-1">
-                <h2 className="text-3xl font-black uppercase tracking-tight text-on-surface">Validar Ticket</h2>
-                <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-50">Sua Vez Através do Link</p>
+                <h2 className="text-3xl font-black uppercase tracking-tight text-on-surface">Ticket Digital</h2>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-50">Confirme o Telemóvel</p>
              </div>
              <form onSubmit={handleJoin} className="space-y-10">
                 <BaseInput value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="Telemóvel (AO +244)" type="tel" required />
                 <button type="submit" disabled={loading} className="w-full btn-primary py-10 tracking-[0.5em] shadow-elevated uppercase text-[12px] font-black">
-                   {loading ? "VALIDANDO..." : "ACESSAR AGORA"}
+                   {loading ? "VALIDANDO..." : "OBTER SENHA"}
                 </button>
              </form>
           </div>
