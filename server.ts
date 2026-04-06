@@ -3,7 +3,7 @@ import { createServer as createViteServer } from "vite";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
-import router from "./api/backend.ts";
+import api from "./api/index.ts";
 
 dotenv.config();
 
@@ -13,8 +13,8 @@ const __dirname = path.dirname(__filename);
 const app = express();
 app.use(express.json());
 
-// Utilize the exact same API router as Vercel
-app.use("/api", router);
+// Use the exact same API logic as the Vercel handler
+app.use(api);
 
 async function setupDevServer() {
   if (process.env.NODE_ENV !== "production") {
