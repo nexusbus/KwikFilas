@@ -12,7 +12,7 @@ const supabase = createClient(
 const app = express();
 app.use(express.json());
 
-// Rotas diretas (Sem o prefixo /api aqui, pois o vercel.json já faz o mapeamento)
+// 1. Listar Estabelecimentos
 app.get("/api/admin/establishments", async (req, res) => {
   const { data, error } = await supabase
     .from("establishments")
@@ -29,17 +29,34 @@ app.get("/api/admin/establishments", async (req, res) => {
   res.json(formatted);
 });
 
+// 2. Criar Novo Estabelecimento (Versão Expandida)
 app.post("/api/admin/establishments", async (req, res) => {
-  const { name, initials } = req.body;
-  const day = new Date().getDate().toString().padStart(2, "0");
+  const { 
+    name, 
+    initials, 
+    nif, 
+    admin_email, 
+    admin_password, 
+    opening_hours, 
+    product_photos 
+  } = req.body;
+
   const countRes = await supabase.from("establishments").select("id", { count: "exact", head: true });
   const idNum = (countRes.count || 0) + 1;
   const code = `${initials.toUpperCase()}-${idNum.toString().padStart(3, "0")}`;
-  const password = `${initials.toUpperCase()}${idNum}${day}`;
 
   const { data, error } = await supabase
     .from("establishments")
-    .insert([{ name, initials: initials.toUpperCase(), code, password }])
+    .insert([{ 
+      name, 
+      initials: initials.toUpperCase(), 
+      code, 
+      nif,
+      admin_email,
+      admin_password, // Em produção, isto deve ser hasheadu
+      opening_hours: opening_hours || {},
+      product_photos: product_photos || []
+    }])
     .select()
     .single();
 
@@ -47,6 +64,7 @@ app.post("/api/admin/establishments", async (req, res) => {
   res.json(data);
 });
 
+// 3. Entrar na Fila
 app.post("/api/queue/join", async (req, res) => {
   const { phone, estCode } = req.body;
   const { data: est, error: estErr } = await supabase
@@ -73,6 +91,7 @@ app.post("/api/queue/join", async (req, res) => {
   res.json({ success: true, customer: data });
 });
 
+// 4. Chamar Próximo
 app.post("/api/establishments/:code/next", async (req, res) => {
   const { code } = req.params;
   const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
@@ -88,6 +107,13 @@ app.post("/api/establishments/:code/next", async (req, res) => {
   if (nextArr && nextArr.length > 0) {
     await supabase.from("queues").update({ status: "called" }).eq("id", nextArr[0].id);
   }
+  res.json({ success: true });
+});
+
+// 5. Abandonar Fila
+app.post("/api/queue/leave", async (req, res) => {
+  const { id } = req.body;
+  await supabase.from("queues").delete().eq("id", id);
   res.json({ success: true });
 });
 
