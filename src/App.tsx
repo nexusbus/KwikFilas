@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { createClient } from "@supabase/supabase-js";
-import { motion, AnimatePresence } from "motion"; // Simplified motion import
+import { motion, AnimatePresence } from "motion/react"; // Correct import for v12
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
   LayoutDashboard, Lock, LogOut, Mail, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, 
@@ -71,10 +71,10 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
          const user = await res.json();
          onLogin({ id: user.id, name: user.name, role: user.role, email: user.admin_email, estId: user.id });
       } else {
-         setError("Os dados estão incorretos.");
+         setError("Dados de acesso incorretos.");
       }
     } catch (e) {
-      setError("Falha de conexão.");
+      setError("Falha de conexão com o sistema.");
     }
     setLoading(false);
   };
@@ -85,16 +85,16 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
           <div className="text-center space-y-4">
             <KLogo className="w-20 h-20 mb-8 mx-auto animate-pulse" />
             <h1 className="text-4xl font-black text-[#0F172A] uppercase tracking-tighter">KwikFilas<br/><span className="text-[#2563EB] italic font-medium tracking-normal">Portal.</span></h1>
-            <p className="text-[9px] font-black uppercase text-slate-300 tracking-[0.6em] mt-2">Acesso Exclusivo para Gestão Profissional.</p>
+            <p className="text-[9px] font-black uppercase text-slate-300 tracking-[0.6em] mt-2 leading-none">Acesso Registado para Operadores Mestre.</p>
           </div>
 
           <div className="card-main w-full space-y-6">
             <form onSubmit={handleLogin} className="space-y-1">
-               <BaseInput icon={Mail} value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="Utilizador / Email" type="email" required />
+               <BaseInput icon={Mail} value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="Email Corporativo" type="email" required />
                <BaseInput icon={Lock} value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="Senha Mestra" type="password" required />
                {error && <p className="text-[9px] font-bold text-red-500 text-center py-2 px-4 bg-red-50 rounded-lg">{error}</p>}
                <button type="submit" disabled={loading} className="w-full btn-primary py-7 mt-4 flex items-center justify-center gap-3 disabled:opacity-50">
-                {loading ? "PROCURANDO..." : "ABRIR PORTAL" } <ArrowRight className="w-4 h-4"/>
+                {loading ? "CONEXÃO..." : "ABRIR PORTAL" } <ArrowRight className="w-4 h-4"/>
                </button>
             </form>
           </div>
@@ -135,13 +135,13 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(data.path);
          setFormData({ ...formData, logo_url: publicUrl });
       }
-    } catch (e) { setError("Erro crítico no upload."); }
+    } catch (e) { setError("Erro crítico no upload da imagem."); }
     setLoading(false);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.logo_url) return setError("A foto do logótipo é obrigatória!");
+    if (!formData.logo_url) return setError("É obrigatório carregar um logótipo!");
     setLoading(true);
     setError(null);
     try {
@@ -155,46 +155,46 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
          setView("list");
          refresh();
       } else { setError("Dados já registados (NIF ou Email)."); }
-    } catch (e) { setError("Falha na submissão."); }
+    } catch (e) { setError("Falha na submissão do formulário."); }
     setLoading(false);
   };
 
   const handleDelete = async (targetId: string) => {
-    const pass = prompt("Verificação de Identidade (Super User Password):");
+    const pass = prompt("Confirmação de Mestre (Senha Super Admin):");
     if (!pass) return;
     const res = await fetch("/api/admin/establishments/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ targetId, superPassword: pass }),
     });
-    if (res.ok) refresh(); else alert("Acesso negado.");
+    if (res.ok) refresh(); else alert("Acesso negado pela senha.");
   };
 
   return (
     <ContentWrapper>
-       <div className="w-full pt-8 pb-20 space-y-8 animate-in fade-in duration-500">
+       <div className="w-full pt-8 pb-20 space-y-8">
           <div className="flex justify-between items-center bg-white p-4 rounded-[28px] border border-outline/10 h-14 shadow-sm">
              <div className="flex items-center gap-2 px-2">
                 <ShieldCheck className="w-5 h-5 text-[#2563EB]" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-[#2563EB]">Master Control</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-[#2563EB]">Super Control</span>
              </div>
              <button onClick={onLogout} className="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center border border-outline/10"><LogOut className="w-4 h-4 text-slate-300" /></button>
           </div>
 
           <div className="flex bg-[#F1F5F9] p-1 rounded-2xl w-full border border-slate-200/50">
              <button onClick={() => setView("list")} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "list" ? "bg-white text-[#2563EB] shadow-sm" : "text-slate-400")}>Catálogo</button>
-             <button onClick={() => setView("create")} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "create" ? "bg-white text-[#2563EB] shadow-sm" : "text-slate-400")}>Adicionar</button>
+             <button onClick={() => setView("create")} className={cn("flex-grow py-3 rounded-xl text-[9px] font-black uppercase tracking-widest transition-all", view === "create" ? "bg-white text-[#2563EB] shadow-sm" : "text-slate-400")}>Registar</button>
           </div>
 
           {view === "list" ? (
-             <div className="space-y-3 w-full">
+             <div className="space-y-3 w-full animate-in fade-in">
                 {establishments.map(est => (
                    <div key={est.id} className="w-full bg-white p-4 rounded-[32px] border border-outline/20 flex items-center justify-between group active:scale-[0.98] transition-all">
                       <div className="flex items-center gap-4">
                          <div className="w-12 h-12 bg-slate-50 rounded-[20px] overflow-hidden shadow-inner flex items-center justify-center border border-outline/10">
                             {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Store className="w-5 h-5 text-slate-200" />}
                          </div>
-                         <div className="text-left"><h4 className="font-black text-sm text-[#0F172A] uppercase mb-1">{est.name}</h4><span className="text-[9px] font-bold text-[#2563EB] uppercase tracking-widest opacity-50">{est.initials} • {est.code}</span></div>
+                         <div className="text-left"><h4 className="font-black text-sm text-[#0F172A] uppercase mb-1 leading-none">{est.name}</h4><span className="text-[9px] font-bold text-[#2563EB] uppercase tracking-widest opacity-50">{est.initials} • {est.code}</span></div>
                       </div>
                       <button onClick={() => handleDelete(est.id)} className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all"><Trash2 className="w-4 h-4 text-red-500" /></button>
                    </div>
@@ -210,15 +210,15 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
                             <input type="file" className="hidden" accept="image/*" onChange={handleUpload} disabled={loading} />
                          </label>
                       </div>
-                      <span className="text-[10px] font-black uppercase text-[#2563EB] tracking-[.2em] mt-3">Logótipo Corporativo</span>
+                      <span className="text-[10px] font-black uppercase text-[#2563EB] tracking-[.2em] mt-3">Identidade Visual</span>
                    </div>
                    {error && <div className="p-4 mb-6 bg-red-50 border border-red-100 rounded-2xl flex items-center gap-3"><AlertCircle className="w-4 h-4 text-red-500" /><p className="text-[9px] font-bold text-red-600 leading-tight uppercase">{error}</p></div>}
                    <BaseInput value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} placeholder="Nome Profissional" required />
                    <BaseInput value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} placeholder="NIF Oficial (Único)" required />
                    <BaseInput value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} placeholder="Email Registrado" type="email" required />
                    <BaseInput value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} placeholder="Senha de Gestão" type="password" required />
-                   <button type="submit" disabled={loading} className="w-full btn-primary py-7 mt-6 shadow-elevated disabled:opacity-50 text-[11px] font-black uppercase tracking-widest">
-                      {loading ? "GERANDO..." : "CONSTRUIR CANAL"}
+                   <button type="submit" disabled={loading} className="w-full btn-primary py-7 mt-6 shadow-elevated disabled:opacity-50 text-[11px] font-black uppercase tracking-widest text-sm">
+                      {loading ? "SINCRONIZANDO..." : "ACTIVAR PARCEIRO"}
                    </button>
                 </form>
              </div>
@@ -242,7 +242,7 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
     if (found) setEst(found);
   };
 
-  useEffect(() => { refresh(); const itv = setInterval(refresh, 4000); return () => clearInterval(itv); }, []);
+  useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
 
   const handleNext = async () => {
     if (!est) return;
@@ -266,7 +266,7 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
      setLoading(false);
   };
 
-  if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><Timer className="animate-spin text-[#2563EB]" /></div>;
+  if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-10 h-10 border-4 border-[#2563EB] border-t-transparent animate-spin rounded-full"></div></div>;
 
   const current = (est.queues || []).find(q => q.status === "called");
   const waiting = (est.queues || []).filter(q => q.status === "waiting");
@@ -289,10 +289,10 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
                 <div className={cn("w-14 h-14 rounded-full flex items-center justify-center", waiting.length > 0 ? "bg-white/20 animate-pulse" : "bg-slate-200")}>
                    <Bell className="w-7 h-7 fill-white" />
                 </div>
-                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "CHAMANDO..." : "CHAMAR PRÓXIMO") : "FILA LIMPA"}</h2>
+                <h2 className="text-3xl font-black uppercase tracking-tighter leading-none">{waiting.length > 0 ? (loading ? "CHAMANDO..." : "CHAMAR PRÓXIMO") : "SEM FILA"}</h2>
              </button>
-             <div className="bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/10"><span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-widest leading-none">Aguardando</span><span className="text-2xl font-black text-[#0F172A]">{waiting.length}</span></div>
-             <div className="bg-[#2563EB]/5 p-8 rounded-[48px] text-center border border-[#2563EB]/5"><span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 block mb-1 tracking-widest leading-none">Em Painel</span><span className="text-2xl font-black text-[#2563EB]">{current ? current.ticket_number.split('-').pop() : '--'}</span></div>
+             <div className="bg-[#F8FAFC] p-8 rounded-[48px] text-center border border-outline/10"><span className="text-[10px] font-black uppercase opacity-20 block mb-1 tracking-widest leading-none">Em Espera</span><span className="text-2xl font-black text-[#0F172A]">{waiting.length}</span></div>
+             <div className="bg-[#2563EB]/5 p-8 rounded-[48px] text-center border border-[#2563EB]/5"><span className="text-[10px] font-black uppercase text-[#2563EB] opacity-40 block mb-1 tracking-widest leading-none">No Painel</span><span className="text-2xl font-black text-[#2563EB]">{current ? current.ticket_number.split('-').pop() : '--'}</span></div>
           </div>
 
           <div className="card-main w-full p-8 space-y-4">
@@ -304,22 +304,22 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
           </div>
 
           <div className="space-y-4 w-full">
-             <div className="flex justify-between items-center px-4"><span className="text-[10px] font-black uppercase text-[#2563EB]/30 tracking-[0.4em]">Fila Activa</span><Users className="w-4 h-4 text-slate-100" /></div>
+             <div className="flex justify-between items-center px-4"><span className="text-[10px] font-black uppercase text-[#2563EB]/30 tracking-[0.4em]">Monitorização</span><Users className="w-4 h-4 text-slate-100" /></div>
              {waiting.length > 0 ? (
                waiting.map((q, i) => (
-                <div key={q.id} className="bg-white p-5 rounded-[44px] border border-outline/10 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all animate-in slide-in-from-bottom-2 duration-300">
+                <div key={q.id} className="bg-white p-5 rounded-[44px] border border-outline/10 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all animate-in slide-in-from-bottom-2">
                    <div className="flex items-center gap-4">
                       <div className="w-12 h-12 bg-slate-50 text-[#2563EB] font-black rounded-3xl flex flex-col items-center justify-center border border-outline/10">
                          <span className="text-[10px] opacity-20">#{i+1}</span>
                          <span className="text-base">{q.ticket_number.split('-').pop()}</span>
                       </div>
-                      <div className="text-left leading-none"><h4 className="font-black text-[16px] text-[#0F172A] mb-1">{q.phone}</h4><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Aguardando Vez</p></div>
+                      <div className="text-left leading-none"><h4 className="font-black text-[16px] text-[#0F172A] mb-1">{q.phone}</h4><p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">Aguardando no Local</p></div>
                    </div>
                    <div className="p-3 bg-white border border-outline/10 rounded-2xl"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={32} /></div>
                 </div>
                ))
              ) : (
-                <div className="py-24 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-10 h-10 mb-4" /><span className="text-[10px] font-black uppercase tracking-widest leading-none">Sem Actividade Digital</span></div>
+                <div className="py-24 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-10 h-10 mb-4" /><span className="text-[10px] font-black uppercase tracking-widest leading-none">Fila Digital Limpa</span></div>
              )}
           </div>
        </div>
@@ -363,12 +363,12 @@ const ClientView = ({ estCode }: { estCode: string }) => {
       body: JSON.stringify({ phone, estCode }),
     });
     if (res.ok) { localStorage.setItem(`kw_phone_${estCode}`, phone); refresh(); }
-    else { alert("Este número já possui senha activa."); }
+    else { alert("Este telemóvel já se encontra na fila."); }
     setLoading(false);
   };
 
   if (loading && !est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-8 h-8 border-4 border-[#2563EB] border-t-transparent animate-spin rounded-full"></div></div>;
-  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-16 text-center space-y-10"><Info className="w-12 h-12 text-slate-100" /><p className="text-[10px] font-black uppercase opacity-20 tracking-widest leading-relaxed">Código de Canal Expirado.<br/>Por favor, escaneie o QR Code novamente.</p></div>;
+  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-16 text-center space-y-10"><Info className="w-12 h-12 text-slate-100" /><p className="text-[10px] font-black uppercase opacity-20 tracking-widest leading-relaxed">Infraestrutura não identificada.<br/>Por favor, escaneie novamente o QR Code.</p></div>;
 
   if (myTicket) {
      const position = (est.queues || []).filter((q: any) => q.status === "waiting" && new Date(q.joined_at).getTime() < new Date(myTicket.joined_at).getTime()).length + 1;
@@ -377,12 +377,12 @@ const ClientView = ({ estCode }: { estCode: string }) => {
      return (
        <ContentWrapper>
          <div className="py-20 space-y-16 w-full flex flex-col items-center animate-in fade-in">
-            <div className="w-28 h-28 bg-white rounded-[48px] shadow-sm flex items-center justify-center overflow-hidden border border-outline/10 relative">
+            <div className="w-24 h-24 bg-white rounded-[44px] shadow-sm flex items-center justify-center overflow-hidden border border-outline/10 relative">
                <img src={est.logo_url} className="w-full h-full object-cover" />
                <div className="absolute inset-0 bg-[#2563EB]/5"></div>
             </div>
             <div className="bg-white rounded-[80px] p-16 shadow-elevated border border-outline/5 flex flex-col items-center gap-10 w-full relative group">
-               <div className="relative w-56 h-56 flex items-center justify-center">
+               <div className="relative w-52 h-52 flex items-center justify-center">
                   <div className={cn("absolute inset-0 rounded-full border-[6px] border-dashed transition-all duration-1000", isCalled ? "border-green-500 animate-spin-slow scale-110" : "border-[#2563EB]/5 animate-spin-slow-reverse")}></div>
                   <div className="text-center pt-3">
                      <span className={cn("text-8xl font-black tracking-tighter leading-none transition-all duration-500", isCalled ? "text-green-600 scale-125" : "text-[#2563EB] opacity-90")}>
@@ -392,11 +392,10 @@ const ClientView = ({ estCode }: { estCode: string }) => {
                </div>
                <div className="text-center space-y-3">
                   <h3 className="text-4xl font-black tracking-tighter uppercase leading-none">{isCalled ? "SUA VEZ!" : `${position}º NA Fila`}</h3>
-                  <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] leading-relaxed px-8">{isCalled ? "DIRIJA-SE AO BALCÃO PARA ATENDIMENTO." : "ESTE TICKET GARANTE O SEU LUGAR DIGITAL."}</p>
+                  <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] leading-relaxed px-8">{isCalled ? "DIRIJA-SE AO LOCAL PARA INICIAR O ATENDIMENTO." : "ESTE É O SEU LUGAR DIGITAL. AGUARDE A NOTIFICAÇÃO."}</p>
                </div>
-               {isCalled && <div className="absolute -top-4 bg-green-500 text-white px-6 py-2 rounded-full text-[9px] font-black uppercase tracking-widest animate-bounce">Notificação Activa</div>}
             </div>
-            <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); }} className="text-[11px] font-black text-slate-200 uppercase tracking-[0.4em] hover:text-red-500 active:scale-95 transition-all">Sair do Canal</button>
+            <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); }} className="text-[11px] font-black text-slate-200 uppercase tracking-[0.4em] hover:text-red-500 active:scale-95 transition-all">Sair da Fila Digital</button>
          </div>
        </ContentWrapper>
      );
