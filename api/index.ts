@@ -12,7 +12,7 @@ const supabase = createClient(
 const app = express();
 app.use(express.json());
 
-// 1. Listar Estabelecimentos
+// Rotas diretas (Sem o prefixo /api aqui, pois o vercel.json já faz o mapeamento)
 app.get("/api/admin/establishments", async (req, res) => {
   const { data, error } = await supabase
     .from("establishments")
@@ -20,7 +20,7 @@ app.get("/api/admin/establishments", async (req, res) => {
   
   if (error) return res.status(500).json({ error: error.message });
   
-  const formatted = data.map(est => ({
+  const formatted = (data || []).map(est => ({
     ...est,
     customers: (est.queues || []).filter(q => q.status !== 'served'),
     contacts: [] 
@@ -29,11 +29,8 @@ app.get("/api/admin/establishments", async (req, res) => {
   res.json(formatted);
 });
 
-// 2. Criar Novo Estabelecimento
 app.post("/api/admin/establishments", async (req, res) => {
   const { name, initials } = req.body;
-  if (!name || !initials) return res.status(400).json({ error: "Nome e iniciais são obrigatórios" });
-
   const day = new Date().getDate().toString().padStart(2, "0");
   const countRes = await supabase.from("establishments").select("id", { count: "exact", head: true });
   const idNum = (countRes.count || 0) + 1;
@@ -50,7 +47,6 @@ app.post("/api/admin/establishments", async (req, res) => {
   res.json(data);
 });
 
-// 3. Entrar na Fila
 app.post("/api/queue/join", async (req, res) => {
   const { phone, estCode } = req.body;
   const { data: est, error: estErr } = await supabase
@@ -59,7 +55,7 @@ app.post("/api/queue/join", async (req, res) => {
     .eq("code", estCode)
     .single();
 
-  if (estErr || !est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
+  if (estErr || !est) return res.status(404).json({ error: "Local não encontrado" });
 
   const day = new Date().getDate().toString().padStart(2, "0");
   const { count } = await supabase.from("queues").select("id", { count: "exact", head: true });
@@ -77,53 +73,21 @@ app.post("/api/queue/join", async (req, res) => {
   res.json({ success: true, customer: data });
 });
 
-// 4. Chamar Próximo
 app.post("/api/establishments/:code/next", async (req, res) => {
   const { code } = req.params;
-  const { data: est } = await supabase
-    .from("establishments")
-    .select("id")
-    .eq("code", code)
-    .single();
-
+  const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
-  const { data: currentlyCalled } = await supabase
-    .from("queues")
-    .select("*")
-    .eq("est_id", est.id)
-    .eq("status", "called")
-    .single();
-
+  const { data: currentlyCalled } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
   if (currentlyCalled) {
-    await supabase.from("history").insert([{
-      est_id: est.id,
-      phone: currentlyCalled.phone,
-      ticket_number: currentlyCalled.ticket_number
-    }]);
+    await supabase.from("history").insert([{ est_id: est.id, phone: currentlyCalled.phone, ticket_number: currentlyCalled.ticket_number }]);
     await supabase.from("queues").delete().eq("id", currentlyCalled.id);
   }
 
-  const { data: nextArr } = await supabase
-    .from("queues")
-    .select("*")
-    .eq("est_id", est.id)
-    .eq("status", "waiting")
-    .order("joined_at", { ascending: true })
-    .limit(1);
-
+  const { data: nextArr } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "waiting").order("joined_at", { ascending: true }).limit(1);
   if (nextArr && nextArr.length > 0) {
-    const next = nextArr[0];
-    await supabase.from("queues").update({ status: "called" }).eq("id", next.id);
+    await supabase.from("queues").update({ status: "called" }).eq("id", nextArr[0].id);
   }
-
-  res.json({ success: true });
-});
-
-// 5. Abandonar Fila
-app.post("/api/queue/leave", async (req, res) => {
-  const { id } = req.body;
-  await supabase.from("queues").delete().eq("id", id);
   res.json({ success: true });
 });
 
