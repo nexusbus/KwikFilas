@@ -11,72 +11,70 @@
 
 @theme {
   --color-primary: var(--primary);
-  --color-primary-600: #1E40AF;
-  --color-primary-50: #EFF6FF;
-  
-  --color-surface: #ffffff;
-  --color-surface-variant: var(--surface-variant);
   --color-on-surface: var(--on-surface);
   --color-on-surface-variant: var(--on-surface-variant);
-  
+  --color-surface-variant: var(--surface-variant);
   --color-outline: var(--outline);
-  --color-outline-variant: #F1F5F9;
   
   --shadow-ambient: 0 1px 4px rgba(0, 0, 0, 0.02), 0 2px 12px rgba(0, 0, 0, 0.04);
   --shadow-elevated: 0 10px 40px rgba(37, 99, 235, 0.06);
 }
 
 @layer base {
-  body {
+  html, body {
     background-color: #ffffff;
     color: var(--on-surface);
     -webkit-font-smoothing: antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
+    overflow-x: hidden; /* Lock horizontal scroll */
+    width: 100%;
+    position: relative;
     font-size: 14px;
-    line-height: 1.5;
+    touch-action: manipulation; /* Prevent accidental double-tap zoom */
   }
 
-  .glass {
-    background: rgba(255, 255, 255, 0.9);
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
+  /* Prevent Mobile Zoom on Input Focus */
+  input, select, textarea {
+    font-size: 16px !important; 
+    line-height: normal;
   }
 }
 
 @layer components {
-  /* High Density & High Contrast Buttons */
   .btn-primary {
     background-color: var(--primary);
     color: #ffffff;
-    @apply font-bold py-3.5 px-6 rounded-2xl shadow-sm hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-wider text-[10px];
+    @apply font-bold py-4 px-6 rounded-2xl shadow-sm hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-widest text-[10px];
     border: none;
-    cursor: pointer;
+    width: 100%;
   }
   
   .btn-outline {
     border: 1px solid var(--outline);
     color: var(--on-surface);
     background-color: transparent;
-    @apply font-bold py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all text-center uppercase tracking-wider text-[10px];
-    cursor: pointer;
+    @apply font-bold py-4 px-6 rounded-2xl hover:bg-slate-50 transition-all text-center uppercase tracking-widest text-[10px];
+    width: 100%;
   }
 
-  /* High Contrast High Density Cards */
   .card-main {
     background-color: #ffffff;
-    @apply p-7 rounded-[32px] shadow-ambient border border-slate-200/60 w-full max-w-sm mx-auto;
+    @apply p-8 rounded-[40px] shadow-ambient border border-slate-200/50 w-full max-w-[340px] mx-auto;
+    box-sizing: border-box;
   }
   
   .input-field {
     background-color: var(--surface-variant);
-    @apply w-full p-4.5 rounded-xl border border-transparent font-bold text-base outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:bg-white;
+    @apply w-full p-4.5 rounded-xl border border-transparent font-bold text-[16px] outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:bg-white;
+    box-sizing: border-box;
   }
 }
 
 /* Fluid Global Transitions */
 * {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
 }
 
 @keyframes pulse-subtle {
