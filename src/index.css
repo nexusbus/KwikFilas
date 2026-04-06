@@ -1,17 +1,25 @@
 @import "tailwindcss";
 
+/* Failsafe Variables for CSS-Native Resolution */
+:root {
+  --primary: #2563EB;
+  --on-surface: #0F172A;
+  --on-surface-variant: #475569;
+  --surface-variant: #F1F5F9;
+  --outline: #E2E8F0;
+}
+
 @theme {
-  /* Premium Global Blue Theme - High Density Optimizations */
-  --color-primary: #2563EB;
+  --color-primary: var(--primary);
   --color-primary-600: #1E40AF;
   --color-primary-50: #EFF6FF;
   
   --color-surface: #ffffff;
-  --color-surface-variant: #F1F5F9;
-  --color-on-surface: #0F172A;
-  --color-on-surface-variant: #475569;
+  --color-surface-variant: var(--surface-variant);
+  --color-on-surface: var(--on-surface);
+  --color-on-surface-variant: var(--on-surface-variant);
   
-  --color-outline: #E2E8F0;
+  --color-outline: var(--outline);
   --color-outline-variant: #F1F5F9;
   
   --shadow-ambient: 0 1px 4px rgba(0, 0, 0, 0.02), 0 2px 12px rgba(0, 0, 0, 0.04);
@@ -20,10 +28,13 @@
 
 @layer base {
   body {
-    @apply bg-surface text-on-surface antialiased;
+    background-color: #ffffff;
+    color: var(--on-surface);
+    -webkit-font-smoothing: antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
-    font-size: 14px; /* Base size reduced for density */
+    font-size: 14px;
+    line-height: 1.5;
   }
 
   .glass {
@@ -34,43 +45,43 @@
 }
 
 @layer components {
-  /* Compact & Fluid Buttons */
+  /* High Density & High Contrast Buttons */
   .btn-primary {
-    @apply bg-primary text-white font-bold py-3 px-6 rounded-2xl shadow-sm 
-           hover:shadow-md active:scale-95 transition-all text-center uppercase tracking-wider text-[10px];
-    background-image: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+    background-color: var(--primary);
+    color: #ffffff;
+    @apply font-bold py-3.5 px-6 rounded-2xl shadow-sm hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-wider text-[10px];
+    border: none;
+    cursor: pointer;
   }
   
   .btn-outline {
-    @apply border border-outline text-on-surface font-bold py-3 px-6 rounded-2xl 
-           hover:bg-surface-variant transition-all text-center uppercase tracking-wider text-[10px];
+    border: 1px solid var(--outline);
+    color: var(--on-surface);
+    background-color: transparent;
+    @apply font-bold py-3.5 px-6 rounded-2xl hover:bg-slate-50 transition-all text-center uppercase tracking-wider text-[10px];
+    cursor: pointer;
   }
 
-  /* Dense Cards */
+  /* High Contrast High Density Cards */
   .card-main {
-    @apply bg-white p-6 rounded-[28px] shadow-ambient border border-outline/40 w-full max-w-sm mx-auto;
+    background-color: #ffffff;
+    @apply p-7 rounded-[32px] shadow-ambient border border-slate-200/60 w-full max-w-sm mx-auto;
   }
   
   .input-field {
-    @apply w-full bg-surface-variant p-4 rounded-xl border border-transparent 
-           focus:border-primary/20 focus:bg-white font-bold text-base 
-           outline-none transition-all placeholder:text-on-surface-variant/30;
-  }
-  
-  .badge-category {
-    @apply bg-surface-variant border border-outline/50 p-3 rounded-2xl flex flex-col items-center justify-center 
-           gap-1.5 hover:border-primary/30 transition-all text-on-surface-variant font-bold text-[9px] uppercase;
+    background-color: var(--surface-variant);
+    @apply w-full p-4.5 rounded-xl border border-transparent font-bold text-base outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:bg-white;
   }
 }
 
-/* Fluid Transitions */
+/* Fluid Global Transitions */
 * {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 @keyframes pulse-subtle {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(0.995); }
+  50% { opacity: 0.9; transform: scale(0.99); }
 }
 
 .animate-pulse-subtle {
