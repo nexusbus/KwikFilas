@@ -7,36 +7,41 @@
   --on-surface-variant: #475569;
   --surface-variant: #F1F5F9;
   --outline: #E2E8F0;
-}
 
-@theme {
+  /* Theme variables moved from @theme to resolve linter warnings */
   --color-primary: var(--primary);
   --color-on-surface: var(--on-surface);
   --color-on-surface-variant: var(--on-surface-variant);
   --color-surface-variant: var(--surface-variant);
   --color-outline: var(--outline);
-  
+
   --shadow-ambient: 0 1px 4px rgba(0, 0, 0, 0.02), 0 2px 12px rgba(0, 0, 0, 0.04);
   --shadow-elevated: 0 10px 40px rgba(37, 99, 235, 0.06);
 }
 
 @layer base {
-  html, body {
+
+  html,
+  body {
     background-color: #ffffff;
     color: var(--on-surface);
     -webkit-font-smoothing: antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
-    overflow-x: hidden; /* Lock horizontal scroll */
+    overflow-x: hidden;
+    /* Lock horizontal scroll */
     width: 100%;
     position: relative;
     font-size: 14px;
-    touch-action: manipulation; /* Prevent accidental double-tap zoom */
+    touch-action: manipulation;
+    /* Prevent accidental double-tap zoom */
   }
 
   /* Prevent Mobile Zoom on Input Focus */
-  input, select, textarea {
-    font-size: 16px !important; 
+  input,
+  select,
+  textarea {
+    font-size: 16px !important;
     line-height: normal;
   }
 }
@@ -45,29 +50,83 @@
   .btn-primary {
     background-color: var(--primary);
     color: #ffffff;
-    @apply font-bold py-4 px-6 rounded-2xl shadow-sm hover:brightness-110 active:scale-95 transition-all text-center uppercase tracking-widest text-[10px];
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
     border: none;
     width: 100%;
+    cursor: pointer;
+    display: block;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
-  
+
+  .btn-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.95);
+  }
+
   .btn-outline {
     border: 1px solid var(--outline);
     color: var(--on-surface);
     background-color: transparent;
-    @apply font-bold py-4 px-6 rounded-2xl hover:bg-slate-50 transition-all text-center uppercase tracking-widest text-[10px];
+    font-weight: 700;
+    padding: 1rem 1.5rem;
+    border-radius: 1rem;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-size: 10px;
     width: 100%;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .btn-outline:hover {
+    background-color: #f8fafc;
   }
 
   .card-main {
     background-color: #ffffff;
-    @apply p-8 rounded-[40px] shadow-ambient border border-slate-200/50 w-full max-w-[340px] mx-auto;
+    padding: 2rem;
+    border-radius: 40px;
+    box-shadow: var(--shadow-ambient);
+    border: 1px solid rgba(226, 232, 240, 0.5);
+    width: 100%;
+    max-width: 340px;
+    /* Fallback for mx-auto if needed, but applying margin directly */
+    margin-left: auto;
+    margin-right: auto;
     box-sizing: border-box;
   }
-  
+
   .input-field {
     background-color: var(--surface-variant);
-    @apply w-full p-4.5 rounded-xl border border-transparent font-bold text-[16px] outline-none transition-all placeholder:text-slate-400 focus:ring-2 focus:ring-primary/20 focus:bg-white;
+    width: 100%;
+    padding: 1.125rem;
+    border-radius: 0.75rem;
+    border: 1px solid transparent;
+    font-weight: 700;
+    font-size: 16px;
+    outline: none;
     box-sizing: border-box;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .input-field::placeholder {
+    color: #94a3b8;
+  }
+
+  .input-field:focus {
+    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+    background-color: white;
   }
 }
 
@@ -78,8 +137,17 @@
 }
 
 @keyframes pulse-subtle {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50% { opacity: 0.9; transform: scale(0.99); }
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
 }
 
 .animate-pulse-subtle {

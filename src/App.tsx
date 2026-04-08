@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
   LayoutDashboard, Lock, LogOut, Mail, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, 
-  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History
+  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
@@ -26,65 +26,81 @@ interface AuthUser {
   estId?: string;
 }
 
+// --- GLOBAL TOAST SYSTEM ---
+interface Toast { id: string; message: string; type: 'success' | 'error' | 'info'; }
+
+const ToastContainer = ({ toasts, remove }: { toasts: Toast[], remove: (id: string) => void }) => (
+  <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] w-full max-w-xs space-y-2 px-4 pointer-events-none">
+    <AnimatePresence>
+      {toasts.map(t => (
+        <motion.div 
+          key={t.id} 
+          initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -10, opacity: 0 }}
+          className={cn(
+            "pointer-events-auto p-4 flex items-center gap-3 border shadow-sm text-[10px] font-black uppercase tracking-widest",
+            t.type === 'success' ? "bg-white border-primary text-primary" : "bg-red-50 border-red-200 text-red-500"
+          )}
+        >
+          {t.type === 'success' ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+          {t.message}
+        </motion.div>
+      ))}
+    </AnimatePresence>
+  </div>
+);
+
 const KLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={cn("fill-primary w-8 h-8", className)}>
-    <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="8" strokeLinecap="square" />
+    <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="10" strokeLinecap="square" />
   </svg>
 );
 
 const ContentWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-full max-w-sm mx-auto flex flex-col items-center px-4">{children}</div>
+  <div className="w-full max-w-sm mx-auto flex flex-col items-center px-4 mb-20">{children}</div>
 );
 
 const BaseInput = ({ icon: Icon, label, ...props }: any) => (
-  <div className="w-full mb-3">
-    {label && <span className="text-[7px] font-bold uppercase text-[#2563EB] block mb-1 px-1 opacity-60">{label}</span>}
-    <div className="w-full bg-[#F8FAFC] rounded-none border border-slate-200 focus-within:border-primary transition-all flex items-center px-3 h-12">
-      {Icon && <Icon className="w-3.5 h-3.5 text-primary/30 mr-2 shrink-0" />}
-      <input {...props} className="flex-grow bg-transparent text-[14px] font-bold border-none outline-none placeholder:text-slate-300" />
+  <div className="w-full mb-4">
+    {label && <span className="text-[8px] font-black uppercase text-[#2563EB] block mb-1 opacity-50">{label}</span>}
+    <div className="w-full bg-[#F8FAFC] border border-slate-200 focus-within:border-primary flex items-center px-4 h-14">
+      {Icon && <Icon className="w-4 h-4 text-primary/30 mr-3 shrink-0" />}
+      <input {...props} className="flex-grow bg-transparent text-[16px] font-bold border-none outline-none placeholder:text-slate-200" />
     </div>
   </div>
 );
 
-// --- 1. LANDING: LOGIN (SQUARE DESIGN) ---
+
+
+// --- 1. LANDING: LOGIN ---
 const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (res.ok) {
-         const user = await res.json();
-         onLogin({ id: user.id, name: user.name, role: user.role, email: user.admin_email, estId: user.id });
-      } else { setError("Credenciais Inválidas."); }
-    } catch (e) { setError("Falha de Conexão."); }
+      const res = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
+      if (res.ok) { onLogin(await res.json()); } else { alert("Credenciais Incorretas"); }
+    } catch (e) { alert("Erro de Conexão"); }
     setLoading(false);
   };
 
   return (
     <ContentWrapper>
-      <div className="pt-20 space-y-12 flex flex-col items-center w-full">
-          <div className="text-center space-y-3">
-            <KLogo className="w-16 h-16 mb-6 mx-auto" />
-            <h1 className="text-3xl font-black text-[#0F172A] uppercase tracking-tighter">KwikFilas<br/><span className="text-[#2563EB] italic font-medium tracking-normal text-xl">Admin.</span></h1>
-            <p className="text-[8px] font-bold uppercase text-slate-400 tracking-[0.4em] mt-2">Plataforma de Gestão de Público.</p>
+      <div className="pt-24 space-y-12 flex flex-col items-center w-full">
+          <div className="text-center space-y-4">
+            <KLogo className="w-16 h-16 mb-4 mx-auto" />
+            <h1 className="text-4xl font-black text-[#0F172A] uppercase tracking-tighter">KwikFilas<br/><span className="text-[#2563EB] italic font-medium tracking-normal text-2xl">Mestre.</span></h1>
+            <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.6em] mt-3 leading-none opacity-50">Portal Administrativo Oficial</p>
           </div>
-          <div className="w-full space-y-4 bg-white p-6 border border-slate-100">
-            <form onSubmit={handleLogin} className="space-y-0.5">
-               <BaseInput icon={Mail} value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="Utilizador" type="email" required />
-               <BaseInput icon={Lock} value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="Senha" type="password" required />
-               {error && <p className="text-[8px] font-bold text-red-500 text-center py-2 uppercase bg-red-50 mb-4">{error}</p>}
-               <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-5 mt-4 flex items-center justify-center gap-2 disabled:opacity-50 font-black text-[10px] uppercase tracking-widest rounded-none">
-                {loading ? "VALIDANDO..." : "ABRIR PAINEL" } <ArrowRight className="w-3 h-3"/>
+          <div className="w-full bg-white p-8 border border-slate-100 shadow-sm">
+            <form onSubmit={handleLogin} className="space-y-2">
+               <BaseInput icon={Mail} value={email} onChange={(e: any) => setEmail(e.target.value)} placeholder="Utilizador / Email" type="email" required />
+               <BaseInput icon={Lock} value={password} onChange={(e: any) => setPassword(e.target.value)} placeholder="Senha Mestra" type="password" required />
+               <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-6 mt-6 flex items-center justify-center gap-3 disabled:opacity-50 font-black text-xs uppercase tracking-widest leading-none">
+                {loading ? "PROCURANDO..." : "ABRIR CANAL" } <ArrowRight className="w-4 h-4"/>
                </button>
             </form>
           </div>
@@ -93,20 +109,19 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
   );
 };
 
-// --- 2. SUPER ADMIN: GESTÃO (SQUARE DESIGN) ---
-const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
+// --- 2. SUPER ADMIN: GESTÃO ---
+const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
   const [view, setView] = useState<"list" | "create">("list");
   const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" });
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const refresh = async () => {
     try {
       const res = await fetch("/api/admin/establishments");
       const data = await res.json();
       setEstablishments(Array.isArray(data) ? data : []);
-    } catch (e) { console.error("Refresh fail"); }
+    } catch (e) { console.error("API error"); }
   };
 
   useEffect(() => { refresh(); }, []);
@@ -117,73 +132,66 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
     try {
       const file = e.target.files[0];
       const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
-      const { data, error: upError } = await supabase.storage.from('logos').upload(fileName, file);
-      if (upError) { setError("Erro de Bucket: " + upError.message); } 
-      else {
+      const { data, error } = await supabase.storage.from('logos').upload(fileName, file);
+      if (!error) {
          const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(data.path);
          setFormData({ ...formData, logo_url: publicUrl });
+         notify("Logótipo Carregado");
       }
-    } catch (e) { setError("Erro no upload."); }
+    } catch (e) { notify("Erro no Upload", 'error'); }
     setLoading(false);
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.logo_url) return setError("Logótipo necessário.");
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/establishments", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      if (res.ok) { refresh(); setView("list"); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }
-      else { setError("Conflito de NIF/Email."); }
-    } catch (e) { setError("Erro na submissão."); }
+      const res = await fetch("/api/admin/establishments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
+      if (res.ok) { refresh(); setView("list"); notify("Canal Ativado com Sucesso"); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }
+      else { notify("Dados Duplicados", 'error'); }
+    } catch (e) { notify("Erro Crítico", 'error'); }
     setLoading(false);
   };
 
   return (
     <ContentWrapper>
-       <div className="w-full pt-6 pb-20 space-y-6">
+       <div className="w-full pt-8 pb-32 space-y-6">
           <div className="flex justify-between items-center bg-white p-3 border border-slate-200">
              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-4 h-4 text-[#2563EB]" />
-                <span className="text-[8px] font-black uppercase tracking-widest text-[#2563EB]">Master Control</span>
+                <ShieldCheck className="w-5 h-5 text-primary" />
+                <span className="text-[10px] font-black uppercase text-primary">Master Control</span>
              </div>
-             <button onClick={onLogout} className="p-2 bg-slate-50 border border-slate-200"><LogOut className="w-3.5 h-3.5 text-slate-400" /></button>
+             <button onClick={onLogout} className="p-3 bg-red-50 text-red-500 border border-red-100"><LogOut className="w-4 h-4" /></button>
           </div>
-          <div className="flex bg-[#F8FAFC] border border-slate-200 p-1">
-             <button onClick={() => setView("list")} className={cn("flex-grow py-2.5 text-[8px] font-black uppercase tracking-widest", view === "list" ? "bg-white text-[#2563EB] border border-slate-200" : "text-slate-400")}>LISTA</button>
-             <button onClick={() => setView("create")} className={cn("flex-grow py-2.5 text-[8px] font-black uppercase tracking-widest", view === "create" ? "bg-white text-[#2563EB] border border-slate-200" : "text-slate-400")}>REGISTAR</button>
+          <div className="flex bg-slate-50 border border-slate-100 p-1">
+             <button onClick={() => setView("list")} className={cn("flex-grow py-3 text-[9px] font-black uppercase tracking-widest", view === "list" ? "bg-white text-primary border border-slate-100" : "text-slate-400")}>Catálogo</button>
+             <button onClick={() => setView("create")} className={cn("flex-grow py-3 text-[9px] font-black uppercase tracking-widest", view === "create" ? "bg-white text-primary border border-slate-100" : "text-slate-400")}>Adicionar</button>
           </div>
           {view === "list" ? (
              <div className="space-y-2">
                 {establishments.map(est => (
-                   <div key={est.id} className="bg-white p-3 border border-slate-100 flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                         <div className="w-10 h-10 bg-slate-50 flex items-center justify-center border border-slate-100 overflow-hidden">
-                            {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Store className="w-4 h-4 text-slate-200" />}
-                         </div>
-                         <div className="text-left"><h4 className="font-black text-xs text-[#0F172A] uppercase">{est.name}</h4><span className="text-[8px] font-bold text-[#2563EB] uppercase tracking-widest opacity-50">{est.code}</span></div>
+                   <div key={est.id} className="bg-white p-4 border border-slate-100 flex items-center justify-between group active:bg-slate-50">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 border border-slate-100 overflow-hidden">{est.logo_url && <img src={est.logo_url} className="w-full h-full object-cover" />}</div>
+                         <div className="text-left"><h4 className="font-black text-[13px] uppercase text-[#0F172A]">{est.name}</h4><span className="text-[9px] font-bold text-primary tracking-widest opacity-40">{est.code}</span></div>
                       </div>
                    </div>
                 ))}
              </div>
           ) : (
-             <div className="bg-white p-6 border border-slate-100 space-y-4">
-                <form onSubmit={handleCreate} className="space-y-0.5">
-                   <div className="flex flex-col items-center mb-6">
-                      <div className="w-20 h-20 bg-slate-50 border border-dashed border-slate-300 flex items-center justify-center overflow-hidden relative group">
-                         {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <ImageIcon className="w-6 h-6 text-slate-200" />}
-                         <label className="absolute inset-0 bg-[#2563EB]/80 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer"><Camera className="w-5 h-5 text-white" /><input type="file" className="hidden" onChange={handleUpload} /></label>
+             <div className="bg-white p-8 border border-slate-100 space-y-6">
+                <form onSubmit={handleCreate} className="space-y-2">
+                   <div className="flex flex-col items-center mb-10">
+                      <div className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden relative">
+                         {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <ImageIcon className="w-10 h-10 text-slate-200" />}
+                         <label className="absolute inset-0 bg-primary/80 opacity-0 hover:opacity-100 flex items-center justify-center cursor-pointer transition-all"><Camera className="w-6 h-6 text-white" /><input type="file" className="hidden" onChange={handleUpload} /></label>
                       </div>
                    </div>
-                   {error && <p className="text-[8px] font-bold text-red-500 text-center py-2 uppercase bg-red-50 mb-4">{error}</p>}
-                   <BaseInput value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} placeholder="Estabelecimento" required />
-                   <BaseInput value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} placeholder="NIF" required />
-                   <BaseInput value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} placeholder="Email Admin" type="email" required />
-                   <BaseInput value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} placeholder="Senha Admin" type="password" required />
-                   <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-5 mt-4 font-black text-[10px] uppercase tracking-widest">ACTIVAR CANAL</button>
+                   <BaseInput value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} placeholder="Nome Profissional" required />
+                   <BaseInput value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} placeholder="NIF Oficial" required />
+                   <BaseInput value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} placeholder="Email Registado" type="email" required />
+                   <BaseInput value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} placeholder="Senha de Gestão" type="password" required />
+                   <button type="submit" disabled={loading} className="w-full bg-primary text-white py-6 mt-6 font-black text-[11px] uppercase tracking-widest">ACTUALIZAR BASE DE DADOS</button>
                 </form>
              </div>
           )}
@@ -192,8 +200,8 @@ const SuperAdminView = ({ onLogout }: { onLogout: () => void }) => {
   );
 };
 
-// --- 3. EST ADMIN: GESTÃO (SQUARE + CRM DESIGN) ---
-const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void }) => {
+// --- 3. EST ADMIN: GESTÃO ---
+const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [est, setEst] = useState<Establishment | null>(null);
   const [manualPhone, setManualPhone] = useState("");
   const [loading, setLoading] = useState(false);
@@ -210,20 +218,37 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
   const handleNext = async () => {
     if (!est) return;
     setLoading(true);
-    await fetch(`/api/establishments/${est.code}/next`, { method: "POST" });
-    refresh();
+    const res = await fetch(`/api/establishments/${est.code}/next`, { method: "POST" });
+    if (res.ok) { 
+      const resJson = await res.json();
+      if (resJson.next) notify(`Chamando Senha ${resJson.next.ticket_number.split('-').pop()}`);
+      else notify("Fila de Espera Vazia", 'info');
+      refresh(); 
+    }
     setLoading(false);
+  };
+
+  const handleRecall = async (ticketId: string, ticketNum: string) => {
+    if (!est) return;
+    await fetch(`/api/establishments/${est.code}/recall`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId }) });
+    notify(`SMS de Reforço: ${ticketNum.split('-').pop()}`);
+  };
+
+  const handleCancel = async (ticketId: string) => {
+    if (!est) return;
+    await fetch(`/api/establishments/${est.code}/cancel`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId }) });
+    notify("Ticket Cancelado", 'error');
+    refresh();
   };
 
   const handleManualJoin = async (e: React.FormEvent) => {
      e.preventDefault();
      if (!est || !manualPhone) return;
      setLoading(true);
-     await fetch("/api/queue/join", {
-       method: "POST", headers: { "Content-Type": "application/json" },
-       body: JSON.stringify({ phone: manualPhone, estCode: est.code }),
-     });
-     setManualPhone(""); refresh(); setLoading(false);
+     const res = await fetch("/api/queue/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: manualPhone, estCode: est.code }) });
+     if (res.ok) { setManualPhone(""); refresh(); notify("Senha Manual Gerada"); }
+     else { notify("Cliente já na Fila", 'error'); }
+     setLoading(false);
   };
 
   const handlePrintQR = () => {
@@ -242,88 +267,82 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
     printWindow.document.close();
   };
 
-  if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><Timer className="animate-spin text-primary" /></div>;
+  if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-10 h-10 border-4 border-primary border-t-transparent animate-spin"></div></div>;
 
   const current = (est.queues || []).find(q => q.status === "called");
   const waiting = (est.queues || []).filter(q => q.status === "waiting");
-  // Simular Histórico (todos os que passaram menos os curr/wait)
-  const history = (est.queues || []).sort((a,b) => new Date(b.joined_at).getTime() - new Date(a.joined_at).getTime());
+  const totalToday = (est.queues || []).length;
 
   return (
     <ContentWrapper>
-       <div className="w-full pt-6 pb-24 space-y-6 flex flex-col items-center">
-          {/* Header Compacto */}
-          <div className="w-full bg-white border border-slate-200 p-3 flex flex-col items-center text-center space-y-2">
-             <div className="w-16 h-16 bg-slate-50 border border-slate-100 overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
-             <div><h4 className="font-black text-sm uppercase text-[#2563EB] leading-none">{est.name}</h4><span className="text-[7px] font-bold text-slate-300 uppercase tracking-widest">{est.code}</span></div>
+       <div className="w-full pt-8 pb-32 space-y-8 flex flex-col items-center">
+          {/* Header & Stats Cards */}
+          <div className="w-full grid grid-cols-1 gap-2">
+             <div className="bg-white border border-slate-200 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                   <div className="w-10 h-10 border border-slate-100 overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
+                   <div className="leading-none flex flex-col text-left"><h4 className="font-black text-sm uppercase text-primary">{est.name}</h4><span className="text-[8px] font-bold text-slate-300 uppercase tracking-widest mt-1">{est.code}</span></div>
+                </div>
+                <button onClick={onLogout} className="p-3 bg-red-50 text-red-500 border border-red-100"><LogOut className="w-4 h-4" /></button>
+             </div>
+             <div className="bg-slate-900 p-4 border border-slate-800 flex justify-between items-center px-8">
+                <div className="text-center"><span className="text-[8px] font-black uppercase text-primary opacity-50 block mb-1">Passaram Hoje</span><span className="text-2xl font-black text-white">{totalToday}</span></div>
+                <div className="h-8 w-px bg-slate-800"></div>
+                <div className="text-center"><span className="text-[8px] font-black uppercase text-primary block mb-1">Aguardando</span><span className="text-2xl font-black text-white">{waiting.length}</span></div>
+             </div>
           </div>
 
-          <div className="w-full space-y-4 flex flex-col items-center">
-             {/* CHAMADA (RECTO) */}
-             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-10 px-6 border-4 flex flex-col items-center gap-4 transition-all", waiting.length > 0 ? "bg-[#2563EB] border-[#2563EB] text-white" : "bg-slate-50 border-slate-100 opacity-40")}>
-                <Bell className={cn("w-6 h-6", waiting.length > 0 && "animate-pulse")} />
-                <h2 className="text-xl font-black uppercase tracking-tighter">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "CHAMAR PRÓXIMO") : "FILA LIMPA"}</h2>
-                <p className="text-[8px] font-bold uppercase tracking-widest opacity-60">Sms será disparado automaticamente</p>
+          {/* Master Controls */}
+          <div className="w-full space-y-2 flex flex-col items-center">
+             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-12 px-6 border-4 flex flex-col items-center gap-4 transition-all relative overflow-hidden", waiting.length > 0 ? "bg-primary border-primary text-white" : "bg-slate-50 border-slate-100 opacity-40")}>
+                {waiting.length > 0 && <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-white" />}
+                <Bell className={cn("w-8 h-8 relative z-10", waiting.length > 0 && "animate-pulse")} />
+                <h2 className="text-2xl font-black uppercase tracking-tighter relative z-10">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "CHAMAR PRÓXIMO") : "FILA DIGITAL LIMPA"}</h2>
+                <div className="flex items-center gap-2 relative z-10"><span className="w-2 h-2 bg-white rounded-full"></span><p className="text-[8px] font-bold uppercase tracking-[0.2em] opacity-80">Disparo de SMS Automático</p></div>
              </button>
 
-             {/* INDICADORES COMPACTOS */}
-             <div className="w-full flex gap-1.5">
-                <div className="flex-grow bg-[#F8FAFC] p-6 border border-slate-200 text-center">
-                   <span className="text-[7px] font-black uppercase opacity-20 block mb-0.5 tracking-widest">Em espera</span>
-                   <span className="text-2xl font-black text-[#0F172A]">{waiting.length}</span>
-                </div>
-                <div className="flex-grow bg-[#2563EB]/5 p-6 border border-[#2563EB]/10 text-center">
-                   <span className="text-[7px] font-black uppercase text-[#2563EB] opacity-40 block mb-0.5 tracking-widest">No Painel</span>
-                   <span className="text-2xl font-black text-[#2563EB]">{current ? current.ticket_number.split('-').pop() : '--'}</span>
+             <div className="w-full bg-[#2563EB]/5 p-8 border-2 border-primary border-dashed text-center flex flex-col items-center">
+                <span className="text-[10px] font-black uppercase text-primary opacity-40 block mb-1 tracking-[0.4em]">Senha no Painel</span>
+                <span className="text-6xl font-black text-primary tracking-tighter">{current ? current.ticket_number.split('-').pop() : '--'}</span>
+                {current && (
+                   <button onClick={() => handleRecall(current.id, current.ticket_number)} className="mt-6 flex items-center gap-3 text-primary bg-white border border-primary/20 px-6 py-2.5 font-black text-[9px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                      <RefreshCcw className="w-4 h-4" /> Re-Chamar Cliente
+                   </button>
+                )}
+             </div>
+
+             <div className="w-full bg-white border border-slate-200 p-6 flex flex-col items-center space-y-4">
+                <div className="flex items-center gap-2 border-b border-slate-50 pb-3 w-full justify-center"><Ticket className="w-4 h-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary tracking-widest">Atendimento Manual</span></div>
+                <form onSubmit={handleManualJoin} className="w-full flex flex-col gap-2">
+                   <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-5 text-xl font-black outline-none text-center" placeholder="Telemóvel" />
+                   <button type="submit" disabled={loading} className="w-full bg-primary text-white py-5 font-black uppercase text-[10px] tracking-widest">ADICIONAR À FILA</button>
+                </form>
+             </div>
+
+             {/* CRM & Active Management */}
+             <div className="w-full bg-slate-900 border border-slate-800 p-6">
+                <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4"><span className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Fila Activa (Live)</span><Users className="w-4 h-4 text-slate-700" /></div>
+                <div className="space-y-1.5">
+                   {waiting.map((q, i) => (
+                      <div key={q.id} className="bg-slate-800 border border-slate-700 p-4 flex items-center justify-between">
+                         <div className="flex items-center gap-4">
+                            <span className="text-xl font-black text-white w-10">#{q.ticket_number.split('-').pop()}</span>
+                            <div className="text-left leading-none flex flex-col gap-1"><span className="text-[14px] font-black text-slate-100">{q.phone}</span><span className="text-[7px] font-bold text-primary uppercase tracking-widest">{i === 0 ? "PRÓXIMO NA LINHA" : "EM ESPERA"}</span></div>
+                         </div>
+                         <div className="flex gap-2">
+                            <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-3 bg-white/5 text-white/50 border border-white/5 hover:bg-white/10 hover:text-white"><Bell className="w-4 h-4" /></button>
+                            <button onClick={() => handleCancel(q.id)} className="p-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"><Trash2 className="w-4 h-4" /></button>
+                         </div>
+                      </div>
+                   ))}
+                   {waiting.length === 0 && <div className="py-20 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-10 h-10 mb-2" /><span className="text-[10px] font-black uppercase tracking-widest">Sem Fluxo Digital</span></div>}
                 </div>
              </div>
 
-             {/* CRM: LISTAS RECTAS */}
-             <div className="w-full space-y-1.5 flex flex-col items-center">
-                <div className="w-full bg-white border border-slate-200 p-5 space-y-4 flex flex-col items-center">
-                   <div className="flex items-center gap-2 border-b border-slate-50 pb-2 w-full justify-center"><Ticket className="w-3.5 h-3.5 text-primary" /><span className="text-[8px] font-black uppercase text-primary tracking-widest">Senha Manual</span></div>
-                   <form onSubmit={handleManualJoin} className="w-full flex flex-col gap-1.5">
-                      <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-4 text-base font-black outline-none text-center" placeholder="9XX XXX XXX" />
-                      <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-4 font-black uppercase text-[10px] tracking-widest">GERAR SENHA</button>
-                   </form>
-                </div>
-
-                <div className="w-full bg-white border border-slate-200 p-5 flex flex-col items-center space-y-6">
-                   <div className="flex flex-col items-center gap-1"><QrCode className="w-4 h-4 text-primary opacity-20" /><span className="text-[7px] font-black uppercase text-primary opacity-40 tracking-widest">Canal de Entrada</span></div>
-                   <div id="main-qr-canvas" className="p-4 border border-slate-50"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={140} level="H" imageSettings={{src: est.logo_url, x: undefined, y: undefined, height: 32, width: 32, excavate: true, }} /></div>
-                   <button onClick={handlePrintQR} className="w-full bg-slate-50 text-slate-400 py-4 flex items-center justify-center gap-2 font-black uppercase text-[8px] tracking-[.3em] hover:bg-primary hover:text-white transition-all border border-slate-100">IMPRIMIR QR CODE</button>
-                </div>
-
-                {/* LISTA DE CLIENTES NA FILA */}
-                <div className="w-full bg-slate-900 border border-slate-800 p-5 mt-4">
-                   <div className="flex items-center justify-between mb-4"><span className="text-[9px] font-black uppercase text-primary tracking-[0.4em]">Fila Activa</span><Users className="w-3.5 h-3.5 text-slate-700" /></div>
-                   <div className="space-y-1">
-                      {waiting.map((q, i) => (
-                        <div key={q.id} className="bg-slate-800 border border-slate-700 p-3 flex items-center justify-between">
-                           <div className="flex items-center gap-3">
-                              <span className="text-[10px] font-black text-primary">#{q.ticket_number.split('-').pop()}</span>
-                              <div className="text-left"><span className="text-[12px] font-black text-white block leading-none">{q.phone}</span><span className="text-[6px] font-bold text-slate-500 uppercase">Aguardando</span></div>
-                           </div>
-                        </div>
-                      ))}
-                      {waiting.length === 0 && <p className="text-[8px] text-slate-700 uppercase py-6 text-center font-bold">Vazio</p>}
-                   </div>
-                </div>
-
-                {/* LISTA DE CONTACTOS / CRM */}
-                <div className="w-full bg-white border border-slate-200 p-5 mt-2">
-                   <div className="flex items-center justify-between mb-4"><span className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em]">Lista de Contactos</span><History className="w-3.5 h-3.5 text-slate-200" /></div>
-                   <div className="space-y-1 h-48 overflow-y-auto pr-1">
-                      {history.map((q) => (
-                        <div key={q.id} className="border-b border-slate-50 p-2.5 flex items-center justify-between last:border-none">
-                           <div className="text-left"><span className="text-[11px] font-black text-slate-800 block leading-none">{q.phone}</span><span className="text-[6px] font-bold text-slate-400 uppercase">{new Date(q.joined_at).toLocaleTimeString()}</span></div>
-                           <span className={cn("text-[6px] font-black uppercase px-2 py-0.5", q.status === 'called' ? "bg-green-50 text-green-600" : "bg-slate-50 text-slate-300")}>{q.status}</span>
-                        </div>
-                      ))}
-                   </div>
-                </div>
-
-                <button onClick={onLogout} className="text-[8px] font-black text-slate-200 uppercase tracking-[0.5em] pt-12 hover:text-red-500 transition-all">Terminar Sessão</button>
+             <div className="w-full bg-white border border-slate-200 p-8 flex flex-col items-center space-y-6">
+                <div className="flex flex-col items-center gap-1"><QrCode className="w-5 h-5 text-primary opacity-20" /><span className="text-[9px] font-black uppercase text-primary opacity-40 tracking-widest">GATEWAY DE ENTRADA</span></div>
+                <div id="main-qr-canvas" className="p-6 border border-slate-50"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={160} level="H" imageSettings={{src: est.logo_url, x: undefined, y: undefined, height: 40, width: 40, excavate: true }} /></div>
+                <button onClick={handlePrintQR} className="w-full bg-slate-50 text-slate-400 py-5 flex items-center justify-center gap-3 font-black uppercase text-[9px] tracking-[.3em] hover:bg-primary hover:text-white transition-all border border-slate-100">IMPRIMIR CARTAZ QR</button>
              </div>
           </div>
        </div>
@@ -331,8 +350,8 @@ const EstAdminView = ({ auth, onLogout }: { auth: AuthUser, onLogout: () => void
   );
 };
 
-// --- 4. CLIENTE: ENTRADA VIA QR (SQUARE DESIGN) ---
-const ClientView = ({ estCode }: { estCode: string }) => {
+// --- 4. CLIENTE: TRACKING ---
+const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, t?: any) => void }) => {
   const [est, setEst] = useState<Establishment | null>(null);
   const [phone, setPhone] = useState("");
   const [myTicket, setMyTicket] = useState<Customer | null>(null);
@@ -348,48 +367,50 @@ const ClientView = ({ estCode }: { estCode: string }) => {
           const savedPhone = localStorage.getItem(`kw_phone_${estCode}`);
           if (savedPhone) {
              const ticket = (found.queues || []).find((q: any) => q.phone === savedPhone);
+             if (ticket && ticket.status === 'called' && (!myTicket || myTicket.status !== 'called')) {
+                if (navigator.vibrate) navigator.vibrate([200, 100, 200, 100, 500]);
+                notify("SUA SENHA FOI CHAMADA!", 'success');
+             }
              setMyTicket(ticket || null);
           }
        }
-     } catch (e) { console.error("Client refresh fail"); }
+     } catch (e) { console.error("Refresh ERROR"); }
      setLoading(false);
   };
 
-  useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
+  useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, [myTicket]);
 
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || phone.length < 9) return;
     setLoading(true);
-    const res = await fetch("/api/queue/join", {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ phone, estCode }),
-    });
-    if (res.ok) { localStorage.setItem(`kw_phone_${estCode}`, phone); refresh(); }
-    else { alert("Já se encontra na fila."); }
+    const res = await fetch("/api/queue/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, estCode }) });
+    if (res.ok) { localStorage.setItem(`kw_phone_${estCode}`, phone); refresh(); notify("ENTROU NA FILA DIGITAL"); }
+    else { notify("JÁ SE ENCONTRA NA FILA", 'error'); }
     setLoading(false);
   };
 
-  if (loading && !est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-6 h-6 border-2 border-primary border-t-transparent animate-spin"></div></div>;
-  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-12 text-center space-y-6"><Info className="w-8 h-8 text-slate-100" /><p className="text-[8px] font-black uppercase text-slate-300 tracking-widest">Canal Indisponível.</p></div>;
+  if (loading && !est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-10 h-10 border-4 border-primary border-t-transparent animate-spin"></div></div>;
+  if (!est) return <div className="min-h-screen flex flex-col items-center justify-center px-12 text-center space-y-6 grayscale opacity-20"><Info className="w-20 h-20" /><span className="text-[10px] font-black uppercase tracking-[0.6em]">Canal Indisponível</span></div>;
 
   if (myTicket) {
      const position = (est.queues || []).filter((q: any) => q.status === "waiting" && new Date(q.joined_at).getTime() < new Date(myTicket.joined_at).getTime()).length + 1;
      const isCalled = myTicket.status === "called";
      return (
        <ContentWrapper>
-         <div className="py-20 space-y-12 w-full flex flex-col items-center animate-in fade-in">
-            <div className="w-20 h-20 bg-white border border-slate-100 flex items-center justify-center overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
-            <div className="bg-white border-2 border-slate-100 p-12 flex flex-col items-center gap-8 w-full">
-               <div className="relative w-44 h-44 flex items-center justify-center border-4 border-primary/5">
-                  <span className={cn("text-7xl font-black tracking-tighter leading-none transition-all", isCalled ? "text-green-600 animate-pulse" : "text-primary")}>{myTicket.ticket_number.split('-').pop()}</span>
+         <div className="py-20 space-y-12 w-full flex flex-col items-center animate-in fade-in transition-colors duration-500" style={{ backgroundColor: isCalled ? '#2563EB05' : 'transparent' }}>
+            <div className="w-24 h-24 bg-white border border-slate-100 flex items-center justify-center overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
+            <div className={cn("bg-white border-4 p-16 flex flex-col items-center gap-10 w-full transition-all duration-1000", isCalled ? "border-primary scale-105 shadow-2xl" : "border-slate-50 shadow-sm")}>
+               <div className="relative w-48 h-48 flex items-center justify-center">
+                  {isCalled && <motion.div animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.1, 0.3] }} transition={{ repeat: Infinity, duration: 1.5 }} className="absolute inset-0 bg-primary" />}
+                  <span className={cn("text-8xl font-black tracking-tighter leading-none relative z-10", isCalled ? "text-primary" : "text-primary opacity-80")}>{myTicket.ticket_number.split('-').pop()}</span>
                </div>
-               <div className="text-center space-y-2">
-                  <h3 className="text-2xl font-black tracking-tighter uppercase">{isCalled ? "SUA VEZ!" : `${position}º NA Fila`}</h3>
-                  <p className="text-[8px] font-black uppercase text-slate-300 tracking-[0.3em]">{isCalled ? "DIRIJA-SE AO BALCÃO." : "AGUARDE A CHAMADA NO LOCAL."}</p>
+               <div className="text-center space-y-4">
+                  <h3 className="text-3xl font-black tracking-tighter uppercase leading-none">{isCalled ? "DIRIJA-SE AO LOCAL!" : `${position}º NA FILA`}</h3>
+                  <p className="text-[10px] font-black uppercase text-slate-300 tracking-[0.4em] leading-relaxed px-8">{isCalled ? "O ATENDIMENTO ESTÁ AGUARDANDO POR SI AGORA." : "MANTENHA ESTA PÁGINA ABERTA PARA REBER O AVISO."}</p>
                </div>
             </div>
-            <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); }} className="text-[9px] font-black text-slate-200 uppercase tracking-widest">Sair da Fila</button>
+            {isCalled && <div className="bg-primary text-white p-4 w-full text-center font-black text-[12px] uppercase tracking-widest animate-pulse">Sua Senha foi Chamada</div>}
+            <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); notify("Saída da Fila Digital", 'info'); }} className="text-[10px] font-black text-slate-200 uppercase tracking-widest pt-12">Sair Deste Canal</button>
          </div>
        </ContentWrapper>
      );
@@ -397,27 +418,26 @@ const ClientView = ({ estCode }: { estCode: string }) => {
 
   return (
     <ContentWrapper>
-       <div className="py-16 space-y-10 w-full text-center animate-in slide-in-from-top-4">
-          <div className="w-24 h-24 bg-white border border-slate-100 mx-auto flex items-center justify-center overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
-          <div className="space-y-2">
-             <h1 className="text-4xl font-black text-[#0F172A] uppercase tracking-tighter leading-none">{est.name}</h1>
-             <p className="text-[9px] font-black text-[#2563EB] uppercase tracking-[0.4em] opacity-40">Fila Digital Inteligente</p>
+       <div className="py-20 space-y-12 w-full text-center animate-in slide-in-from-top-4">
+          <div className="w-32 h-32 bg-white border border-slate-100 mx-auto flex items-center justify-center overflow-hidden"><img src={est.logo_url} className="w-full h-full object-cover" /></div>
+          <div className="space-y-4 px-6 text-center">
+             <h1 className="text-5xl font-black text-[#0F172A] uppercase tracking-tighter leading-none opacity-90">{est.name}</h1>
+             <p className="text-[11px] font-black text-primary uppercase tracking-[0.6em] opacity-40">FILA DIGITAL INTELIGENTE</p>
           </div>
-          <div className="bg-white border border-slate-200 p-10 space-y-10 w-full shadow-sm">
-             <div className="text-center space-y-0.5">
-                <h2 className="text-2xl font-black uppercase tracking-tight text-[#0F172A]">Ticket Digital</h2>
-                <p className="text-[8px] font-black text-primary uppercase tracking-[0.3em] opacity-50">Registe o seu telemóvel</p>
+          <div className="bg-white border border-slate-200 p-12 space-y-12 w-full shadow-sm">
+             <div className="text-center space-y-2">
+                <h2 className="text-3xl font-black uppercase tracking-tight text-[#0F172A]">Aceder à Fila</h2>
+                <p className="text-[10px] font-black text-primary uppercase tracking-[0.4em] opacity-30">Introduza o seu telemóvel</p>
              </div>
-             <form onSubmit={handleJoin} className="space-y-8">
-                <BaseInput value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="9XX XXX XXX" type="tel" required />
-                <button type="submit" disabled={loading} className="w-full bg-[#2563EB] text-white py-8 tracking-[0.4em] uppercase text-[10px] font-black">OBTER SENHA</button>
+             <form onSubmit={handleJoin} className="space-y-10">
+                <BaseInput value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="Telemóvel (9XX...)" type="tel" required />
+                <button type="submit" disabled={loading} className="w-full bg-primary text-white py-10 uppercase text-[12px] font-black tracking-[0.4em]">ENTRAR AGORA</button>
              </form>
           </div>
        </div>
     </ContentWrapper>
   );
 };
-
 export default function App() {
   const [auth, setAuth] = useState<AuthUser | null>(() => {
     const saved = localStorage.getItem("kw_auth");
@@ -425,6 +445,13 @@ export default function App() {
     return null;
   });
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
+  const [toasts, setToasts] = useState<Toast[]>([]);
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    const id = Math.random().toString(36).substr(2, 9);
+    setToasts(prev => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 3000);
+  };
 
   useEffect(() => {
     const p = new URLSearchParams(window.location.search);
@@ -432,19 +459,24 @@ export default function App() {
     if (code) setClientEstCode(code);
   }, []);
 
-  const handleLogin = (data: AuthUser) => { setAuth(data); localStorage.setItem("kw_auth", JSON.stringify(data)); };
-  const handleLogout = () => { setAuth(null); localStorage.removeItem("kw_auth"); };
+  const handleLogin = (data: AuthUser) => { setAuth(data); localStorage.setItem("kw_auth", JSON.stringify(data)); showToast("Acesso Autorizado"); };
+  const handleLogout = () => { setAuth(null); localStorage.removeItem("kw_auth"); showToast("Sessão Terminada", 'info'); };
 
   return (
-    <div className="bg-white min-h-screen selection:bg-[#2563EB]/5 overflow-x-hidden relative scroll-smooth antialiased">
+    <div className="bg-white min-h-screen selection:bg-primary/5 overflow-x-hidden relative antialiased font-['Inter']">
       <style>{`
-        :root { --primary: #2563EB; --on-surface: #0F172A; }
-        body { background-color: #ffffff; color: #0F172A; font-family: 'Inter', sans-serif; overflow-x: hidden; }
         * { border-radius: 0px !important; }
-        input, button, div, span { border-radius: 0px !important; }
-        .shadow-sm { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.03); }
+        .bg-primary { background-color: #2563EB; }
+        .text-primary { color: #2563EB; }
+        .border-primary { border-color: #2563EB; }
+        .shadow-sm { box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05); }
       `}</style>
-      {clientEstCode ? ( <ClientView estCode={clientEstCode} /> ) : auth ? ( auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} /> : <EstAdminView auth={auth} onLogout={handleLogout} /> ) : ( <LandingView onLogin={handleLogin} /> )}
+      
+      <ToastContainer toasts={toasts} remove={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
+
+      {clientEstCode ? ( <ClientView estCode={clientEstCode} notify={showToast} /> ) : auth ? ( 
+        auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} notify={showToast} /> : <EstAdminView auth={auth} onLogout={handleLogout} notify={showToast} /> 
+      ) : ( <LandingView onLogin={handleLogin} /> )}
     </div>
   );
 }

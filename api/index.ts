@@ -127,47 +127,99 @@ app.post("/api/queue/join", async (req, res) => {
 // 6. CHAMAR PRÓXIMO + DISPARO SMS
 app.post("/api/establishments/:code/next", async (req, res) => {
   const { code } = req.params;
-  
-  // 1. Get Establishment Details
   const { data: est } = await supabase.from("establishments").select("id, name").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
-  // 2. Clear current 'called' tickets
   const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
   if (current) await supabase.from("queues").delete().eq("id", current.id);
 
-  // 3. Find and call the next customer
-  const { data: next } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "waiting").order("joined_at").limit(1).single();
+  const { data: next } = await supabase.from("queues")
+    .select("*")
+    .eq("est_id", est.id)
+    .eq("status", "waiting")
+    .order("joined_at", { ascending: true })
+    .limit(1)
+    .single();
   
   if (next) {
     await supabase.from("queues").update({ status: "called" }).eq("id", next.id);
-
-    // --- SMS DISPATCH (SMSHUB ANGOLA) ---
-    const smsId = process.env.SMSHUB_ID_KEY;
-    const smsToken = process.env.SMSHUB_API_TOKEN;
-    const smsUrl = process.env.SMSHUB_BASE_URL;
-
-    if (smsId && smsToken && smsUrl && next.phone) {
-       const message = `KwikFilas: Sua senha ${next.ticket_number.split('-').pop()} de ${est.name} foi chamada. Por favor dirija-se ao local.`;
-       try {
-         await fetch(smsUrl, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              id: smsId,
-              api_key: smsToken,
-              telemo: next.phone,
-              sms: message
-            })
-         });
-       } catch (e) {
-          console.error("SMS Hub Fail", e);
-       }
-    }
+    await triggerSms(next.phone, next.ticket_number, est.name);
   }
-
   res.json({ success: true, next: next || null });
 });
 
+// 7. RE-CHAMAR (DISPARAR SMS NOVAMENTE)
+app.post("/api/establishments/:code/recall", async (req, res) => {
+  const { code } = req.params;
+  const { ticketId } = req.body;
+  const { data: est } = await supabase.from("establishments").select("id, name").eq("code", code).single();
+  const { data: ticket } = await supabase.from("queues").select("*").eq("id", ticketId).single();
+  
+  if (ticket && est) {
+    await triggerSms(ticket.phone, ticket.ticket_number, est.name);
+    return res.json({ success: true });
+  }
+  res.status(404).json({ error: "Ticket não encontrado" });
+});
+
+// 8. CANCELAR TICKET
+app.post("/api/establishments/:code/cancel", async (req, res) => {
+  const { ticketId } = req.body;
+  await supabase.from("queues").delete().eq("id", ticketId);
+  res.json({ success: true });
+});
+
+// --- HELPER SMS ---
+async function triggerSms(phone: string, ticket: string, estName: string) {
+  const rawId = process.env.SMSHUB_AUTH_ID ?? '';
+  const rawToken = process.env.SMSHUB_SECRET ?? '';
+  const rawUrl = process.env.SMSHUB_BASE_URL ?? "https://smshub.ao/api/sms/send";
+  
+  const smsId = rawId.replace(/^"|"$/g, '');
+  const smsToken = rawToken.replace(/^"|"$/g, '');
+  const smsUrl = rawUrl.replace(/^"|"$/g, '');
+
+  if (smsId && smsToken && smsUrl && phone) {
+    let cleanPhone = phone.replace(/\D/g, '');
+    
+    // Formatar para Angola se necessário (9 dígitos -> 244 + 9 dígitos)
+    if (cleanPhone.length === 9) {
+      cleanPhone = '244' + cleanPhone;
+    }
+
+    const ticketSeq = ticket.split('-').pop();
+    const message = `KwikFilas: Sua senha ${ticketSeq} em ${estName} foi chamada. Por favor dirija-se ao local.`;
+    
+    try {
+      const queryParams = new URLSearchParams({
+        id: smsId,
+        api_key: smsToken,
+        telemo: cleanPhone,
+        sms: message
+      });
+
+      const finalUrl = `${smsUrl}?${queryParams.toString()}`;
+      
+      console.log('--- SMS DISPATCH ATTEMPT ---');
+      console.log('URL:', finalUrl.split('api_key=')[0] + 'api_key=***');
+      
+      const response = await fetch(finalUrl, { method: "GET" });
+      const responseData = await response.text();
+      
+      console.log('SMS Hub Status:', response.status);
+      console.log('SMS Hub Response:', responseData);
+      console.log('---------------------------');
+      return responseData;
+    } catch (e) {
+      console.error('CRITICAL: SMS Hub Dispatch Failed', e);
+      return null;
+    }
+  } else {
+    console.warn('SMS dispatch skipped: Missing configuration or phone number');
+    return null;
+  }
+}
+
 export default app;
+
 
