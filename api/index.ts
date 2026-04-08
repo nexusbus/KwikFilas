@@ -173,7 +173,7 @@ app.post("/api/establishments/:code/cancel", async (req, res) => {
 async function triggerSms(phone: string, ticket: string, estName: string) {
   const rawId = process.env.SMSHUB_AUTH_ID ?? '';
   const rawToken = process.env.SMSHUB_SECRET ?? '';
-  const rawUrl = process.env.SMSHUB_BASE_URL ?? "https://smshub.ao/api/sms/send";
+  const rawUrl = process.env.SMSHUB_BASE_URL ?? "https://app.smshubangola.com/api/sendsms";
   
   const smsId = rawId.replace(/^"|"$/g, '');
   const smsToken = rawToken.replace(/^"|"$/g, '');
@@ -192,16 +192,17 @@ async function triggerSms(phone: string, ticket: string, estName: string) {
     
     try {
       const queryParams = new URLSearchParams({
-        id: smsId,
-        api_key: smsToken,
-        telemo: cleanPhone,
-        sms: message
+        auth_id: smsId,
+        secret_key: smsToken,
+        to: cleanPhone,
+        from: "KwikFilas",
+        message: message
       });
 
       const finalUrl = `${smsUrl}?${queryParams.toString()}`;
       
       console.log('--- SMS DISPATCH ATTEMPT ---');
-      console.log('URL:', finalUrl.split('api_key=')[0] + 'api_key=***');
+      console.log('URL:', finalUrl.split('secret_key=')[0] + 'secret_key=***');
       
       const response = await fetch(finalUrl, { method: "GET" });
       const responseData = await response.text();
