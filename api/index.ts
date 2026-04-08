@@ -144,6 +144,20 @@ app.post("/api/establishments/:code/next", async (req, res) => {
   if (next) {
     await supabase.from("queues").update({ status: "called" }).eq("id", next.id);
     await triggerSms(next.phone, next.ticket_number, est.name);
+
+    // Notificar a 2ª posição (o novo primeiro na lista de espera)
+    const { data: pos2 } = await supabase.from("queues")
+      .select("*")
+      .eq("est_id", est.id)
+      .eq("status", "waiting")
+      .order("joined_at", { ascending: true })
+      .limit(1)
+      .single();
+
+    if (pos2) {
+      const pos2Msg = `KwikFilas: Só falta uma pessoa para sua vez em ${est.name}. Por favor, prepare-se.`;
+      await triggerSms(pos2.phone, pos2.ticket_number, est.name, pos2Msg);
+    }
   }
   res.json({ success: true, next: next || null });
 });
@@ -170,7 +184,7 @@ app.post("/api/establishments/:code/cancel", async (req, res) => {
 });
 
 // --- HELPER SMS ---
-async function triggerSms(phone: string, ticket: string, estName: string) {
+async function triggerSms(phone: string, ticket: string, estName: string, customMsg?: string) {
   const rawId = process.env.SMSHUB_AUTH_ID ?? '';
   const rawToken = process.env.SMSHUB_SECRET ?? '';
   const rawUrl = process.env.SMSHUB_BASE_URL ?? "https://app.smshubangola.com/api/sendsms";
@@ -188,7 +202,7 @@ async function triggerSms(phone: string, ticket: string, estName: string) {
     }
 
     const ticketSeq = ticket.split('-').pop();
-    const message = `KwikFilas: Sua senha ${ticketSeq} em ${estName} foi chamada. Por favor dirija-se ao local.`;
+    const message = customMsg || `KwikFilas: Sua senha ${ticketSeq} em ${estName} foi chamada. Por favor dirija-se ao local.`;
     
     try {
       const queryParams = new URLSearchParams({
