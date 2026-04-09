@@ -71,8 +71,93 @@ const BaseInput = ({ icon: Icon, label, ...props }: any) => (
 
 
 
+// --- 0. MARKETING: LANDING PAGE ---
+const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
+  return (
+    <div className="w-full bg-white selection:bg-primary/10">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100 h-20 flex items-center px-6 md:px-12 justify-between">
+        <div className="flex items-center gap-3">
+          <KLogo className="w-8 h-8" />
+          <span className="font-black text-xl uppercase tracking-tighter text-[#0F172A]">KwikFilas</span>
+        </div>
+        <button onClick={onLoginClick} className="text-[10px] font-black uppercase tracking-widest text-primary border border-primary/20 px-6 py-3 hover:bg-primary hover:text-white transition-all">
+          Portal Parceiro
+        </button>
+      </nav>
+
+      {/* Hero Section */}
+      <section className="pt-40 pb-20 px-6 md:px-12 max-w-6xl mx-auto text-center space-y-8">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
+          <h1 className="text-5xl md:text-7xl font-black text-[#0F172A] uppercase tracking-tighter leading-[0.9]">
+            A Fila Acabou.<br/>
+            <span className="text-primary italic">A Liberdade Começou.</span>
+          </h1>
+          <p className="max-w-2xl mx-auto mt-8 text-slate-500 font-medium text-lg leading-relaxed">
+            Transforme a espera física dos seus clientes numa experiência digital fluida. 
+            Aumente a satisfação, melhore o fluxo e modernize o seu negócio com o KwikFilas.
+          </p>
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-12">
+            <button onClick={onLoginClick} className="w-full md:w-auto bg-primary text-white px-10 py-6 font-black uppercase text-sm tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all">
+              Aderir Agora <ArrowRight className="w-5 h-5" />
+            </button>
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300">
+              <ShieldCheck className="w-4 h-4" /> Sem taxas de adesão
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20 bg-slate-50 px-6 md:px-12">
+        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            { icon: Bell, title: "Avisos em Tempo Real", desc: "Seus clientes recebem notificações via SMS quando a vez deles se aproxima." },
+            { icon: LayoutDashboard, title: "Controle Total", desc: "Dashboard intuitivo para gerir múltiplas filas e estabelecimentos com precisão." },
+            { icon: Smartphone, title: "Zero Apps", desc: "Os clientes só precisam de ler um QR Code. Sem instalações, sem fricção." },
+            { icon: Timer, title: "Melhor Fluxo", desc: "Otimize o tempo de atendimento e reduza aglomerações no seu espaço físico." },
+            { icon: Users, title: "CRM Integrado", desc: "Saiba quantos clientes passam pelo seu negócio e fidelize a sua base." },
+            { icon: QrCode, title: "Cartazes Dinâmicos", desc: "Gere e imprima cartazes de entrada personalizados em segundos." }
+          ].map((feature, i) => (
+            <div key={i} className="bg-white p-10 border border-slate-100 space-y-6 group hover:border-primary/30 transition-all">
+              <div className="w-14 h-14 bg-primary/5 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                <feature.icon className="w-7 h-7" />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-tight text-[#0F172A]">{feature.title}</h3>
+              <p className="text-slate-400 text-sm leading-relaxed">{feature.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Business Section */}
+      <section className="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center space-y-12">
+        <h2 className="text-4xl font-black uppercase tracking-tighter">Porquê ser parceiro?</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 text-left">
+          <div className="space-y-4">
+            <CheckCircle2 className="w-8 h-8 text-primary" />
+            <h4 className="font-black text-xl uppercase">Retenção de Clientes</h4>
+            <p className="text-slate-500 text-sm">Clientes que não ficam presos em filas têm 70% mais chances de consumir mais no seu estabelecimento ou retornar.</p>
+          </div>
+          <div className="space-y-4">
+            <CheckCircle2 className="w-8 h-8 text-primary" />
+            <h4 className="font-black text-xl uppercase">Modernização da Marca</h4>
+            <p className="text-slate-500 text-sm">Posicione o seu negócio como inovador e tecnológico perante a concorrência.</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-20 border-t border-slate-100 px-6 md:px-12 text-center">
+        <KLogo className="w-10 h-10 mx-auto mb-8 opacity-20" />
+        <p className="text-[10px] font-black uppercase tracking-[1em] text-slate-300">KwikFilas 2024</p>
+      </footer>
+    </div>
+  );
+};
+
 // --- 1. LANDING: LOGIN ---
-const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => {
+const LandingView = ({ onLogin, onBack }: { onLogin: (authData: AuthUser) => void, onBack: () => void }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -90,6 +175,9 @@ const LandingView = ({ onLogin }: { onLogin: (authData: AuthUser) => void }) => 
   return (
     <ContentWrapper>
       <div className="pt-24 space-y-12 flex flex-col items-center w-full">
+          <button onClick={onBack} className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300 hover:text-primary self-start mb-10 transition-colors">
+            <ChevronLeft className="w-4 h-4"/> Voltar
+          </button>
           <div className="text-center space-y-4">
             <KLogo className="w-16 h-16 mb-4 mx-auto" />
             <h1 className="text-4xl font-black text-[#0F172A] uppercase tracking-tighter">KwikFilas<br/><span className="text-[#2563EB] italic font-medium tracking-normal text-2xl">Mestre.</span></h1>
@@ -458,6 +546,7 @@ export default function App() {
     return null;
   });
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
+  const [showLogin, setShowLogin] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -487,9 +576,15 @@ export default function App() {
       
       <ToastContainer toasts={toasts} remove={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
 
-      {clientEstCode ? ( <ClientView estCode={clientEstCode} notify={showToast} /> ) : auth ? ( 
+      {clientEstCode ? ( 
+        <ClientView estCode={clientEstCode} notify={showToast} /> 
+      ) : auth ? ( 
         auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} notify={showToast} /> : <EstAdminView auth={auth} onLogout={handleLogout} notify={showToast} /> 
-      ) : ( <LandingView onLogin={handleLogin} /> )}
+      ) : showLogin ? (
+        <LandingView onLogin={handleLogin} onBack={() => setShowLogin(false)} />
+      ) : (
+        <MarketingView onLoginClick={() => setShowLogin(true)} />
+      )}
     </div>
   );
 }
