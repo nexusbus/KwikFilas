@@ -304,31 +304,51 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
              </div>
              <button onClick={onLogout} className="p-4 bg-red-50 text-red-500 hover:bg-red-500 hover:text-white transition-all"><LogOut className="w-5 h-5" /></button>
           </div>
-          <div className="flex border border-slate-100 p-1.5 bg-slate-50/50 backdrop-blur-sm max-w-md mx-auto">
-             <button onClick={() => setView("list")} className={cn("flex-grow py-5 text-[10px] font-black uppercase tracking-[0.3em] transition-all", view === "list" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Base Ativa</button>
-             <button onClick={() => setView("create")} className={cn("flex-grow py-5 text-[10px] font-black uppercase tracking-[0.3em] transition-all", view === "create" ? "bg-white text-primary shadow-sm" : "text-slate-400")}>Nova Filial</button>
+          <div className="flex border-b border-slate-200">
+             <button onClick={() => setView("list")} className={cn("px-8 py-4 text-[11px] font-bold uppercase tracking-wider transition-all border-b-2", view === "list" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600")}>Estabelecimentos</button>
+             <button onClick={() => setView("create")} className={cn("px-8 py-4 text-[11px] font-bold uppercase tracking-wider transition-all border-b-2", view === "create" ? "border-primary text-primary" : "border-transparent text-slate-400 hover:text-slate-600")}>Registar Novo</button>
           </div>
 
           {view === "list" ? (
-             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {establishments.map((est, i) => (
-                   <motion.div key={est.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }} className="glass-card p-10 flex flex-col items-center space-y-8 group hover:border-primary/50 transition-all border-slate-200/40 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 p-4 opacity-10 font-black text-6xl tracking-tighter select-none">#{i+1}</div>
-                      <div className="w-20 h-20 border-2 border-slate-100 bg-white shadow-sm overflow-hidden p-2 group-hover:scale-110 transition-transform">
-                         {est.logo_url && <img src={est.logo_url} className="w-full h-full object-cover" />}
-                      </div>
-                      <div className="text-center space-y-2">
-                         <h4 className="font-black text-lg uppercase text-[#0F172A] tracking-tighter leading-tight">{est.name}</h4>
-                         <span className="text-[10px] font-bold text-primary px-3 py-1 bg-primary/5 tracking-[0.2em]">{est.code}</span>
-                      </div>
-                      <div className="w-full h-px bg-slate-100" />
-                      <div className="flex items-center gap-4 text-[10px] font-black uppercase text-slate-300">
-                         <span className="flex items-center gap-1"><Users className="w-3 h-3" /> {est.queues?.length || 0}</span>
-                         <span className="h-3 w-px bg-slate-100" />
-                         <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> Live</span>
-                      </div>
-                   </motion.div>
-                ))}
+             <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+                <table className="w-full text-left border-collapse">
+                   <thead>
+                      <tr className="bg-slate-50 border-b border-slate-200">
+                         <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Logo</th>
+                         <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Nome / Código</th>
+                         <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">NIF / Admin</th>
+                         <th className="p-4 text-[10px] font-black uppercase text-slate-400 tracking-widest">Ações</th>
+                      </tr>
+                   </thead>
+                   <tbody>
+                      {establishments.map(est => (
+                         <tr key={est.id} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                            <td className="p-4"><div className="w-10 h-10 border border-slate-100 bg-white p-1 overflow-hidden">{est.logo_url && <img src={est.logo_url} className="w-full h-full object-cover" />}</div></td>
+                            <td className="p-4">
+                               <div className="font-bold text-slate-900">{est.name}</div>
+                               <div className="text-[10px] font-black text-primary uppercase opacity-50">{est.code}</div>
+                            </td>
+                            <td className="p-4 text-xs font-medium text-slate-500">
+                               <div>{est.nif}</div>
+                               <div className="opacity-60">{est.admin_email}</div>
+                            </td>
+                            <td className="p-4">
+                               <button 
+                                 onClick={async () => {
+                                   const pw = prompt("Confirme a Senha de Super User para apagar:");
+                                   if (!pw) return;
+                                   const res = await fetch("/api/admin/establishments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetId: est.id, superPassword: pw }) });
+                                   if (res.ok) { notify("Estabelecimento removido"); refresh(); } else { notify("Falha na autenticação", 'error'); }
+                                 }}
+                                 className="p-3 text-red-400 hover:bg-red-50 hover:text-red-500 transition-all"
+                               >
+                                 <Trash2 className="w-4 h-4" />
+                               </button>
+                            </td>
+                         </tr>
+                      ))}
+                   </tbody>
+                </table>
              </div>
           ) : (
              <div className="glass-card p-12 border-slate-200/50 space-y-10 max-w-2xl mx-auto shadow-premium">
@@ -459,15 +479,26 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                    <div className="absolute top-0 left-0 w-2 h-full bg-primary" />
                    <div className="text-center relative z-10"><span className="text-[10px] font-black uppercase text-primary/60 block mb-2 tracking-widest">Atendidos</span><span className="text-5xl font-black text-white tracking-tighter leading-none">{totalToday}</span></div>
                    <div className="h-16 w-px bg-white/10 relative z-10"></div>
-                   <div className="text-center relative z-10"><span className="text-[10px] font-black uppercase text-primary block mb-2 tracking-widest">Espera</span><span className="text-5xl font-black text-white tracking-tighter leading-none">{waiting.length}</span></div>
+                   <div className="text-center relative z-10">
+                      <span className="text-[10px] font-black uppercase text-primary block mb-2 tracking-widest">Espera</span>
+                      <span className="text-5xl font-black text-white tracking-tighter leading-none">{waiting.length}</span>
+                   </div>
                 </div>
 
                 <div className="space-y-4">
-                   <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-20 px-10 glass-card border-none flex flex-col items-center gap-6 transition-all relative overflow-hidden shadow-premium group", waiting.length > 0 ? "bg-primary text-white" : "bg-slate-50 opacity-40")}>
-                      {waiting.length > 0 && <motion.div animate={{ opacity: [0.01, 0.05, 0.01] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-white" />}
-                      <Bell className={cn("w-12 h-12 relative z-10 group-hover:scale-125 transition-transform", waiting.length > 0 && "animate-pulse")} />
-                      <h2 className="text-3xl font-black uppercase tracking-tighter relative z-10">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "PRÓXIMA SENHA") : "SEM ESPERA"}</h2>
-                      <div className="flex items-center gap-2 relative z-10"><span className="w-2.5 h-2.5 bg-white rounded-full"></span><p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Terminal Digital & SMS</p></div>
+                   <button 
+                     onClick={handleNext} 
+                     disabled={waiting.length === 0 || loading} 
+                     className={cn(
+                       "w-full py-14 flex flex-col items-center gap-4 transition-all relative overflow-hidden shadow-premium", 
+                       waiting.length > 0 ? "bg-[#2563EB] hover:bg-blue-700 active:scale-[0.98]" : "bg-slate-50 opacity-50"
+                     )}
+                   >
+                      <Bell className={cn("w-8 h-8 text-white relative z-10", waiting.length > 0 && "animate-pulse")} />
+                      <h2 className="text-2xl font-black uppercase tracking-tighter text-white relative z-10">
+                        {waiting.length > 0 ? (loading ? "PROCESSANDO..." : "CHAMAR PRÓXIMO") : "SEM FILA"}
+                      </h2>
+                      <div className="text-[9px] font-bold uppercase tracking-widest text-white/50 relative z-10">TERMINAL DIGITAL & SMS</div>
                    </button>
 
                    <div className="glass-card p-12 bg-primary/5 border-2 border-primary border-dashed text-center flex flex-col items-center shadow-premium">
