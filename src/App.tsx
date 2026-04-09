@@ -359,10 +359,16 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
-    const resArr = await fetch(`/api/admin/establishments?role=establishment&estId=${auth.estId}`);
-    const data = await resArr.json();
-    const found = data.find((e: any) => e.id === auth.estId);
-    if (found) setEst(found);
+    try {
+      const targetId = auth.estId || (auth as any).id;
+      const resArr = await fetch(`/api/admin/establishments?role=establishment&estId=${targetId}`);
+      if (!resArr.ok) throw new Error("API Fail");
+      const data = await resArr.json();
+      const found = data.find((e: any) => e.id === targetId);
+      if (found) setEst(found);
+    } catch (e) {
+      console.error("Refresh Error", e);
+    }
   };
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
@@ -419,7 +425,13 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     printWindow.document.close();
   };
 
-  if (!est) return <div className="min-h-screen flex items-center justify-center bg-white"><div className="w-10 h-10 border-4 border-primary border-t-transparent animate-spin"></div></div>;
+  if (!est) return (
+     <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-6">
+        <div className="w-10 h-10 border-4 border-primary border-t-transparent animate-spin"></div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-slate-300">Conectando ao Canal...</p>
+        <button onClick={onLogout} className="text-primary font-black text-[9px] uppercase tracking-widest border border-primary/20 px-6 py-3">Cancelar e Sair</button>
+     </div>
+  );
 
   const current = (est.queues || []).find(q => q.status === "called");
   const waiting = (est.queues || []).filter(q => q.status === "waiting");
@@ -605,8 +617,18 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
 };
 export default function App() {
   const [auth, setAuth] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem("kw_auth");
-    if (saved) { try { return JSON.parse(saved); } catch(e) { return null; } }
+    try {
+      const saved = localStorage.getItem("kw_auth");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        // Expira em 24h
+        if (parsed.timestamp && Date.now() - parsed.timestamp > 86400000) {
+          localStorage.removeItem("kw_auth");
+          return null;
+        }
+        return parsed;
+      }
+    } catch (e) { return null; }
     return null;
   });
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
@@ -625,7 +647,16 @@ export default function App() {
     if (code) setClientEstCode(code);
   }, []);
 
-  const handleLogin = (data: AuthUser) => { setAuth(data); localStorage.setItem("kw_auth", JSON.stringify(data)); showToast("Acesso Autorizado"); };
+  const handleLogin = (data: AuthUser) => { 
+    const mappedData = { 
+      ...data, 
+      estId: data.estId || (data as any).id,
+      timestamp: Date.now() 
+    };
+    setAuth(mappedData); 
+    localStorage.setItem("kw_auth", JSON.stringify(mappedData)); 
+    showToast("Acesso Autorizado"); 
+  };
   const handleLogout = () => { setAuth(null); localStorage.removeItem("kw_auth"); showToast("Sessão Terminada", 'info'); };
 
   return (

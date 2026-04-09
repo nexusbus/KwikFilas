@@ -50,7 +50,7 @@ app.get("/api/admin/establishments", async (req, res) => {
     query = query.eq("id", estId);
   }
 
-  const { data, error } = await supabase.from("establishments").select("*, queues(*)");
+  const { data, error } = await query;
   if (error) return res.status(500).json({ error: error.message });
   
   const formatted = (data || []).map(est => ({
