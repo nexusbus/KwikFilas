@@ -55,8 +55,8 @@ const KLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const ContentWrapper = ({ children }: { children: React.ReactNode }) => (
-  <div className="w-full max-w-sm mx-auto flex flex-col items-center px-4 mb-20">{children}</div>
+const ContentWrapper = ({ children, wide = false }: { children: React.ReactNode, wide?: boolean }) => (
+  <div className={cn("w-full mx-auto flex flex-col items-center px-4 mb-20 transition-all duration-500", wide ? "max-w-6xl" : "max-w-sm")}>{children}</div>
 );
 
 const BaseInput = ({ icon: Icon, label, ...props }: any) => (
@@ -154,8 +154,8 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
   };
 
   return (
-    <ContentWrapper>
-       <div className="w-full pt-8 pb-32 space-y-6">
+    <ContentWrapper wide={view === "list"}>
+       <div className="w-full pt-8 pb-32 space-y-8">
           <div className="flex justify-between items-center bg-white p-3 border border-slate-200">
              <div className="flex items-center gap-2">
                 <ShieldCheck className="w-5 h-5 text-primary" />
@@ -168,12 +168,12 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
              <button onClick={() => setView("create")} className={cn("flex-grow py-3 text-[9px] font-black uppercase tracking-widest", view === "create" ? "bg-white text-primary border border-slate-100" : "text-slate-400")}>Adicionar</button>
           </div>
           {view === "list" ? (
-             <div className="space-y-2">
+             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {establishments.map(est => (
-                   <div key={est.id} className="bg-white p-4 border border-slate-100 flex items-center justify-between group active:bg-slate-50">
+                   <div key={est.id} className="bg-white p-6 border border-slate-100 flex items-center justify-between group hover:border-primary/30 transition-all">
                       <div className="flex items-center gap-4">
-                         <div className="w-10 h-10 border border-slate-100 overflow-hidden">{est.logo_url && <img src={est.logo_url} className="w-full h-full object-cover" />}</div>
-                         <div className="text-left"><h4 className="font-black text-[13px] uppercase text-[#0F172A]">{est.name}</h4><span className="text-[9px] font-bold text-primary tracking-widest opacity-40">{est.code}</span></div>
+                         <div className="w-12 h-12 border border-slate-100 overflow-hidden shrink-0">{est.logo_url && <img src={est.logo_url} className="w-full h-full object-cover" />}</div>
+                         <div className="text-left"><h4 className="font-black text-[14px] uppercase text-[#0F172A] leading-tight">{est.name}</h4><span className="text-[10px] font-bold text-primary tracking-widest opacity-40">{est.code}</span></div>
                       </div>
                    </div>
                 ))}
@@ -274,8 +274,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const totalToday = (est.queues || []).length;
 
   return (
-    <ContentWrapper>
-       <div className="w-full pt-8 pb-32 space-y-8 flex flex-col items-center">
+    <ContentWrapper wide>
+       <div className="w-full pt-8 pb-32 space-y-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+             
+             {/* Left Column: Controls & Stats */}
+             <div className="lg:col-span-4 space-y-6">
           {/* Header & Stats Cards */}
           <div className="w-full grid grid-cols-1 gap-2">
              <div className="bg-white border border-slate-200 p-4 flex items-center justify-between">
@@ -285,65 +289,74 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                 </div>
                 <button onClick={onLogout} className="p-3 bg-red-50 text-red-500 border border-red-100"><LogOut className="w-4 h-4" /></button>
              </div>
-             <div className="bg-slate-900 p-4 border border-slate-800 flex justify-between items-center px-8">
-                <div className="text-center"><span className="text-[8px] font-black uppercase text-primary opacity-50 block mb-1">Passaram Hoje</span><span className="text-2xl font-black text-white">{totalToday}</span></div>
-                <div className="h-8 w-px bg-slate-800"></div>
-                <div className="text-center"><span className="text-[8px] font-black uppercase text-primary block mb-1">Aguardando</span><span className="text-2xl font-black text-white">{waiting.length}</span></div>
+              <div className="bg-slate-900 p-6 border border-slate-800 flex justify-between items-center px-10">
+                <div className="text-center"><span className="text-[9px] font-black uppercase text-primary opacity-50 block mb-1">Passaram Hoje</span><span className="text-3xl font-black text-white">{totalToday}</span></div>
+                <div className="h-10 w-px bg-slate-800"></div>
+                <div className="text-center"><span className="text-[9px] font-black uppercase text-primary block mb-1">Aguardando</span><span className="text-3xl font-black text-white">{waiting.length}</span></div>
              </div>
           </div>
 
-          {/* Master Controls */}
-          <div className="w-full space-y-2 flex flex-col items-center">
-             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-12 px-6 border-4 flex flex-col items-center gap-4 transition-all relative overflow-hidden", waiting.length > 0 ? "bg-primary border-primary text-white" : "bg-slate-50 border-slate-100 opacity-40")}>
+          <div className="space-y-3">
+             <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-14 px-8 border-4 flex flex-col items-center gap-4 transition-all relative overflow-hidden", waiting.length > 0 ? "bg-primary border-primary text-white" : "bg-slate-50 border-slate-100 opacity-40")}>
                 {waiting.length > 0 && <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-white" />}
-                <Bell className={cn("w-8 h-8 relative z-10", waiting.length > 0 && "animate-pulse")} />
-                <h2 className="text-2xl font-black uppercase tracking-tighter relative z-10">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "CHAMAR PRÓXIMO") : "FILA DIGITAL LIMPA"}</h2>
-                <div className="flex items-center gap-2 relative z-10"><span className="w-2 h-2 bg-white rounded-full"></span><p className="text-[8px] font-bold uppercase tracking-[0.2em] opacity-80">Disparo de SMS Automático</p></div>
+                <Bell className={cn("w-10 h-10 relative z-10", waiting.length > 0 && "animate-pulse")} />
+                <h2 className="text-3xl font-black uppercase tracking-tighter relative z-10">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "PRÓXIMA SENHA") : "SEM ESPERA"}</h2>
+                <div className="flex items-center gap-2 relative z-10"><span className="w-2.5 h-2.5 bg-white rounded-full"></span><p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Painel Digital & SMS</p></div>
              </button>
 
-             <div className="w-full bg-[#2563EB]/5 p-8 border-2 border-primary border-dashed text-center flex flex-col items-center">
-                <span className="text-[10px] font-black uppercase text-primary opacity-40 block mb-1 tracking-[0.4em]">Senha no Painel</span>
-                <span className="text-6xl font-black text-primary tracking-tighter">{current ? current.ticket_number.split('-').pop() : '--'}</span>
+             <div className="bg-primary/5 p-10 border-2 border-primary border-dashed text-center flex flex-col items-center">
+                <span className="text-[11px] font-black uppercase text-primary opacity-40 block mb-1 tracking-[0.4em]">Senha no Visor</span>
+                <span className="text-7xl font-black text-primary tracking-tighter">{current ? current.ticket_number.split('-').pop() : '--'}</span>
                 {current && (
-                   <button onClick={() => handleRecall(current.id, current.ticket_number)} className="mt-6 flex items-center gap-3 text-primary bg-white border border-primary/20 px-6 py-2.5 font-black text-[9px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
-                      <RefreshCcw className="w-4 h-4" /> Re-Chamar Cliente
+                   <button onClick={() => handleRecall(current.id, current.ticket_number)} className="mt-8 flex items-center gap-3 text-primary bg-white border border-primary/20 px-8 py-3.5 font-black text-[10px] uppercase tracking-widest hover:bg-primary hover:text-white transition-all">
+                      <RefreshCcw className="w-4 h-4" /> Re-Notificar Terminal
                    </button>
                 )}
              </div>
+          </div>
+          </div>
 
-             <div className="w-full bg-white border border-slate-200 p-6 flex flex-col items-center space-y-4">
-                <div className="flex items-center gap-2 border-b border-slate-50 pb-3 w-full justify-center"><Ticket className="w-4 h-4 text-primary" /><span className="text-[10px] font-black uppercase text-primary tracking-widest">Atendimento Manual</span></div>
-                <form onSubmit={handleManualJoin} className="w-full flex flex-col gap-2">
-                   <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-5 text-xl font-black outline-none text-center" placeholder="Telemóvel" />
-                   <button type="submit" disabled={loading} className="w-full bg-primary text-white py-5 font-black uppercase text-[10px] tracking-widest">ADICIONAR À FILA</button>
-                </form>
-             </div>
+          {/* Right Column: Queue & Management */}
+          <div className="lg:col-span-8 space-y-6">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Manual Entry */}
+                <div className="bg-white border border-slate-200 p-8 flex flex-col items-center space-y-4">
+                  <div className="flex items-center gap-2 border-b border-slate-50 pb-4 w-full justify-center"><Ticket className="w-4 h-4 text-primary" /><span className="text-[11px] font-black uppercase text-primary tracking-widest">Entrada Balcão</span></div>
+                  <form onSubmit={handleManualJoin} className="w-full flex flex-col gap-3">
+                    <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-100 p-6 text-2xl font-black outline-none text-center" placeholder="9XX XXX XXX" />
+                    <button type="submit" disabled={loading} className="w-full bg-primary text-white py-6 font-black uppercase text-[11px] tracking-widest hover:brightness-110 active:scale-95 transition-all">GERAR SENHA FÍSICA</button>
+                  </form>
+                </div>
 
-             {/* CRM & Active Management */}
-             <div className="w-full bg-slate-900 border border-slate-800 p-6">
-                <div className="flex items-center justify-between mb-6 border-b border-slate-800 pb-4"><span className="text-[11px] font-black uppercase text-primary tracking-[0.4em]">Fila Activa (Live)</span><Users className="w-4 h-4 text-slate-700" /></div>
-                <div className="space-y-1.5">
-                   {waiting.map((q, i) => (
-                      <div key={q.id} className="bg-slate-800 border border-slate-700 p-4 flex items-center justify-between">
-                         <div className="flex items-center gap-4">
-                            <span className="text-xl font-black text-white w-10">#{q.ticket_number.split('-').pop()}</span>
-                            <div className="text-left leading-none flex flex-col gap-1"><span className="text-[14px] font-black text-slate-100">{q.phone}</span><span className="text-[7px] font-bold text-primary uppercase tracking-widest">{i === 0 ? "PRÓXIMO NA LINHA" : "EM ESPERA"}</span></div>
-                         </div>
-                         <div className="flex gap-2">
-                            <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-3 bg-white/5 text-white/50 border border-white/5 hover:bg-white/10 hover:text-white"><Bell className="w-4 h-4" /></button>
-                            <button onClick={() => handleCancel(q.id)} className="p-3 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white"><Trash2 className="w-4 h-4" /></button>
-                         </div>
-                      </div>
-                   ))}
-                   {waiting.length === 0 && <div className="py-20 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-10 h-10 mb-2" /><span className="text-[10px] font-black uppercase tracking-widest">Sem Fluxo Digital</span></div>}
+                {/* Entrance QR Gateway */}
+                <div className="bg-white border border-slate-200 p-8 flex flex-col items-center space-y-6">
+                  <div className="flex flex-col items-center gap-1"><QrCode className="w-5 h-5 text-primary opacity-20" /><span className="text-[10px] font-black uppercase text-primary opacity-40 tracking-widest">Canal de Entrada</span></div>
+                  <div id="main-qr-canvas" className="p-4 border border-slate-50 bg-white"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={140} level="H" imageSettings={{src: est.logo_url, x: undefined, y: undefined, height: 35, width: 35, excavate: true }} /></div>
+                  <button onClick={handlePrintQR} className="w-full bg-slate-50 text-slate-400 py-6 flex items-center justify-center gap-3 font-black uppercase text-[10px] tracking-[.3em] hover:bg-primary hover:text-white transition-all border border-slate-100">CARTAZ DE IMPRESSÃO</button>
                 </div>
              </div>
 
-             <div className="w-full bg-white border border-slate-200 p-8 flex flex-col items-center space-y-6">
-                <div className="flex flex-col items-center gap-1"><QrCode className="w-5 h-5 text-primary opacity-20" /><span className="text-[9px] font-black uppercase text-primary opacity-40 tracking-widest">GATEWAY DE ENTRADA</span></div>
-                <div id="main-qr-canvas" className="p-6 border border-slate-50"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={160} level="H" imageSettings={{src: est.logo_url, x: undefined, y: undefined, height: 40, width: 40, excavate: true }} /></div>
-                <button onClick={handlePrintQR} className="w-full bg-slate-50 text-slate-400 py-5 flex items-center justify-center gap-3 font-black uppercase text-[9px] tracking-[.3em] hover:bg-primary hover:text-white transition-all border border-slate-100">IMPRIMIR CARTAZ QR</button>
+             {/* Live Queue Management */}
+             <div className="w-full bg-slate-900 border border-slate-800 p-8">
+                <div className="flex items-center justify-between mb-8 border-b border-slate-800 pb-5"><span className="text-[12px] font-black uppercase text-primary tracking-[0.4em]">Fila Activa em Tempo Real</span><Users className="w-5 h-5 text-slate-700" /></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                   {waiting.map((q, i) => (
+                      <div key={q.id} className="bg-slate-800 border border-slate-700 p-5 flex items-center justify-between group hover:border-primary/50 transition-colors">
+                         <div className="flex items-center gap-5">
+                            <span className="text-2xl font-black text-white w-12 shrink-0">#{q.ticket_number.split('-').pop()}</span>
+                            <div className="text-left leading-none flex flex-col gap-2"><span className="text-[16px] font-black text-slate-100 tracking-tight">{q.phone}</span><span className="text-[8px] font-bold text-primary uppercase tracking-widest">{i === 0 ? "PRÓXIMO" : `${i + 1}º NA FILA`}</span></div>
+                         </div>
+                         <div className="flex gap-2 opacity-60 group-hover:opacity-100 transition-opacity">
+                            <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-4 bg-white/5 text-white/50 border border-white/5 hover:bg-white/10 hover:text-white active:scale-95 transition-all"><Bell className="w-4 h-4" /></button>
+                            <button onClick={() => handleCancel(q.id)} className="p-4 bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500 hover:text-white active:scale-95 transition-all"><Trash2 className="w-4 h-4" /></button>
+                         </div>
+                      </div>
+                   ))}
+                   {waiting.length === 0 && <div className="col-span-full py-24 flex flex-col items-center opacity-10 grayscale text-center"><Timer className="w-12 h-12 mb-3" /><span className="text-[12px] font-black uppercase tracking-widest">Sem Clientes em Espera</span></div>}
+                </div>
              </div>
+          </div>
           </div>
        </div>
     </ContentWrapper>

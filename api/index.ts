@@ -112,8 +112,21 @@ app.post("/api/queue/join", async (req, res) => {
   const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).single();
   if (exists) return res.status(400).json({ error: "Já está nesta fila" });
 
-  const day = new Date().getDate();
-  const ticket = `${est.initials}-${day}-${Math.floor(Math.random() * 900) + 100}`;
+  const today = new Date().toISOString().split('T')[0];
+  
+  // Contar senhas geradas HOJE para este estabelecimento
+  const { count: qCount } = await supabase.from("queues")
+    .select("id", { count: "exact", head: true })
+    .eq("est_id", est.id)
+    .gte("joined_at", `${today}T00:00:00Z`);
+
+  const { count: hCount } = await supabase.from("history")
+    .select("id", { count: "exact", head: true })
+    .eq("est_id", est.id)
+    .gte("served_at", `${today}T00:00:00Z`);
+  
+  const seq = (qCount || 0) + (hCount || 0) + 1;
+  const ticket = `${est.initials}-${seq.toString().padStart(3, '0')}`;
 
   const { data, error } = await supabase
     .from("queues")
@@ -131,7 +144,16 @@ app.post("/api/establishments/:code/next", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
   const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
-  if (current) await supabase.from("queues").delete().eq("id", current.id);
+  if (current) {
+    // Mover para histórico antes de remover
+    await supabase.from("history").insert([{
+      est_id: est.id,
+      phone: current.phone,
+      ticket_number: current.ticket_number,
+      served_at: new Date().toISOString()
+    }]);
+    await supabase.from("queues").delete().eq("id", current.id);
+  }
 
   const { data: next } = await supabase.from("queues")
     .select("*")
