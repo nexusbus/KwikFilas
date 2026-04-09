@@ -213,6 +213,46 @@ app.post("/api/queue/confirm-arrival", async (req, res) => {
   res.json({ success: true });
 });
 
+// 10. LISTAR CONTACTOS DO PARCEIRO
+app.get("/api/establishments/:code/contacts", async (req, res) => {
+  const { code } = req.params;
+  const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
+  if (!est) return res.status(404).json({ error: "Local não encontrado" });
+
+  const { data, error } = await supabase
+    .from("history")
+    .select("phone, served_at")
+    .eq("est_id", est.id)
+    .order("served_at", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  
+  // Remover duplicados (mesmo número em visitas diferentes)
+  const unique = Array.from(new Set(data.map(c => c.phone))).map(phone => {
+     return data.find(c => c.phone === phone);
+  });
+
+  res.json(unique);
+});
+
+// 11. ADICIONAR CONTACTO MANUALMENTE
+app.post("/api/establishments/:code/contacts", async (req, res) => {
+  const { code } = req.params;
+  const { phone } = req.body;
+  const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
+  if (!est) return res.status(404).json({ error: "Local não encontrado" });
+
+  const { error } = await supabase.from("history").insert([{
+    est_id: est.id,
+    phone,
+    ticket_number: "CRM-MANUAL",
+    served_at: new Date().toISOString()
+  }]);
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // --- HELPER SMS ---
 async function triggerSms(phone: string, ticket: string, estName: string, customMsg?: string) {
   const rawId = process.env.SMSHUB_AUTH_ID ?? '';

@@ -383,6 +383,15 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [est, setEst] = useState<Establishment | null>(null);
   const [manualPhone, setManualPhone] = useState("");
   const [loading, setLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<"queue" | "crm">("queue");
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [newContactPhone, setNewContactPhone] = useState("");
+
+  const refreshContacts = async () => {
+    if (!est) return;
+    const res = await fetch(`/api/establishments/${est.code}/contacts`);
+    if (res.ok) setContacts(await res.json());
+  };
 
   const refresh = async () => {
     try {
@@ -449,6 +458,21 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     printWindow.document.close();
   };
 
+  const handleAddContact = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!est || !newContactPhone) return;
+    setLoading(true);
+    const res = await fetch(`/api/establishments/${est.code}/contacts`, { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ phone: newContactPhone }) 
+    });
+    if (res.ok) { setNewContactPhone(""); refreshContacts(); notify("Contacto Adicionado à Base"); }
+    setLoading(false);
+  };
+
+  useEffect(() => { if (activeTab === 'crm') refreshContacts(); }, [activeTab]);
+
   if (!est) return (
      <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-6">
         <div className="w-10 h-10 border-4 border-primary border-t-transparent animate-spin"></div>
@@ -464,6 +488,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   return (
     <ContentWrapper wide>
        <div className="w-full pt-12 pb-32 space-y-12">
+          <div className="flex border-b border-slate-200 mb-8">
+             <button onClick={() => setActiveTab("queue")} className={cn("px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-2", activeTab === "queue" ? "border-primary text-primary" : "border-transparent text-slate-400")}>Fila Digital</button>
+             <button onClick={() => setActiveTab("crm")} className={cn("px-8 py-4 text-[11px] font-black uppercase tracking-[0.2em] transition-all border-b-2", activeTab === "crm" ? "border-primary text-primary" : "border-transparent text-slate-400")}>Audiência / CRM</button>
+          </div>
+
+          {activeTab === 'queue' ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
              
              <div className="lg:col-span-4 space-y-8">
@@ -555,7 +585,56 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                    </div>
                 </div>
              </div>
-          </div>
+          ) : (
+             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="bg-white border border-slate-200 p-8 shadow-sm">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Total de Audiência</span>
+                      <div className="flex items-center justify-between">
+                         <span className="text-4xl font-black text-slate-900">{contacts.length}</span>
+                         <Users className="w-10 h-10 text-primary/10" />
+                      </div>
+                   </div>
+                   <div className="md:col-span-2 bg-white border border-slate-200 p-8 shadow-sm">
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Adicionar Novo à Base</span>
+                      <form onSubmit={handleAddContact} className="flex gap-4">
+                         <input value={newContactPhone} onChange={e => setNewContactPhone(e.target.value)} placeholder="9XXXXXXXX" className="flex-grow bg-slate-50 border border-slate-200 px-6 py-4 font-bold text-lg outline-none focus:border-primary transition-all" />
+                         <button type="submit" disabled={loading} className="btn-modern px-10">Guardar</button>
+                      </form>
+                   </div>
+                </div>
+
+                <div className="bg-white border border-slate-200 shadow-sm overflow-hidden">
+                   <table className="w-full text-left border-collapse">
+                      <thead>
+                         <tr className="bg-slate-50 border-b border-slate-200 text-[10px] font-black uppercase text-slate-400 tracking-widest">
+                            <th className="p-6">Contacto</th>
+                            <th className="p-6">Última Visita</th>
+                            <th className="p-6 text-right">Canal</th>
+                         </tr>
+                      </thead>
+                      <tbody>
+                         {contacts.map((c, i) => (
+                            <tr key={i} className="border-b border-slate-100 hover:bg-slate-50/50 transition-colors">
+                               <td className="p-6">
+                                  <div className="flex items-center gap-4">
+                                     <div className="w-10 h-10 rounded-full bg-primary/5 flex items-center justify-center text-primary font-black uppercase text-xs">{c.phone.slice(-2)}</div>
+                                     <span className="text-lg font-bold text-slate-900">{c.phone}</span>
+                                  </div>
+                               </td>
+                               <td className="p-6">
+                                  <div className="text-sm font-medium text-slate-500">{new Date(c.served_at).toLocaleDateString()}</div>
+                                  <div className="text-[10px] text-slate-300 font-bold uppercase">{new Date(c.served_at).toLocaleTimeString()}</div>
+                               </td>
+                               <td className="p-6 text-right text-[10px] font-black uppercase text-primary tracking-widest opacity-40">Verificado</td>
+                            </tr>
+                         ))}
+                         {contacts.length === 0 && <tr><td colSpan={3} className="p-20 text-center text-slate-300 font-black uppercase tracking-widest opacity-30">Povoando base de dados...</td></tr>}
+                      </tbody>
+                   </table>
+                </div>
+             </div>
+          )}
        </div>
     </ContentWrapper>
   );
