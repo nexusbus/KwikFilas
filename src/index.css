@@ -3,20 +3,18 @@
 /* Failsafe Variables for CSS-Native Resolution */
 :root {
   --primary: #2563EB;
+  --primary-glow: rgba(37, 99, 235, 0.15);
   --on-surface: #0F172A;
-  --on-surface-variant: #475569;
-  --surface-variant: #F1F5F9;
-  --outline: #E2E8F0;
+  --on-surface-variant: #64748B;
+  --surface-variant: #F8FAFC;
+  --outline: #F1F5F9;
 
-  /* Theme variables moved from @theme to resolve linter warnings */
-  --color-primary: var(--primary);
-  --color-on-surface: var(--on-surface);
-  --color-on-surface-variant: var(--on-surface-variant);
-  --color-surface-variant: var(--surface-variant);
-  --color-outline: var(--outline);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.2);
 
   --shadow-ambient: 0 1px 4px rgba(0, 0, 0, 0.02), 0 2px 12px rgba(0, 0, 0, 0.04);
-  --shadow-elevated: 0 10px 40px rgba(37, 99, 235, 0.06);
+  --shadow-premium: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-glow: 0 0 20px var(--primary-glow);
 }
 
 @layer base {
@@ -127,6 +125,41 @@
   .input-field:focus {
     box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
     background-color: white;
+  }
+
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-ambient);
+  }
+
+  .btn-modern {
+    background: var(--primary);
+    color: white;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    font-size: 11px;
+    padding: 1.25rem 2rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+    filter: brightness(1.1);
+  }
+
+  .text-gradient {
+    background: linear-gradient(135deg, #0F172A 0%, #2563EB 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
   }
 }
 
