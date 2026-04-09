@@ -464,7 +464,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
 
                 <div className="space-y-4">
                    <button onClick={handleNext} disabled={waiting.length === 0 || loading} className={cn("w-full py-20 px-10 glass-card border-none flex flex-col items-center gap-6 transition-all relative overflow-hidden shadow-premium group", waiting.length > 0 ? "bg-primary text-white" : "bg-slate-50 opacity-40")}>
-                      {waiting.length > 0 && <motion.div animate={{ opacity: [0.1, 0.3, 0.1] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-white" />}
+                      {waiting.length > 0 && <motion.div animate={{ opacity: [0.01, 0.05, 0.01] }} transition={{ repeat: Infinity, duration: 2 }} className="absolute inset-0 bg-white" />}
                       <Bell className={cn("w-12 h-12 relative z-10 group-hover:scale-125 transition-transform", waiting.length > 0 && "animate-pulse")} />
                       <h2 className="text-3xl font-black uppercase tracking-tighter relative z-10">{waiting.length > 0 ? (loading ? "DISPARANDO..." : "PRÓXIMA SENHA") : "SEM ESPERA"}</h2>
                       <div className="flex items-center gap-2 relative z-10"><span className="w-2.5 h-2.5 bg-white rounded-full"></span><p className="text-[10px] font-bold uppercase tracking-[0.2em] opacity-80">Terminal Digital & SMS</p></div>
@@ -506,7 +506,13 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                          <motion.div key={q.id} initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: i * 0.05 }} className="bg-white/5 p-6 flex items-center justify-between group hover:bg-white/10 transition-all border border-white/5">
                             <div className="flex items-center gap-6">
                                <span className="text-3xl font-black text-white/90 w-16 shrink-0 leading-none">#{q.ticket_number.split('-').pop()}</span>
-                               <div className="flex flex-col gap-2"><span className="text-lg font-black text-white/70 tracking-tight leading-none">{q.phone}</span><span className="text-[9px] font-bold text-primary uppercase tracking-widest">{i === 0 ? "PRÓXIMO" : `${i + 1}º NA FILA`}</span></div>
+                               <div className="flex flex-col gap-2">
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-lg font-black text-white/70 tracking-tight leading-none">{q.phone}</span>
+                                    {q.is_arrived && <CheckCircle2 className="w-3 h-3 text-green-500" />}
+                                 </div>
+                                 <span className="text-[9px] font-bold text-primary uppercase tracking-widest">{i === 0 ? "PRÓXIMO" : `${i + 1}º NA FILA`}</span>
+                               </div>
                             </div>
                             <div className="flex gap-2">
                                <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-4 bg-white/5 text-white/40 hover:bg-primary hover:text-white transition-all"><Bell className="w-4 h-4" /></button>
@@ -554,6 +560,15 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, [myTicket]);
 
+  const handleConfirmArrival = async () => {
+    if (!myTicket) return;
+    setLoading(true);
+    await fetch("/api/queue/confirm-arrival", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: myTicket.id }) });
+    notify("Chegada Confirmada!");
+    refresh();
+    setLoading(false);
+  };
+
   const handleJoin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -587,7 +602,13 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                   <p className="text-[12px] font-black uppercase text-slate-300 tracking-[0.6em] leading-relaxed max-w-xs mx-auto">{isCalled ? "POR FAVOR, DIRIJA-SE AO LOCAL DE ATENDIMENTO." : "SERÁ NOTIFICADO NESTE ECRÃ ASSIM QUE FOR CHAMADO."}</p>
                </div>
             </div>
-            {isCalled && <button className="btn-modern w-full shadow-glow">Confirmar Chegada</button>}
+            {isCalled ? (
+               myTicket?.is_arrived ? (
+                 <div className="flex items-center gap-3 text-green-500 font-black text-[10px] uppercase bg-green-50 px-10 py-5 border border-green-100 animate-in zoom-in-95"><CheckCircle2 className="w-5 h-5" /> Presença Confirmada no Local</div>
+               ) : (
+                 <button onClick={handleConfirmArrival} disabled={loading} className="btn-modern w-full shadow-glow">{loading ? "Processando..." : "Confirmar Chegada"}</button>
+               )
+            ) : null}
             <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); notify("Saída do Canal", 'info'); }} className="text-[11px] font-black text-slate-300 uppercase tracking-widest pt-12 hover:text-primary transition-colors hover:underline">Abandonar Fila Digital</button>
         </div>
       </ContentWrapper>

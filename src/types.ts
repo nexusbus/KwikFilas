@@ -4,7 +4,8 @@ export interface Customer {
   name?: string;
   joined_at: string;
   status: "waiting" | "called" | "served";
-  ticket_number: string; // e.g., CB-05-001
+  ticket_number: string;
+  is_arrived?: boolean;
 }
 
 export interface Establishment {

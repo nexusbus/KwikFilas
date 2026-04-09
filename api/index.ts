@@ -205,6 +205,14 @@ app.post("/api/establishments/:code/cancel", async (req, res) => {
   res.json({ success: true });
 });
 
+// 9. CONFIRMAR CHEGADA (Client Side)
+app.post("/api/queue/confirm-arrival", async (req, res) => {
+  const { ticketId } = req.body;
+  const { error } = await supabase.from("queues").update({ is_arrived: true }).eq("id", ticketId);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
+});
+
 // --- HELPER SMS ---
 async function triggerSms(phone: string, ticket: string, estName: string, customMsg?: string) {
   const rawId = process.env.SMSHUB_AUTH_ID ?? '';
