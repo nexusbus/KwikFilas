@@ -50,10 +50,45 @@ const ToastContainer = ({ toasts, remove }: { toasts: Toast[], remove: (id: stri
 );
 
 const KLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={cn("fill-primary w-8 h-8", className)}>
+  <svg viewBox="0 0 100 100" className={cn("text-primary w-8 h-8", className)} fill="none">
     <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="10" strokeLinecap="square" />
   </svg>
 );
+
+const StickIllustration = ({ type, className }: { type: 'queue' | 'freedom', className?: string }) => {
+  const stroke = "currentColor";
+  const width = "8";
+  return (
+    <svg viewBox="0 0 200 120" className={cn("w-full h-auto", className)} fill="none">
+      {type === 'queue' ? (
+        <g stroke={stroke} strokeWidth={width} strokeLinecap="square">
+          {/* Person 1 */}
+          <circle cx="40" cy="30" r="10" />
+          <path d="M40 40 L40 80 M40 55 L25 70 M40 55 L55 70 M40 80 L30 100 M40 80 L50 100" />
+          {/* Person 2 */}
+          <circle cx="80" cy="30" r="10" />
+          <path d="M80 40 L80 80 M80 55 L65 70 M80 55 L95 70 M80 80 L70 100 M80 80 L90 100" />
+          {/* Person 3 */}
+          <circle cx="120" cy="30" r="10" />
+          <path d="M120 40 L120 80 M120 55 L105 70 M120 55 L135 70 M120 80 L110 100 M120 80 L130 100" />
+          {/* Barricade/Line */}
+          <path d="M150 20 L150 100" strokeWidth="4" opacity="0.2" />
+        </g>
+      ) : (
+        <g stroke={stroke} strokeWidth={width} strokeLinecap="square">
+          {/* Relaxing Person */}
+          <circle cx="100" cy="30" r="10" />
+          <path d="M100 40 L100 70 M100 55 L80 40 M100 55 L120 40 M100 70 L80 100 M100 70 L120 100" />
+          {/* Sun/Phone */}
+          <path d="M140 30 L160 30 M150 20 L150 40" strokeWidth="4" />
+          <path d="M140 20 L160 40 M160 20 L140 40" strokeWidth="4" />
+          {/* Digital Check */}
+          <path d="M40 60 L60 80 L100 30" stroke="#2563EB" strokeWidth="12" opacity="0.3" />
+        </g>
+      )}
+    </svg>
+  );
+};
 
 const ContentWrapper = ({ children, wide = false }: { children: React.ReactNode, wide?: boolean }) => (
   <div className={cn("w-full mx-auto flex flex-col items-center px-4 mb-20 transition-all duration-500", wide ? "max-w-6xl" : "max-w-sm")}>{children}</div>
@@ -87,25 +122,54 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-40 pb-20 px-6 md:px-12 max-w-6xl mx-auto text-center space-y-8">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }}>
-          <h1 className="text-5xl md:text-7xl font-black text-[#0F172A] uppercase tracking-tighter leading-[0.9]">
+      <section className="pt-40 pb-20 px-6 md:px-12 max-w-6xl mx-auto flex flex-col items-center text-center space-y-12">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.8 }} className="space-y-8">
+          <h1 className="text-5xl md:text-8xl font-black text-[#0F172A] uppercase tracking-tighter leading-[0.85] text-center">
             A Fila Acabou.<br/>
             <span className="text-primary italic">A Liberdade Começou.</span>
           </h1>
-          <p className="max-w-2xl mx-auto mt-8 text-slate-500 font-medium text-lg leading-relaxed">
-            Transforme a espera física dos seus clientes numa experiência digital fluida. 
-            Aumente a satisfação, melhore o fluxo e modernize o seu negócio com o KwikFilas.
+          <p className="max-w-2xl mx-auto text-slate-500 font-medium text-lg leading-relaxed">
+            Elimine a frustração das esperas físicas. Transforme o seu negócio em 
+            um ecossistema digital inteligente onde o cliente é livre para circular.
           </p>
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 mt-12">
-            <button onClick={onLoginClick} className="w-full md:w-auto bg-primary text-white px-10 py-6 font-black uppercase text-sm tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
+            <button onClick={onLoginClick} className="w-full md:w-auto bg-primary text-white px-12 py-7 font-black uppercase text-sm tracking-widest flex items-center justify-center gap-3 active:scale-95 transition-all">
               Aderir Agora <ArrowRight className="w-5 h-5" />
             </button>
-            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-300">
-              <ShieldCheck className="w-4 h-4" /> Sem taxas de adesão
-            </div>
           </div>
         </motion.div>
+
+        {/* ILLUSTRATION COMPONENT */}
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-2 gap-12 pt-20">
+           <div className="bg-slate-50 p-12 space-y-6 flex flex-col items-center">
+              <StickIllustration type="queue" className="text-slate-300 h-24" />
+              <div className="text-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-red-400">O Passado</span>
+                <h4 className="text-2xl font-black uppercase tracking-tighter mt-2">Aglomerados de Gente</h4>
+              </div>
+           </div>
+           <div className="bg-primary/5 p-12 border-2 border-primary/20 border-dashed space-y-6 flex flex-col items-center">
+              <StickIllustration type="freedom" className="text-primary h-24" />
+              <div className="text-center">
+                <span className="text-[10px] font-black uppercase tracking-[0.4em] text-primary">O Futuro</span>
+                <h4 className="text-2xl font-black uppercase tracking-tighter mt-2">Liberdade Total</h4>
+              </div>
+           </div>
+        </div>
+      </section>
+
+      {/* Visual Separation / Concept */}
+      <section className="py-24 px-6 md:px-12 bg-white text-center">
+         <div className="max-w-3xl mx-auto space-y-8">
+            <h2 className="text-4xl md:text-6xl font-black uppercase tracking-tighter leading-none">Pode esperar em qualquer lugar.</h2>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+               {['Na Esplanada', 'No Carro', 'A Passear', 'Em Casa'].map((loc, i) => (
+                  <div key={i} className="bg-[#F8FAFC] py-8 border border-slate-100 font-black uppercase text-[10px] tracking-widest text-slate-400 hover:text-primary transition-colors">
+                     {loc}
+                  </div>
+               ))}
+            </div>
+         </div>
       </section>
 
       {/* Features Grid */}
