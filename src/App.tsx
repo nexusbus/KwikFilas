@@ -725,12 +725,21 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
   const checkPhoneAndContinue = async (e: React.FormEvent) => {
     e.preventDefault();
     if (phone.length < 9) return notify("Número inválido", "error");
+    
+    // 1. Tentar primeiro o nome guardado localmente para este número
+    const localName = localStorage.getItem(`kw_name_${phone}`);
+    if (localName) {
+      setName(localName);
+      return handleJoin(e, localName);
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`/api/check-phone/${phone}`);
       const data = await res.json();
       if (data.name) {
         setName(data.name);
+        localStorage.setItem(`kw_name_${phone}`, data.name);
         handleJoin(e, data.name);
       } else {
         setShowNameInput(true);
@@ -750,14 +759,16 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
 
   const handleJoin = async (e: React.FormEvent, finalName?: string) => {
     if(e) e.preventDefault();
+    const userName = finalName || name;
     setLoading(true);
     const res = await fetch("/api/queue/join", { 
       method: "POST", 
       headers: { "Content-Type": "application/json" }, 
-      body: JSON.stringify({ phone, estCode, name: finalName || name }) 
+      body: JSON.stringify({ phone, estCode, name: userName }) 
     });
     if (res.ok) { 
       localStorage.setItem(`kw_phone_${estCode}`, phone); 
+      if (userName) localStorage.setItem(`kw_name_${phone}`, userName);
       refresh(); 
       notify("Entrou na fila!"); 
     }

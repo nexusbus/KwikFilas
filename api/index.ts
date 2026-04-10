@@ -141,28 +141,30 @@ app.post("/api/queue/join", async (req, res) => {
 app.get("/api/check-phone/:phone", async (req, res) => {
   const { phone } = req.params;
   
-  // Tentar encontrar o nome mais recente associado a este telefone no histórico
-  const { data: hData } = await supabase
+  // No histórico (mais recente)
+  const { data: hist } = await supabase
     .from("history")
     .select("name")
     .eq("phone", phone)
+    .neq("name", "")
     .not("name", "is", null)
     .order("served_at", { ascending: false })
-    .limit(1)
-    .single();
+    .limit(1);
 
-  if (hData && hData.name) return res.json({ name: hData.name });
+  if (hist && hist.length > 0 && hist[0].name) {
+    return res.json({ name: hist[0].name });
+  }
 
-  // Se não encontrar no histórico, tentar na fila atual
-  const { data: qData } = await supabase
+  // Na fila ativa
+  const { data: active } = await supabase
     .from("queues")
     .select("name")
     .eq("phone", phone)
+    .neq("name", "")
     .not("name", "is", null)
-    .limit(1)
-    .single();
+    .limit(1);
 
-  res.json({ name: qData?.name || null });
+  res.json({ name: (active && active.length > 0) ? active[0].name : null });
 });
 
 // 6. CHAMAR PRÓXIMO + DISPARO SMS
