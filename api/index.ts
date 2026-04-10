@@ -103,6 +103,30 @@ app.post("/api/admin/establishments/delete", async (req, res) => {
   res.json({ success: true });
 });
 
+// 4.1 EDITAR (Com Senha de Super Admin)
+app.put("/api/admin/establishments", async (req, res) => {
+  const { targetId, superPassword, updateData } = req.body;
+
+  const { data: isSuper } = await supabase
+    .from("establishments")
+    .select("id")
+    .eq("role", "super")
+    .eq("admin_password", superPassword)
+    .single();
+
+  if (!isSuper) return res.status(403).json({ error: "Acesso negado" });
+
+  const { data, error } = await supabase
+    .from("establishments")
+    .update(updateData)
+    .eq("id", targetId)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {
   const { phone, estCode, name } = req.body;

@@ -241,8 +241,9 @@ const LandingView = ({ onLogin, onBack }: { onLogin: (authData: AuthUser) => voi
 // --- 2. SUPER ADMIN: GESTÃO ---
 const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
-  const [view, setView] = useState<"list" | "create">("list");
+  const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" });
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
@@ -271,15 +272,48 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
     setLoading(false);
   };
 
-  const handleCreate = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/establishments", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(formData) });
-      if (res.ok) { refresh(); setView("list"); notify("Estabelecimento criado"); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }
-      else { notify("Erro ao criar", 'error'); }
+      const isEdit = view === "edit" && editingId;
+      const url = isEdit ? "/api/admin/establishments" : "/api/admin/establishments";
+      const method = isEdit ? "PUT" : "POST";
+      
+      const payload = isEdit 
+        ? { targetId: editingId, superPassword: prompt("Confirme a Senha Master para alterar:"), updateData: formData }
+        : formData;
+
+      if (isEdit && !payload.superPassword) { setLoading(false); return; }
+
+      const res = await fetch(url, { 
+        method, 
+        headers: { "Content-Type": "application/json" }, 
+        body: JSON.stringify(payload) 
+      });
+
+      if (res.ok) { 
+        refresh(); 
+        setView("list"); 
+        notify(isEdit ? "Dados atualizados" : "Estabelecimento criado"); 
+        setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); 
+        setEditingId(null);
+      }
+      else { notify("Erro na operação", 'error'); }
     } catch (e) { notify("Erro Crítico", 'error'); }
     setLoading(false);
+  };
+
+  const openEdit = (est: Establishment) => {
+    setEditingId(est.id);
+    setFormData({
+      name: est.name,
+      nif: est.nif,
+      admin_email: est.admin_email,
+      admin_password: est.admin_password,
+      logo_url: est.logo_url || ""
+    });
+    setView("edit");
   };
 
   return (
@@ -339,6 +373,12 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                           <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{est.queues ? est.queues.length : 0} Clientes hoje</span>
                           <div className="flex gap-2">
                              <button 
+                               onClick={() => openEdit(est)}
+                               className="p-2 text-slate-400 hover:text-[#3451D1] hover:bg-slate-50 rounded-lg transition-colors"
+                             >
+                               <Pencil className="w-4 h-4" />
+                             </button>
+                             <button 
                                onClick={async () => {
                                  const pw = prompt("Senha Master para apagar:");
                                  if (!pw) return;
@@ -349,7 +389,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                              >
                                <Trash2 className="w-4 h-4" />
                              </button>
-                             <button className="text-[#3451D1] text-xs font-bold flex items-center gap-1 hover:underline">
+                             <button className="text-[#3451D1] text-xs font-bold flex items-center gap-1 hover:underline ml-2">
                                Gerir <ArrowRight className="w-3 h-3" />
                              </button>
                           </div>
@@ -365,10 +405,10 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                <div className="max-w-2xl mx-auto">
                  <div className="card-premium p-8 md:p-12 space-y-10">
                     <div className="flex items-center justify-between">
-                       <h3 className="text-2xl font-bold">Registo de Unidade</h3>
-                       <button onClick={() => setView("list")} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                       <h3 className="text-2xl font-bold">{view === 'edit' ? 'Editar Unidade' : 'Registo de Unidade'}</h3>
+                       <button onClick={() => { setView("list"); setEditingId(null); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                     </div>
-                    <form onSubmit={handleCreate} className="space-y-6">
+                    <form onSubmit={handleSubmit} className="space-y-6">
                        <div className="flex flex-col items-center">
                           <div className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden relative group">
                              {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <Building className="w-10 h-10 text-slate-200" />}
@@ -400,7 +440,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                           </div>
                        </div>
                        <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-base mt-4">
-                         {loading ? "A criar..." : "Ativar Unidade Digital"}
+                         {loading ? "A processar..." : (view === 'edit' ? "Guardar Alterações" : "Ativar Unidade Digital")}
                        </button>
                     </form>
                  </div>
