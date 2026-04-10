@@ -251,12 +251,12 @@ app.get("/api/establishments/:code/contacts", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
   // Buscar de ambas as tabelas para garantir base completa
-  const { data: qData } = await supabase.from("queues").select("phone, name, joined_at:joined_at").eq("est_id", est.id);
+  const { data: qData } = await supabase.from("queues").select("phone, name, joined_at").eq("est_id", est.id);
   const { data: hData } = await supabase.from("history").select("phone, name, served_at").eq("est_id", est.id);
 
   const rawData = [
-    ...(qData || []).map(q => ({ phone: q.phone, name: q.name, date: q.joined_at })),
-    ...(hData || []).map(h => ({ phone: h.phone, name: h.name, date: h.served_at }))
+    ...(qData || []).map(q => ({ phone: q.phone || 'S/N', name: q.name, date: q.joined_at })),
+    ...(hData || []).map(h => ({ phone: h.phone || 'S/N', name: h.name, date: h.served_at }))
   ];
   
   // Agrupar por telefone para calcular estatísticas
