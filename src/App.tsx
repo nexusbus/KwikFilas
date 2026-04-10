@@ -482,10 +482,10 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
      const res = await fetch("/api/queue/join", { 
        method: "POST", 
        headers: { "Content-Type": "application/json" }, 
-       body: JSON.stringify({ phone: manualPhone, estCode: est.code, name: autoName }) 
-     });
+       body: JSON.stringify({ phone: manualPhone, estCode: est.code, name: autoName })
+      });
 
-     if (res.ok) { setManualPhone(""); refresh(); notify("Senha Manual Gerada"); }
+      if (res.ok) { setManualPhone(""); refresh(); notify("Senha Manual Gerada"); }
      else { notify("Cliente já na Fila", 'error'); }
      setLoading(false);
   };
@@ -500,21 +500,24 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
       <head>
         <title>Imprimir QR Code - ${est.name}</title>
         <style>
-          body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; font-family: 'Inter', sans-serif; background: white; }
-          h1 { font-size: 48px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; color: #0f172a; }
-          .qr-container { margin: 40px 0; }
-          svg image { clip-path: inset(0% round 15%); } /* Arredondar bordas do logo */
-          h2 { font-size: 18px; font-weight: 800; color: #64748b; letter-spacing: 0.3em; margin-top: 20px; }
-          p { font-size: 14px; color: #94a3b8; margin-top: 5px; font-weight: 600; }
+          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+          body { display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:100vh; margin:0; text-align:center; font-family: 'Inter', sans-serif; background: white; padding: 40px; }
+          h1 { font-size: 64px; font-weight: 900; text-transform: uppercase; margin: 0; color: #0f172a; }
+          .subtitle { font-size: 20px; color: #64748b; margin-top: 15px; font-weight: 700; letter-spacing: 0.15em; }
+          .qr-container { margin: 80px 0; display: flex; align-items: center; justify-content: center; width: 100%; }
+          .qr-container svg { width: 500px !important; height: 500px !important; }
+          svg image { clip-path: inset(0% round 15%); }
+          h2 { font-size: 28px; font-weight: 800; color: #0f172a; letter-spacing: 0.5em; margin: 0; }
+          .footer-text { font-size: 16px; color: #94a3b8; margin-top: 10px; font-weight: 600; }
         </style>
       </head>
       <body>
         <h1>${est.name}</h1>
-        <p>RECOLHA A SUA SENHA DIGITAL</p>
+        <p class="subtitle">ESCANEIE PARA ENTRAR NA FILA</p>
         <div class="qr-container">${qrSvg}</div>
         <h2>KWIKFILAS</h2>
-        <p>THE DIGITAL CURATOR</p>
-        <script>setTimeout(() => { window.print(); window.close(); }, 1000);</script>
+        <p class="footer-text">THE DIGITAL CURATOR</p>
+        <script>setTimeout(() => { window.print(); window.close(); }, 1200);</script>
       </body></html>
     `);
     printWindow.document.close();
