@@ -13,11 +13,13 @@ export interface Establishment {
   code: string; 
   name: string;
   initials: string;
-  password?: string;
+  nif: string;
+  admin_email: string;
+  admin_password: string;
+  logo_url?: string;
   average_wait_time?: number;
-  customers: Customer[];
-  history: Customer[];
-  contacts: string[]; 
+  queues?: Customer[];
+  history?: Customer[];
 }
 
 export interface QueueState {
