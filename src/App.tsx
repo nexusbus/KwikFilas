@@ -748,15 +748,6 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     setLoading(false);
   };
 
-  const handleConfirmArrival = async () => {
-    if (!myTicket) return;
-    setLoading(true);
-    await fetch("/api/queue/confirm-arrival", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: myTicket.id }) });
-    notify("Chegada Confirmada!");
-    refresh();
-    setLoading(false);
-  };
-
   const handleJoin = async (e: React.FormEvent, finalName?: string) => {
     if(e) e.preventDefault();
     const userName = finalName || name;
@@ -773,6 +764,34 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
       notify("Entrou na fila!"); 
     }
     else { notify("Já se encontra na fila", 'error'); }
+    setLoading(false);
+  };
+
+  const handleConfirmArrival = async () => {
+    if (!myTicket) return;
+    setLoading(true);
+    await fetch("/api/queue/confirm-arrival", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId: myTicket.id }) });
+    notify("Chegada Confirmada!");
+    refresh();
+    setLoading(false);
+  };
+
+  const handleLeave = async () => {
+    if (!myTicket || !est) return;
+    if (!confirm("Tem a certeza que deseja abandonar a fila?")) return;
+    
+    setLoading(true);
+    const res = await fetch(`/api/establishments/${est.code}/cancel`, { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ ticketId: myTicket.id }) 
+    });
+    
+    if (res.ok) {
+      localStorage.removeItem(`kw_phone_${estCode}`);
+      setMyTicket(null);
+      notify("Saiu da fila.");
+    }
     setLoading(false);
   };
 
@@ -821,7 +840,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                 )}
             </div>
 
-            <button onClick={() => { localStorage.removeItem(`kw_phone_${estCode}`); setMyTicket(null); }} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
+            <button onClick={handleLeave} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
         </motion.div>
       </div>
     );
