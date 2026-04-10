@@ -902,7 +902,17 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     const isCalled = myTicket.status === "called";
     
     return (
-      <div className="min-h-screen bg-[#F8FAFD] p-6 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-[#F8FAFD] relative overflow-x-hidden">
+        {/* Foto de Capa Ofuscada */}
+        <div className="absolute top-0 left-0 right-0 h-64 overflow-hidden pointer-events-none">
+           <img 
+             src={est.logo_url} 
+             className="w-full h-full object-cover blur-3xl opacity-20 scale-125" 
+           />
+           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F8FAFD]/50 to-[#F8FAFD]" />
+        </div>
+
+        <div className="relative z-10 p-6 flex flex-col items-center justify-center min-h-screen">
         <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="w-full max-w-sm space-y-8">
             <div className="text-center space-y-2">
                <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-sm border border-slate-50 p-3 mb-6">
@@ -940,6 +950,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
             </div>
 
             <button onClick={() => setShowAbandonModal(true)} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
+        </div>
 
             <AnimatePresence>
               {showAbandonModal && (
@@ -967,8 +978,18 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
   }
 
   return (
-    <div className="min-h-screen bg-[#F8FAFD] p-6 flex flex-col items-center justify-center">
-       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
+    <div className="min-h-screen bg-[#F8FAFD] relative overflow-x-hidden">
+       {/* Foto de Capa Ofuscada */}
+       <div className="absolute top-0 left-0 right-0 h-64 overflow-hidden pointer-events-none">
+          <img 
+            src={est.logo_url} 
+            className="w-full h-full object-cover blur-3xl opacity-20 scale-125" 
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F8FAFD]/50 to-[#F8FAFD]" />
+       </div>
+
+       <div className="relative z-10 p-6 flex flex-col items-center justify-center min-h-screen">
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
           <header className="text-center space-y-2">
              <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-sm border border-slate-50 p-3 mb-6">
                 <img src={est.logo_url} className="w-full h-full object-contain" />
