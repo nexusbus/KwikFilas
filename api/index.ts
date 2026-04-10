@@ -273,18 +273,24 @@ app.get("/api/establishments/:code/contacts", async (req, res) => {
     if (!existing) {
       statsMap.set(record.phone, {
         phone: record.phone,
-        name: record.name,
+        name: record.name || null,
         last_visit: record.date,
         visit_count: 1,
         _lastDateMs: currentDate
       });
     } else {
       existing.visit_count += 1;
-      // Manter o nome mais recente e a data mais recente
+      
+      // Prioritizar sempre ter um nome. Se o novo registro tiver nome, e o atual não tiver
+      // OU se o novo registro for mais recente e tiver nome, atualizamos.
+      if (record.name && (!existing.name || currentDate > existing._lastDateMs)) {
+        existing.name = record.name;
+      }
+
+      // Atualizar metadata da última visita
       if (currentDate > existing._lastDateMs) {
         existing._lastDateMs = currentDate;
         existing.last_visit = record.date;
-        if (record.name) existing.name = record.name;
       }
     }
   });
