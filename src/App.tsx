@@ -496,11 +496,25 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     if (!printWindow) return;
     const qrSvg = document.getElementById('main-qr-canvas')?.innerHTML || '';
     printWindow.document.write(`
-      <html><body style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; font-family: sans-serif;">
-        <h1 style="font-size: 32px; font-weight: 900; text-transform: uppercase;">${est.name}</h1>
-        <div style="transform: scale(2.5); margin: 60px 0;">${qrSvg}</div>
-        <h2 style="font-size: 16px; font-weight: 800; color: #64748b; letter-spacing: 0.2em;">KWIKFILAS - FILA DIGITAL</h2>
-        <script>setTimeout(() => { window.print(); window.close(); }, 800);</script>
+      <html>
+      <head>
+        <title>Imprimir QR Code - ${est.name}</title>
+        <style>
+          body { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100vh; margin:0; text-align:center; font-family: 'Inter', sans-serif; background: white; }
+          h1 { font-size: 48px; font-weight: 900; text-transform: uppercase; margin-bottom: 10px; color: #0f172a; }
+          .qr-container { margin: 40px 0; }
+          svg image { clip-path: inset(0% round 15%); } /* Arredondar bordas do logo */
+          h2 { font-size: 18px; font-weight: 800; color: #64748b; letter-spacing: 0.3em; margin-top: 20px; }
+          p { font-size: 14px; color: #94a3b8; margin-top: 5px; font-weight: 600; }
+        </style>
+      </head>
+      <body>
+        <h1>${est.name}</h1>
+        <p>RECOLHA A SUA SENHA DIGITAL</p>
+        <div class="qr-container">${qrSvg}</div>
+        <h2>KWIKFILAS</h2>
+        <p>THE DIGITAL CURATOR</p>
+        <script>setTimeout(() => { window.print(); window.close(); }, 1000);</script>
       </body></html>
     `);
     printWindow.document.close();
@@ -665,11 +679,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                     <div id="main-qr-canvas" className="hidden">
                        <QRCodeSVG 
                          value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
-                         size={512} 
+                         size={1024} 
+                         level="H"
                          imageSettings={{
                            src: est.logo_url,
-                           height: 120,
-                           width: 120,
+                           height: 200,
+                           width: 200,
                            excavate: true,
                          }}
                        />

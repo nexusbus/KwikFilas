@@ -127,10 +127,18 @@
   }
 
   .badge-active {
-    background-color: #DCFCE7;
-    color: #166534;
+    background-color: #F0FDF4;
+    color: #16A34A;
   }
+}
 
+/* Rounded Logo in QR Codes */
+svg image {
+  clip-path: inset(0% round 15%);
+  -webkit-clip-path: inset(0% round 15%);
+}
+
+@layer components {
   .badge-live {
     background-color: #DBEAFE;
     color: #1E40AF;
