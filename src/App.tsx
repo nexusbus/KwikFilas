@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
-  LayoutDashboard, Lock, LogOut, Mail, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, 
+  LayoutDashboard, Lock, LogOut, Mail, Pencil, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, 
   Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
