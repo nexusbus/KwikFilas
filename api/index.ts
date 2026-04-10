@@ -220,10 +220,10 @@ app.get("/api/establishments/:code/contacts", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
   // Buscar de ambas as tabelas para garantir base completa
-  const { data: qData } = await supabase.from("queues").select("phone, joined_at as served_at").eq("est_id", est.id);
+  const { data: qData } = await supabase.from("queues").select("phone, served_at:joined_at").eq("est_id", est.id);
   const { data: hData } = await supabase.from("history").select("phone, served_at").eq("est_id", est.id);
 
-  const combined = [...(qData || []), ...(hData || [])];
+  const combined = [...((qData || []) as any[]), ...((hData || []) as any[])];
   
   // Ordenar por data mais recente
   combined.sort((a, b) => new Date(b.served_at).getTime() - new Date(a.served_at).getTime());
