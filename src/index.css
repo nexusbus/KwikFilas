@@ -2,37 +2,40 @@
 
 /* Failsafe Variables for CSS-Native Resolution */
 :root {
-  --primary: #2563EB;
-  --primary-glow: rgba(37, 99, 235, 0.15);
-  --on-surface: #0F172A;
-  --on-surface-variant: #64748B;
-  --surface-variant: #F8FAFC;
-  --outline: #F1F5F9;
+  --primary: #3451D1;
+  --primary-hover: #2B44B3;
+  --primary-light: #EEF2FF;
+  --bg-main: #F8FAFD;
+  --surface: #FFFFFF;
+  --text-main: #0F172A;
+  --text-muted: #64748B;
+  --accent-green: #22C55E;
+  --accent-blue: #3B82F6;
+  --accent-red: #EF4444;
+  
+  --radius-card: 1.5rem;
+  --radius-button: 0.75rem;
 
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.2);
-
-  --shadow-ambient: 0 1px 4px rgba(0, 0, 0, 0.02), 0 2px 12px rgba(0, 0, 0, 0.04);
-  --shadow-premium: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-  --shadow-glow: 0 0 20px var(--primary-glow);
+  --shadow-sm: 0 2px 4px rgba(0,0,0,0.02), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-premium: 0 20px 25px -5px rgba(0, 0, 0, 0.05), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
 }
 
 @layer base {
 
   html,
   body {
-    background-color: #ffffff;
-    color: var(--on-surface);
+    background-color: var(--bg-main);
+    color: var(--text-main);
     -webkit-font-smoothing: antialiased;
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
     margin: 0;
     overflow-x: hidden;
-    /* Lock horizontal scroll */
     width: 100%;
     position: relative;
-    font-size: 14px;
+    font-size: 15px;
+    line-height: 1.5;
     touch-action: manipulation;
-    /* Prevent accidental double-tap zoom */
   }
 
   /* Prevent Mobile Zoom on Input Focus */
@@ -48,119 +51,96 @@
   .btn-primary {
     background-color: var(--primary);
     color: #ffffff;
-    font-weight: 700;
-    padding: 1rem 1.5rem;
-    border-radius: 1rem;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    font-weight: 600;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--radius-button);
+    box-shadow: var(--shadow-sm);
     text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 10px;
+    font-size: 0.875rem;
     border: none;
-    width: 100%;
     cursor: pointer;
-    display: block;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
   }
 
   .btn-primary:hover {
-    filter: brightness(1.1);
+    background-color: var(--primary-hover);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
   .btn-primary:active {
-    transform: scale(0.95);
+    transform: translateY(0);
   }
 
-  .btn-outline {
-    border: 1px solid var(--outline);
-    color: var(--on-surface);
-    background-color: transparent;
-    font-weight: 700;
-    padding: 1rem 1.5rem;
-    border-radius: 1rem;
-    text-align: center;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    font-size: 10px;
-    width: 100%;
-    cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .btn-outline:hover {
-    background-color: #f8fafc;
-  }
-
-  .card-main {
-    background-color: #ffffff;
-    padding: 2rem;
-    border-radius: 40px;
-    box-shadow: var(--shadow-ambient);
-    border: 1px solid rgba(226, 232, 240, 0.5);
-    width: 100%;
-    max-width: 340px;
-    /* Fallback for mx-auto if needed, but applying margin directly */
-    margin-left: auto;
-    margin-right: auto;
-    box-sizing: border-box;
-  }
-
-  .input-field {
-    background-color: var(--surface-variant);
-    width: 100%;
-    padding: 1.125rem;
-    border-radius: 0.75rem;
-    border: 1px solid transparent;
-    font-weight: 700;
-    font-size: 16px;
-    outline: none;
-    box-sizing: border-box;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .input-field::placeholder {
-    color: #94a3b8;
-  }
-
-  .input-field:focus {
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
-    background-color: white;
-  }
-
-  .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid var(--glass-border);
-    box-shadow: var(--shadow-ambient);
-  }
-
-  .btn-modern {
-    background: var(--primary);
-    color: white;
-    font-weight: 900;
-    text-transform: uppercase;
-    letter-spacing: 0.15em;
-    font-size: 11px;
-    padding: 1.25rem 2rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative;
-    overflow: hidden;
+  .btn-ghost {
+    background-color: var(--primary-light);
+    color: var(--primary);
+    font-weight: 600;
+    padding: 0.875rem 1.5rem;
+    border-radius: var(--radius-button);
     border: none;
     cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
   }
 
-  .btn-modern:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-glow);
-    filter: brightness(1.1);
+  .card-premium {
+    background-color: var(--surface);
+    padding: 1.5rem;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-premium);
+    border: 1px solid rgba(0, 0, 0, 0.03);
   }
 
-  .text-gradient {
-    background: linear-gradient(135deg, #0F172A 0%, #2563EB 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+  .input-modern {
+    background-color: #F1F5F9;
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 2px solid transparent;
+    font-weight: 500;
+    font-size: 1rem;
+    outline: none;
+    transition: all 0.2s ease;
   }
+
+  .input-modern:focus {
+    background-color: white;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px var(--primary-light);
+  }
+
+  .badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .badge-active {
+    background-color: #DCFCE7;
+    color: #166534;
+  }
+
+  .badge-live {
+    background-color: #DBEAFE;
+    color: #1E40AF;
+  }
+
+  .badge-inactive {
+     background-color: #F1F5F9;
+     color: #475569;
+  }
+}
 }
 
 /* Fluid Global Transitions */
