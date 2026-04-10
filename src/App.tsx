@@ -471,7 +471,20 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
      e.preventDefault();
      if (!est || !manualPhone) return;
      setLoading(true);
-     const res = await fetch("/api/queue/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone: manualPhone, estCode: est.code }) });
+
+     let autoName = null;
+     try {
+       const ck = await fetch(`/api/check-phone/${manualPhone}`);
+       const ckData = await ck.json();
+       autoName = ckData.name;
+     } catch(e) {}
+
+     const res = await fetch("/api/queue/join", { 
+       method: "POST", 
+       headers: { "Content-Type": "application/json" }, 
+       body: JSON.stringify({ phone: manualPhone, estCode: est.code, name: autoName }) 
+     });
+
      if (res.ok) { setManualPhone(""); refresh(); notify("Senha Manual Gerada"); }
      else { notify("Cliente já na Fila", 'error'); }
      setLoading(false);
