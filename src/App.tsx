@@ -646,7 +646,8 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                 <table className="w-full text-left">
                    <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                       <tr>
-                         <th className="px-6 py-4">Telemóvel</th>
+                         <th className="px-6 py-4">Cliente</th>
+                         <th className="px-6 py-4">Frequência</th>
                          <th className="px-6 py-4">Última Atividade</th>
                          <th className="px-6 py-4 text-right">Status</th>
                       </tr>
@@ -656,15 +657,23 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                          <tr key={i} className="hover:bg-slate-50/50 transition-colors">
                             <td className="px-6 py-4">
                                <div className="flex items-center gap-3">
-                                  <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center text-[#3451D1] text-[10px] font-bold">{c.phone.slice(-2)}</div>
-                                  <span className="font-bold text-[#0F172A]">{c.phone}</span>
+                                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3451D1] text-xs font-bold">
+                                    {(c.name || 'C').charAt(0).toUpperCase()}
+                                  </div>
+                                  <div className="flex flex-col">
+                                    <span className="font-bold text-[#0F172A]">{c.name || 'Cliente'}</span>
+                                    <span className="text-[10px] text-slate-400 font-medium">{c.phone}</span>
+                                  </div>
                                </div>
                             </td>
+                            <td className="px-6 py-4">
+                               <span className="text-xs font-bold text-[#3451D1] bg-blue-50 px-2 py-1 rounded-md">{c.visit_count} Visitas</span>
+                            </td>
                             <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                               {new Date(c.served_at).toLocaleDateString()} às {new Date(c.served_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                               {new Date(c.last_visit).toLocaleDateString()} às {new Date(c.last_visit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </td>
                             <td className="px-6 py-4 text-right">
-                               <span className="badge badge-active">Verificado</span>
+                               <span className="badge badge-active">Ativo</span>
                             </td>
                          </tr>
                       ))}
@@ -681,6 +690,8 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
 const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, t?: any) => void }) => {
   const [est, setEst] = useState<Establishment | null>(null);
   const [phone, setPhone] = useState("");
+  const [name, setName] = useState("");
+  const [showNameInput, setShowNameInput] = useState(false);
   const [myTicket, setMyTicket] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -711,6 +722,23 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 5000); return () => clearInterval(itv); }, [myTicket]);
 
+  const checkPhoneAndContinue = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (phone.length < 9) return notify("Número inválido", "error");
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/check-phone/${phone}`);
+      const data = await res.json();
+      if (data.name) {
+        setName(data.name);
+        handleJoin(e, data.name);
+      } else {
+        setShowNameInput(true);
+      }
+    } catch (e) { setShowNameInput(true); }
+    setLoading(false);
+  };
+
   const handleConfirmArrival = async () => {
     if (!myTicket) return;
     setLoading(true);
@@ -720,11 +748,19 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     setLoading(false);
   };
 
-  const handleJoin = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleJoin = async (e: React.FormEvent, finalName?: string) => {
+    if(e) e.preventDefault();
     setLoading(true);
-    const res = await fetch("/api/queue/join", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ phone, estCode }) });
-    if (res.ok) { localStorage.setItem(`kw_phone_${estCode}`, phone); refresh(); notify("Entrou na fila!"); }
+    const res = await fetch("/api/queue/join", { 
+      method: "POST", 
+      headers: { "Content-Type": "application/json" }, 
+      body: JSON.stringify({ phone, estCode, name: finalName || name }) 
+    });
+    if (res.ok) { 
+      localStorage.setItem(`kw_phone_${estCode}`, phone); 
+      refresh(); 
+      notify("Entrou na fila!"); 
+    }
     else { notify("Já se encontra na fila", 'error'); }
     setLoading(false);
   };
@@ -787,32 +823,43 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
              <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-sm border border-slate-50 p-3 mb-6">
                 <img src={est.logo_url} className="w-full h-full object-contain" />
              </div>
-             <h1 className="text-4xl font-bold text-[#0F172A] tracking-tight">Entrar na Fila</h1>
-             <p className="text-slate-500 font-medium">Insira o seu número para receber senha digital e alertas por SMS.</p>
+             <h1 className="text-4xl font-bold text-[#0F172A] tracking-tight">
+               {showNameInput ? "Como se chama?" : "Entrar na Fila"}
+             </h1>
+             <p className="text-slate-500 font-medium">
+               {showNameInput ? "Diga-nos o seu nome para o administrador o reconhecer." : "Insira o seu número para receber senha digital e alertas por SMS."}
+             </p>
           </header>
 
           <div className="card-premium p-8 md:p-10 space-y-8">
-             <form onSubmit={handleJoin} className="space-y-6">
-                <div className="space-y-1.5">
-                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Número de Telemóvel</label>
-                   <div className="flex gap-2">
-                      <div className="input-modern w-24 flex items-center justify-center bg-slate-100 text-slate-500 font-bold">+244</div>
-                      <input value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="9XX XXX XXX" type="tel" className="input-modern flex-1" required />
-                   </div>
-                </div>
-                <button type="submit" disabled={loading} className="btn-primary w-full py-5 text-base">
-                  {loading ? "A processar..." : "Obter Senha Digital"} <ArrowRight className="w-5 h-5" />
-                </button>
-                <div className="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-medium uppercase tracking-wider">
-                   <ShieldCheck className="w-3 h-3" /> Seus dados estão protegidos
-                </div>
-             </form>
-          </div>
-
-          <div className="card-premium p-6 flex flex-col items-center gap-4 bg-white/50 border-dashed border-2">
-             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Acesso Rápido</span>
-             <div className="p-3 bg-white rounded-xl shadow-sm"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={100} /></div>
-             <p className="text-[10px] text-slate-400 text-center font-medium leading-relaxed px-4">Digitalize o QR Code se estiver no local para entrar instantaneamente.</p>
+             {!showNameInput ? (
+               <form onSubmit={checkPhoneAndContinue} className="space-y-6">
+                  <div className="space-y-1.5">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Número de Telemóvel</label>
+                     <div className="flex gap-2">
+                        <div className="input-modern w-24 flex items-center justify-center bg-slate-100 text-slate-500 font-bold">+244</div>
+                        <input value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="9XX XXX XXX" type="tel" className="input-modern flex-1" required />
+                     </div>
+                  </div>
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-5 text-base">
+                    {loading ? "A processar..." : "Obter Senha Digital"} <ArrowRight className="w-5 h-5" />
+                  </button>
+               </form>
+             ) : (
+               <form onSubmit={(e) => handleJoin(e)} className="space-y-6">
+                  <div className="space-y-1.5">
+                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Seu Nome</label>
+                     <input value={name} onChange={(e:any) => setName(e.target.value)} placeholder="Ex: João Silva" type="text" className="input-modern" required autoFocus />
+                  </div>
+                  <button type="submit" disabled={loading} className="btn-primary w-full py-5 text-base">
+                    Confirmar e Entrar <CheckCircle2 className="w-5 h-5" />
+                  </button>
+                  <button type="button" onClick={() => setShowNameInput(false)} className="w-full text-xs font-bold text-slate-400 uppercase">Voltar</button>
+               </form>
+             )}
+             <div className="flex items-center gap-2 justify-center text-[10px] text-slate-400 font-medium uppercase tracking-wider pt-2">
+                <ShieldCheck className="w-3 h-3" /> Seus dados estão protegidos
+             </div>
           </div>
 
           <footer className="text-center pt-8">

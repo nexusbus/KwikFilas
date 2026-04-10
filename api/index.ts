@@ -105,7 +105,7 @@ app.post("/api/admin/establishments/delete", async (req, res) => {
 
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {
-  const { phone, estCode } = req.body;
+  const { phone, estCode, name } = req.body;
   const { data: est } = await supabase.from("establishments").select("id, initials").eq("code", estCode).single();
   if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
 
@@ -130,11 +130,39 @@ app.post("/api/queue/join", async (req, res) => {
 
   const { data, error } = await supabase
     .from("queues")
-    .insert([{ est_id: est.id, phone, ticket_number: ticket }])
+    .insert([{ est_id: est.id, phone, name, ticket_number: ticket }])
     .select().single();
 
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
+});
+
+// 5.1 VERIFICAR NOME POR TELEFONE
+app.get("/api/check-phone/:phone", async (req, res) => {
+  const { phone } = req.params;
+  
+  // Tentar encontrar o nome mais recente associado a este telefone no histórico
+  const { data: hData } = await supabase
+    .from("history")
+    .select("name")
+    .eq("phone", phone)
+    .not("name", "is", null)
+    .order("served_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (hData && hData.name) return res.json({ name: hData.name });
+
+  // Se não encontrar no histórico, tentar na fila atual
+  const { data: qData } = await supabase
+    .from("queues")
+    .select("name")
+    .eq("phone", phone)
+    .not("name", "is", null)
+    .limit(1)
+    .single();
+
+  res.json({ name: qData?.name || null });
 });
 
 // 6. CHAMAR PRÓXIMO + DISPARO SMS
@@ -149,6 +177,7 @@ app.post("/api/establishments/:code/next", async (req, res) => {
     await supabase.from("history").insert([{
       est_id: est.id,
       phone: current.phone,
+      name: current.name,
       ticket_number: current.ticket_number,
       served_at: new Date().toISOString()
     }]);
@@ -213,30 +242,50 @@ app.post("/api/queue/confirm-arrival", async (req, res) => {
   res.json({ success: true });
 });
 
-// 10. LISTAR CONTACTOS DO PARCEIRO (Base de Clientes completa)
+// 10. LISTAR CONTACTOS DO PARCEIRO (Base de Clientes completa com frequências)
 app.get("/api/establishments/:code/contacts", async (req, res) => {
   const { code } = req.params;
   const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
   // Buscar de ambas as tabelas para garantir base completa
-  const { data: qData } = await supabase.from("queues").select("phone, served_at:joined_at").eq("est_id", est.id);
-  const { data: hData } = await supabase.from("history").select("phone, served_at").eq("est_id", est.id);
+  const { data: qData } = await supabase.from("queues").select("phone, name, joined_at:joined_at").eq("est_id", est.id);
+  const { data: hData } = await supabase.from("history").select("phone, name, served_at").eq("est_id", est.id);
 
-  const combined = [...((qData || []) as any[]), ...((hData || []) as any[])];
+  const rawData = [
+    ...(qData || []).map(q => ({ phone: q.phone, name: q.name, date: q.joined_at })),
+    ...(hData || []).map(h => ({ phone: h.phone, name: h.name, date: h.served_at }))
+  ];
   
-  // Ordenar por data mais recente
-  combined.sort((a, b) => new Date(b.served_at).getTime() - new Date(a.served_at).getTime());
-
-  // Remover duplicados
-  const uniqueMap = new Map();
-  combined.forEach(c => {
-    if (!uniqueMap.has(c.phone)) {
-      uniqueMap.set(c.phone, c);
+  // Agrupar por telefone para calcular estatísticas
+  const statsMap = new Map();
+  
+  rawData.forEach(record => {
+    const existing = statsMap.get(record.phone);
+    const currentDate = new Date(record.date).getTime();
+    
+    if (!existing) {
+      statsMap.set(record.phone, {
+        phone: record.phone,
+        name: record.name,
+        last_visit: record.date,
+        visit_count: 1,
+        _lastDateMs: currentDate
+      });
+    } else {
+      existing.visit_count += 1;
+      // Manter o nome mais recente e a data mais recente
+      if (currentDate > existing._lastDateMs) {
+        existing._lastDateMs = currentDate;
+        existing.last_visit = record.date;
+        if (record.name) existing.name = record.name;
+      }
     }
   });
 
-  res.json(Array.from(uniqueMap.values()));
+  const finalResults = Array.from(statsMap.values()).sort((a, b) => b.visit_count - a.visit_count || b._lastDateMs - a._lastDateMs);
+
+  res.json(finalResults);
 });
 
 // 11. ADICIONAR CONTACTO MANUALMENTE
