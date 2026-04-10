@@ -213,26 +213,30 @@ app.post("/api/queue/confirm-arrival", async (req, res) => {
   res.json({ success: true });
 });
 
-// 10. LISTAR CONTACTOS DO PARCEIRO
+// 10. LISTAR CONTACTOS DO PARCEIRO (Base de Clientes completa)
 app.get("/api/establishments/:code/contacts", async (req, res) => {
   const { code } = req.params;
   const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
-  const { data, error } = await supabase
-    .from("history")
-    .select("phone, served_at")
-    .eq("est_id", est.id)
-    .order("served_at", { ascending: false });
+  // Buscar de ambas as tabelas para garantir base completa
+  const { data: qData } = await supabase.from("queues").select("phone, joined_at as served_at").eq("est_id", est.id);
+  const { data: hData } = await supabase.from("history").select("phone, served_at").eq("est_id", est.id);
 
-  if (error) return res.status(500).json({ error: error.message });
+  const combined = [...(qData || []), ...(hData || [])];
   
-  // Remover duplicados (mesmo número em visitas diferentes)
-  const unique = Array.from(new Set(data.map(c => c.phone))).map(phone => {
-     return data.find(c => c.phone === phone);
+  // Ordenar por data mais recente
+  combined.sort((a, b) => new Date(b.served_at).getTime() - new Date(a.served_at).getTime());
+
+  // Remover duplicados
+  const uniqueMap = new Map();
+  combined.forEach(c => {
+    if (!uniqueMap.has(c.phone)) {
+      uniqueMap.set(c.phone, c);
+    }
   });
 
-  res.json(unique);
+  res.json(Array.from(uniqueMap.values()));
 });
 
 // 11. ADICIONAR CONTACTO MANUALMENTE

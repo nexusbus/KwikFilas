@@ -439,6 +439,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   };
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
+  useEffect(() => { if (activeTab === 'crm') refreshContacts(); }, [activeTab, est]);
 
   const handleNext = async () => {
     if (!est) return;
@@ -795,7 +796,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                 <div className="space-y-1.5">
                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Número de Telemóvel</label>
                    <div className="flex gap-2">
-                      <div className="input-modern w-24 flex items-center justify-center bg-slate-100 text-slate-500 font-bold">+351</div>
+                      <div className="input-modern w-24 flex items-center justify-center bg-slate-100 text-slate-500 font-bold">+244</div>
                       <input value={phone} onChange={(e:any) => setPhone(e.target.value)} placeholder="9XX XXX XXX" type="tel" className="input-modern flex-1" required />
                    </div>
                 </div>
