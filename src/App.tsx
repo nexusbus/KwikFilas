@@ -638,16 +638,43 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                 </div>
 
                 <div className="card-premium flex items-center justify-between p-6">
-                   <div className="flex items-center gap-4">
-                      <QrCode className="w-6 h-6 text-slate-300" />
-                      <div>
-                         <h4 className="font-bold text-[#0F172A]">QR Code de Entrada</h4>
-                         <p className="text-xs text-slate-400">Imprima o cartaz para os seus clientes.</p>
-                      </div>
-                   </div>
-                   <div id="main-qr-canvas" className="hidden"><QRCodeSVG value={`https://kwikfilas.vercel.app/?est=${est.code}`} size={160} /></div>
-                   <button onClick={handlePrintQR} className="btn-ghost text-xs">Imprimir Cartaz</button>
-                </div>
+                    <div className="flex items-center gap-4">
+                       <QrCode className="w-6 h-6 text-slate-300" />
+                       <div>
+                          <h4 className="font-bold text-[#0F172A]">QR Code de Entrada</h4>
+                          <p className="text-xs text-slate-400">Imprima o cartaz para os seus clientes.</p>
+                       </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center gap-2">
+                       <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
+                          <QRCodeSVG 
+                            value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
+                            size={80} 
+                            imageSettings={{
+                              src: est.logo_url,
+                              height: 20,
+                              width: 20,
+                              excavate: true,
+                            }}
+                          />
+                       </div>
+                       <button onClick={handlePrintQR} className="btn-ghost text-[10px] h-auto py-1">Imprimir Cartaz</button>
+                    </div>
+
+                    <div id="main-qr-canvas" className="hidden">
+                       <QRCodeSVG 
+                         value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
+                         size={512} 
+                         imageSettings={{
+                           src: est.logo_url,
+                           height: 120,
+                           width: 120,
+                           excavate: true,
+                         }}
+                       />
+                    </div>
+                 </div>
              </div>
           </div>
           ) : (
