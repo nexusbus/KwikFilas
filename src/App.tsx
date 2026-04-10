@@ -692,6 +692,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
   const [phone, setPhone] = useState("");
   const [name, setName] = useState("");
   const [showNameInput, setShowNameInput] = useState(false);
+  const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [myTicket, setMyTicket] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -778,7 +779,6 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
 
   const handleLeave = async () => {
     if (!myTicket || !est) return;
-    if (!confirm("Tem a certeza que deseja abandonar a fila?")) return;
     
     setLoading(true);
     const res = await fetch(`/api/establishments/${est.code}/cancel`, { 
@@ -790,6 +790,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     if (res.ok) {
       localStorage.removeItem(`kw_phone_${estCode}`);
       setMyTicket(null);
+      setShowAbandonModal(false);
       notify("Saiu da fila.");
     }
     setLoading(false);
@@ -840,7 +841,28 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                 )}
             </div>
 
-            <button onClick={handleLeave} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
+            <button onClick={() => setShowAbandonModal(true)} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
+
+            <AnimatePresence>
+              {showAbandonModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
+                  <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowAbandonModal(false)} className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" />
+                  <motion.div initial={{ opacity: 0, scale: 0.9, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.9, y: 20 }} className="card-premium w-full max-w-xs p-8 relative z-10 space-y-6 text-center shadow-2xl">
+                    <div className="w-16 h-16 bg-red-50 text-red-500 rounded-2xl flex items-center justify-center mx-auto">
+                      <LogOut className="w-8 h-8" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-bold text-[#0F172A]">Abandonar Fila?</h3>
+                      <p className="text-sm text-slate-500 font-medium">Irá perder a sua posição na linha e precisará de recolher uma nova senha.</p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                      <button onClick={handleLeave} disabled={loading} className="btn-primary bg-red-500 hover:bg-red-600 border-none py-4">Sim, desejo sair</button>
+                      <button onClick={() => setShowAbandonModal(false)} disabled={loading} className="text-xs font-bold text-slate-400 uppercase tracking-widest py-2">Cancelar</button>
+                    </div>
+                  </motion.div>
+                </div>
+              )}
+            </AnimatePresence>
         </motion.div>
       </div>
     );
