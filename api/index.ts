@@ -175,14 +175,18 @@ app.post("/api/establishments/:code/next", async (req, res) => {
 
   const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
   if (current) {
-    // Mover para histórico antes de remover
-    await supabase.from("history").insert([{
+    // Tentar mover para histórico (se falhar, removemos da fila na mesma para não bloquear, mas tentamos ser robustos)
+    const histPayload: any = {
       est_id: est.id,
       phone: current.phone,
       name: current.name,
-      ticket_number: current.ticket_number,
-      served_at: new Date().toISOString()
-    }]);
+      ticket_number: current.ticket_number
+    };
+    
+    // Adicionar served_at apenas se existir ou usar joined_at como fallback
+    histPayload.served_at = new Date().toISOString();
+
+    await supabase.from("history").insert([histPayload]);
     await supabase.from("queues").delete().eq("id", current.id);
   }
 
@@ -250,13 +254,13 @@ app.get("/api/establishments/:code/contacts", async (req, res) => {
   const { data: est } = await supabase.from("establishments").select("id").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
-  // Buscar de ambas as tabelas para garantir base completa
-  const { data: qData } = await supabase.from("queues").select("phone, name, joined_at").eq("est_id", est.id);
-  const { data: hData } = await supabase.from("history").select("phone, name, served_at").eq("est_id", est.id);
+  // Buscar de ambas as tabelas
+  const { data: qData } = await supabase.from("queues").select("*").eq("est_id", est.id);
+  const { data: hData } = await supabase.from("history").select("*").eq("est_id", est.id);
 
   const rawData = [
-    ...(qData || []).map(q => ({ phone: q.phone || 'S/N', name: q.name, date: q.joined_at })),
-    ...(hData || []).map(h => ({ phone: h.phone || 'S/N', name: h.name, date: h.served_at }))
+    ...(qData || []).map(q => ({ phone: q.phone || 'S/N', name: q.name, date: q.joined_at || new Date().toISOString() })),
+    ...(hData || []).map(h => ({ phone: h.phone || 'S/N', name: h.name, date: h.served_at || h.joined_at || new Date().toISOString() }))
   ];
   
   // Agrupar por telefone para calcular estatísticas

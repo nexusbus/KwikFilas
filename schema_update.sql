@@ -3,6 +3,7 @@
 
 ALTER TABLE queues ADD COLUMN IF NOT EXISTS name TEXT;
 ALTER TABLE history ADD COLUMN IF NOT EXISTS name TEXT;
+ALTER TABLE history ADD COLUMN IF NOT EXISTS served_at TIMESTAMP WITH TIME ZONE DEFAULT NOW();
 
 -- Índices para melhorar a performance da base de dados de clientes
 CREATE INDEX IF NOT EXISTS idx_history_phone ON history(phone);
