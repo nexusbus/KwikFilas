@@ -950,8 +950,8 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
             </div>
 
             <button onClick={() => setShowAbandonModal(true)} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
-        </div>
-
+            </motion.div>
+            
             <AnimatePresence>
               {showAbandonModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
@@ -968,11 +968,12 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                       <button onClick={handleLeave} disabled={loading} className="btn-primary bg-red-500 hover:bg-red-600 border-none py-4">Sim, desejo sair</button>
                       <button onClick={() => setShowAbandonModal(false)} disabled={loading} className="text-xs font-bold text-slate-400 uppercase tracking-widest py-2">Cancelar</button>
                     </div>
+            <button onClick={() => setShowAbandonModal(true)} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
                   </motion.div>
                 </div>
               )}
             </AnimatePresence>
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -1036,7 +1037,8 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
           <footer className="text-center pt-8">
             <p className="text-[10px] font-bold text-slate-300 uppercase tracking-widest leading-loose">© 2024 KWIKFILAS THE DIGITAL CURATOR.<br/>ALL RIGHTS RESERVED.</p>
           </footer>
-       </motion.div>
+        </motion.div>
+       </div>
     </div>
   );
 };
