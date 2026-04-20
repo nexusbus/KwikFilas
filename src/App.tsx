@@ -167,9 +167,113 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
         </div>
       </section>
 
+      <section id="pricing" className="py-20 px-6 md:px-12 bg-white">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-[#0F172A]">Planos de Subscrição</h2>
+            <p className="text-slate-500">Escolha o plano ideal para a escala do seu negócio.</p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* KFmini */}
+            <div className="card-premium flex flex-col justify-between border border-slate-100 hover:border-[#3451D1] transition-all">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-[#0F172A]">KFmini</h3>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-[#0F172A]">0kz</span>
+                    <span className="text-slate-500 text-sm">/mês</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span>150 kz por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span>Gerenciamento de cliente</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span>Base de dados inclusa</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={onLoginClick} className="btn-ghost w-full mt-10">Selecionar Plano</button>
+            </div>
+
+            {/* KFmed */}
+            <div className="card-premium flex flex-col justify-between border-2 border-[#3451D1] relative md:scale-105 shadow-2xl z-10 py-10">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#3451D1] text-white text-[10px] font-bold px-4 py-1 rounded-full uppercase tracking-widest">Mais Popular</div>
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold text-[#0F172A]">KFmed</h3>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold text-[#0F172A]">5.000kz</span>
+                    <span className="text-slate-500 text-sm">/mês</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>220 kz por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>Gerenciamento de cliente</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>Base de dados inclusa</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600 font-bold">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>2x SMS em massa/mês</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={onLoginClick} className="btn-primary w-full mt-10">Selecionar Plano</button>
+            </div>
+
+            {/* KFmax */}
+            <div className="card-premium flex flex-col justify-between border border-slate-100 hover:border-[#3451D1] transition-all bg-slate-900 text-white">
+              <div className="space-y-6">
+                <div>
+                  <h3 className="text-xl font-bold">KFmax</h3>
+                  <div className="mt-2 flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">10.000kz</span>
+                    <span className="text-slate-400 text-sm">/mês</span>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>350 kz por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>Gerenciamento de cliente</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>Base de dados inclusa</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300 font-bold">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>4x SMS Publicitária/mês</span>
+                  </div>
+                </div>
+              </div>
+              <button onClick={onLoginClick} className="btn-ghost bg-white/10 text-white hover:bg-white/20 w-full mt-10 border-none">Selecionar Plano</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <footer className="py-12 border-t border-slate-100 px-6 md:px-12 text-center bg-white">
         <KLogo className="w-8 h-8 mx-auto mb-4 text-slate-300" />
-        <p className="text-sm font-medium text-slate-400">© 2024 KwikFilas. Todos os direitos reservados.</p>
+        <p className="text-sm font-medium text-slate-400">© 2026 KwikFilas. Todos os direitos reservados.</p>
       </footer>
     </div>
   );
