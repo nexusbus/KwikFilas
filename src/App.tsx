@@ -180,23 +180,39 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold text-[#0F172A]">KFmini</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-[#0F172A]">0kz</span>
-                    <span className="text-slate-500 text-sm">/mês</span>
+                  <p className="text-xs text-slate-500 mt-1">Essencial para pequenos fluxos</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-3xl font-bold text-[#0F172A]">150 kz</span>
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-4 py-1">
+                    <div className="h-[1px] bg-slate-100 flex-1"></div>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">ou</span>
+                    <div className="h-[1px] bg-slate-100 flex-1"></div>
+                  </div>
+                  <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
+                    <span className="text-2xl font-bold text-[#3451D1]">60.000 kz</span>
+                    <span className="text-[10px] text-blue-400 font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>150 kz por cliente na fila</span>
+                    <span>Alertas automáticos</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>Gerenciamento de cliente</span>
+                    <span>Gestão de contactos</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
                     <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    <span>Base de dados inclusa</span>
+                    <span>Visualização de base</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
+                    <CheckCircle2 className="w-5 h-5 text-green-500" />
+                    <span>Gestão de filas</span>
                   </div>
                 </div>
               </div>
@@ -209,27 +225,35 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold text-[#0F172A]">KFmed</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold text-[#0F172A]">5.000kz</span>
-                    <span className="text-slate-500 text-sm">/mês</span>
+                  <p className="text-xs text-slate-500 mt-1">Crescimento com marketing direto</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
+                    <span className="text-3xl font-bold text-[#0F172A]">220 kz</span>
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-4 py-1">
+                    <div className="h-[1px] bg-slate-100 flex-1"></div>
+                    <span className="text-[10px] font-bold text-slate-300 uppercase">ou</span>
+                    <div className="h-[1px] bg-slate-100 flex-1"></div>
+                  </div>
+                  <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
+                    <span className="text-2xl font-bold text-[#3451D1]">90.000 kz</span>
+                    <span className="text-[10px] text-[#3451D1] font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
                     <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>220 kz por cliente na fila</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>Gerenciamento de cliente</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-600">
-                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>Base de dados inclusa</span>
+                    <span>Tudo no KFmini</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-600 font-bold">
                     <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>2x SMS em massa/mês</span>
+                    <span>2x SMS Publicitária/Informativa/mês</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-400">
+                    <CheckCircle2 className="w-5 h-5" />
+                    <span>Suporte prioritário</span>
                   </div>
                 </div>
               </div>
@@ -241,27 +265,35 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
               <div className="space-y-6">
                 <div>
                   <h3 className="text-xl font-bold">KFmax</h3>
-                  <div className="mt-2 flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">10.000kz</span>
-                    <span className="text-slate-400 text-sm">/mês</span>
+                  <p className="text-xs text-slate-400 mt-1">Escala total e publicidade</p>
+                </div>
+                <div className="space-y-3">
+                  <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center">
+                    <span className="text-3xl font-bold">350 kz</span>
+                    <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
+                  </div>
+                  <div className="flex items-center gap-4 py-1">
+                    <div className="h-[1px] bg-white/10 flex-1"></div>
+                    <span className="text-[10px] font-bold text-slate-500 uppercase">ou</span>
+                    <div className="h-[1px] bg-white/10 flex-1"></div>
+                  </div>
+                  <div className="p-4 bg-[#3451D1] rounded-2xl border border-blue-400/30 text-center">
+                    <span className="text-2xl font-bold">150.000 kz</span>
+                    <span className="text-[10px] text-blue-200 font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3 pt-2">
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
                     <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>350 kz por cliente na fila</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
-                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>Gerenciamento de cliente</span>
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
-                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>Base de dados inclusa</span>
+                    <span>Tudo no KFmed</span>
                   </div>
                   <div className="flex items-center gap-3 text-sm font-medium text-slate-300 font-bold">
                     <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
-                    <span>4x SMS Publicitária/mês</span>
+                    <span>4x SMS Publicitária/Informativa/mês</span>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm font-medium text-slate-300">
+                    <CheckCircle2 className="w-5 h-5 text-[#3451D1]" />
+                    <span>Dashboard avançado</span>
                   </div>
                 </div>
               </div>
