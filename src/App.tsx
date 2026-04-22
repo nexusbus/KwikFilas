@@ -189,7 +189,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-3xl font-bold text-[#0F172A]">150 kz</span>
+                    <span className="text-3xl font-bold text-[#0F172A]">225 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
@@ -198,7 +198,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                     <div className="h-[1px] bg-slate-100 flex-1"></div>
                   </div>
                   <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100/50 text-center">
-                    <span className="text-2xl font-bold text-[#3451D1]">60.000 kz</span>
+                    <span className="text-2xl font-bold text-[#3451D1]">90.000 kz</span>
                     <span className="text-[10px] text-blue-400 font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
@@ -234,7 +234,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-3xl font-bold text-[#0F172A]">220 kz</span>
+                    <span className="text-3xl font-bold text-[#0F172A]">330 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
@@ -243,7 +243,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                     <div className="h-[1px] bg-slate-100 flex-1"></div>
                   </div>
                   <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 text-center">
-                    <span className="text-2xl font-bold text-[#3451D1]">90.000 kz</span>
+                    <span className="text-2xl font-bold text-[#3451D1]">135.000 kz</span>
                     <span className="text-[10px] text-[#3451D1] font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
@@ -274,7 +274,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center">
-                    <span className="text-3xl font-bold">350 kz</span>
+                    <span className="text-3xl font-bold">525 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
@@ -283,7 +283,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                     <div className="h-[1px] bg-white/10 flex-1"></div>
                   </div>
                   <div className="p-4 bg-[#3451D1] rounded-2xl border border-blue-400/30 text-center">
-                    <span className="text-2xl font-bold">150.000 kz</span>
+                    <span className="text-2xl font-bold">225.000 kz</span>
                     <span className="text-[10px] text-blue-200 font-bold block uppercase tracking-widest mt-1">Subscrição Mensal</span>
                   </div>
                 </div>
