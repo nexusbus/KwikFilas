@@ -51,8 +51,9 @@ const ToastContainer = ({ toasts, remove }: { toasts: Toast[], remove: (id: stri
 );
 
 const KLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={cn("text-[#3451D1] w-8 h-8", className)} fill="none">
-    <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
+  <svg viewBox="0 0 100 100" className={cn("w-10 h-10", className)} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect width="100" height="100" rx="20" fill="currentColor"/>
+    <path d="M30 25V75M30 50L65 25M30 50L65 75" stroke="white" strokeWidth="10" strokeLinecap="round" strokeLinejoin="round"/>
   </svg>
 );
 
