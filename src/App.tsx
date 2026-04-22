@@ -189,7 +189,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-3xl font-bold text-[#0F172A]">225 kz</span>
+                    <span className="text-3xl font-bold text-[#0F172A]">150 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
@@ -234,7 +234,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-center">
-                    <span className="text-3xl font-bold text-[#0F172A]">330 kz</span>
+                    <span className="text-3xl font-bold text-[#0F172A]">220 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
@@ -274,7 +274,7 @@ const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () =>
                 </div>
                 <div className="space-y-3">
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10 text-center">
-                    <span className="text-3xl font-bold">525 kz</span>
+                    <span className="text-3xl font-bold">350 kz</span>
                     <span className="text-[10px] text-slate-400 font-bold block uppercase tracking-widest mt-1">Por cliente na fila</span>
                   </div>
                   <div className="flex items-center gap-4 py-1">
