@@ -875,9 +875,6 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
   );
 };
 
-  );
-};
-
 // --- 3. EST ADMIN: GESTÃO ---
 const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [est, setEst] = useState<Establishment | null>(null);
