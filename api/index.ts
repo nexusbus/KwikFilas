@@ -75,7 +75,7 @@ app.post("/api/admin/establishments", async (req, res) => {
   const { data, error } = await supabase
     .from("establishments")
     .insert([{ 
-      name, nif, admin_email, admin_password, logo_url, initials, code, role: 'establishment' 
+      name, nif, admin_email, admin_password, logo_url, initials, code, role: 'establishment', plan: req.body.plan || 'KFmini'
     }])
     .select()
     .single();
@@ -344,10 +344,10 @@ app.post("/api/establishments/:code/contacts", async (req, res) => {
 
 // 12. SUBSCREVER (Pendente de Aprovação)
 app.post("/api/subscriptions", async (req, res) => {
-  const { name, nif, admin_email, admin_password, logo_url } = req.body;
+  const { name, nif, admin_email, admin_password, logo_url, plan } = req.body;
   const { data, error } = await supabase
     .from("subscriptions")
-    .insert([{ name, nif, admin_email, admin_password, logo_url, status: 'pending' }])
+    .insert([{ name, nif, admin_email, admin_password, logo_url, plan: plan || 'KFmini', status: 'pending' }])
     .select()
     .single();
 
@@ -397,6 +397,7 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
       admin_email: sub.admin_email, 
       admin_password: sub.admin_password, 
       logo_url: sub.logo_url, 
+      plan: sub.plan || 'KFmini',
       initials, 
       code, 
       role: 'establishment' 

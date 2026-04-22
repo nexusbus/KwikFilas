@@ -17,6 +17,7 @@ export interface Establishment {
   admin_email: string;
   admin_password: string;
   logo_url?: string;
+  plan?: string;
   average_wait_time?: number;
   queues?: Customer[];
   history?: Customer[];
@@ -34,5 +35,6 @@ export interface Subscription {
   admin_email: string;
   admin_password: string;
   logo_url?: string;
+  plan?: string;
   status: 'pending' | 'approved' | 'rejected';
 }

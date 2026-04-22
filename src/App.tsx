@@ -57,7 +57,7 @@ const KLogo = ({ className }: { className?: string }) => (
 );
 
 // --- 0. MARKETING: LANDING PAGE ---
-const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
+const MarketingView = ({ onLoginClick, onSubscribeClick }: { onLoginClick: () => void, onSubscribeClick: (plan?: string) => void }) => {
   return (
     <div className="w-full bg-[#F8FAFD] font-['Inter'] min-h-screen">
       <nav className="fixed top-0 left-0 right-0 bg-white/80 backdrop-blur-md z-50 border-b border-slate-100 h-20 flex items-center px-6 md:px-12 justify-between">
@@ -66,7 +66,7 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
           <span className="font-bold text-xl tracking-tight text-[#0F172A]">KwikFilas</span>
         </div>
         <div className="flex gap-4">
-          <button onClick={() => window.dispatchEvent(new CustomEvent('nav-subscribe'))} className="text-sm font-bold text-slate-500 hover:text-[#3451D1] transition-colors">
+          <button onClick={() => onSubscribeClick()} className="text-sm font-bold text-slate-500 hover:text-[#3451D1] transition-colors">
             Adira à Rede
           </button>
           <button onClick={onLoginClick} className="btn-ghost text-sm">
@@ -86,7 +86,7 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
             Elimine a espera física com alertas por SMS em tempo real. Dê liberdade aos seus clientes e eficiência ao seu negócio.
           </p>
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-            <button onClick={() => window.dispatchEvent(new CustomEvent('nav-subscribe'))} className="btn-primary px-8 py-4 text-base w-full md:w-auto">
+            <button onClick={() => onSubscribeClick()} className="btn-primary px-8 py-4 text-base w-full md:w-auto">
               Registar Estabelecimento
             </button>
             <button onClick={onLoginClick} className="btn-ghost px-8 py-4 text-base w-full md:w-auto">
@@ -221,7 +221,7 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   </div>
                 </div>
               </div>
-              <button onClick={onLoginClick} className="btn-ghost w-full mt-10">Selecionar Plano</button>
+              <button onClick={() => onSubscribeClick("KFmini")} className="btn-ghost w-full mt-10">Selecionar Plano</button>
             </div>
 
             {/* KFmed */}
@@ -262,7 +262,7 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   </div>
                 </div>
               </div>
-              <button onClick={onLoginClick} className="btn-primary w-full mt-10">Selecionar Plano</button>
+              <button onClick={() => onSubscribeClick("KFmed")} className="btn-primary w-full mt-10">Selecionar Plano</button>
             </div>
 
             {/* KFmax */}
@@ -302,7 +302,7 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
                   </div>
                 </div>
               </div>
-              <button onClick={onLoginClick} className="btn-ghost bg-white/10 text-white hover:bg-white/20 w-full mt-10 border-none">Selecionar Plano</button>
+              <button onClick={() => onSubscribeClick("KFmax")} className="btn-ghost bg-white/10 text-white hover:bg-white/20 w-full mt-10 border-none">Selecionar Plano</button>
             </div>
           </div>
         </div>
@@ -381,8 +381,15 @@ const LandingView = ({ onLogin, onBack }: { onLogin: (authData: AuthUser) => voi
 
 
 // --- 1.5. SUBSCRIPÇÃO: FORMULÁRIO ---
-const SubscribeView = ({ onBack, notify }: { onBack: () => void, notify: (m: string, t?: any) => void }) => {
-  const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" });
+const SubscribeView = ({ onBack, notify, initialPlan }: { onBack: () => void, notify: (m: string, t?: any) => void, initialPlan?: string }) => {
+  const [formData, setFormData] = useState({ 
+    name: "", 
+    nif: "", 
+    admin_email: "", 
+    admin_password: "", 
+    logo_url: "",
+    plan: initialPlan || "KFmini"
+  });
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -444,11 +451,11 @@ const SubscribeView = ({ onBack, notify }: { onBack: () => void, notify: (m: str
         </button>
 
         <div className="card-premium p-8 md:p-12 space-y-8">
-          <div className="text-center space-y-2">
-            <KLogo className="w-12 h-12 mx-auto text-[#3451D1] mb-4" />
-            <h1 className="text-3xl font-bold">Registe o seu Negócio</h1>
-            <p className="text-slate-500">Junte-se à rede KwikFilas e modernize a sua gestão de filas.</p>
-          </div>
+            <div className="text-center space-y-2">
+              <KLogo className="w-12 h-12 mx-auto text-[#3451D1] mb-4" />
+              <h1 className="text-3xl font-bold">Registe o seu Negócio</h1>
+              <p className="text-slate-500">Junte-se à rede KwikFilas no plano <span className="font-bold text-[#3451D1]">{formData.plan}</span>.</p>
+            </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="flex flex-col items-center">
@@ -724,6 +731,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                   <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
                     <tr>
                       <th className="px-6 py-4">Estabelecimento</th>
+                      <th className="px-6 py-4">Plano</th>
                       <th className="px-6 py-4">Contacto</th>
                       <th className="px-6 py-4">Data</th>
                       <th className="px-6 py-4">Status</th>
@@ -734,6 +742,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                     {subs.map(sub => (
                       <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-[#0F172A]">{sub.name} <div className="text-[10px] text-slate-400 font-medium tracking-widest">{sub.nif}</div></td>
+                        <td className="px-6 py-4"><span className="text-[10px] font-black px-2 py-1 bg-blue-50 text-[#3451D1] rounded-md border border-blue-100">{sub.plan}</span></td>
                         <td className="px-6 py-4 text-sm text-slate-500 font-medium">{sub.admin_email}</td>
                         <td className="px-6 py-4 text-sm text-slate-400">{new Date(sub.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
@@ -1484,6 +1493,7 @@ export default function App() {
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<string | undefined>(undefined);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -1497,7 +1507,10 @@ export default function App() {
     const code = p.get("est");
     if (code) setClientEstCode(code);
 
-    const handleSubNav = () => setShowSubscribe(true);
+    const handleSubNav = (e: any) => {
+      setSelectedPlan(e.detail?.plan);
+      setShowSubscribe(true);
+    };
     window.addEventListener('nav-subscribe', handleSubNav);
     return () => window.removeEventListener('nav-subscribe', handleSubNav);
   }, []);
@@ -1519,11 +1532,14 @@ export default function App() {
       ) : auth ? ( 
         auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} notify={showToast} /> : <EstAdminView auth={auth} onLogout={handleLogout} notify={showToast} /> 
       ) : showSubscribe ? (
-        <SubscribeView onBack={() => setShowSubscribe(false)} notify={showToast} />
+        <SubscribeView initialPlan={selectedPlan} onBack={() => { setShowSubscribe(false); setSelectedPlan(undefined); }} notify={showToast} />
       ) : showLogin ? (
         <LandingView onLogin={handleLogin} onBack={() => setShowLogin(false)} />
       ) : (
-        <MarketingView onLoginClick={() => setShowLogin(true)} />
+        <MarketingView 
+          onLoginClick={() => setShowLogin(true)} 
+          onSubscribeClick={(plan) => { setSelectedPlan(plan); setShowSubscribe(true); }}
+        />
       )}
     </div>
   );
