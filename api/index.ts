@@ -342,6 +342,100 @@ app.post("/api/establishments/:code/contacts", async (req, res) => {
   res.json({ success: true });
 });
 
+// 12. SUBSCREVER (Pendente de Aprovação)
+app.post("/api/subscriptions", async (req, res) => {
+  const { name, nif, admin_email, admin_password, logo_url } = req.body;
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .insert([{ name, nif, admin_email, admin_password, logo_url, status: 'pending' }])
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+// 13. LISTAR SUBSKRIÇÕES (Super Admin)
+app.get("/api/admin/subscriptions", async (req, res) => {
+  const { data, error } = await supabase
+    .from("subscriptions")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+// 14. APROVAR SUBSKRIÇÃO (Super Admin)
+app.post("/api/admin/subscriptions/approve", async (req, res) => {
+  const { subId, superPassword } = req.body;
+
+  // Verificar super senha
+  const { data: isSuper } = await supabase
+    .from("establishments")
+    .select("id")
+    .eq("role", "super")
+    .eq("admin_password", superPassword)
+    .single();
+
+  if (!isSuper) return res.status(403).json({ error: "Senha de Super User incorreta" });
+
+  // Buscar dados da subscrição
+  const { data: sub } = await supabase.from("subscriptions").select("*").eq("id", subId).single();
+  if (!sub) return res.status(404).json({ error: "Subscrição não encontrada" });
+
+  // Criar estabelecimento
+  const initials = await generateUniqueInitials(sub.name);
+  const countRes = await supabase.from("establishments").select("id", { count: "exact", head: true });
+  const code = `${initials}-${(countRes.count || 0) + 1}`;
+
+  const { error: estError } = await supabase
+    .from("establishments")
+    .insert([{ 
+      name: sub.name, 
+      nif: sub.nif, 
+      admin_email: sub.admin_email, 
+      admin_password: sub.admin_password, 
+      logo_url: sub.logo_url, 
+      initials, 
+      code, 
+      role: 'establishment' 
+    }]);
+
+  if (estError) return res.status(500).json({ error: "Erro ao criar estabelecimento" });
+
+  // Atualizar status da subscrição
+  await supabase.from("subscriptions").update({ status: 'approved' }).eq("id", subId);
+
+  res.json({ success: true });
+});
+
+// 15. ESTATÍSTICAS GLOBAIS (Super Admin)
+app.get("/api/admin/stats", async (req, res) => {
+  const { client, start_date, end_date, ticket_number } = req.query;
+
+  let query = supabase.from("history").select("*, establishments(name)");
+
+  if (client) {
+    query = query.ilike("phone", `%${client}%`);
+  }
+  if (start_date) {
+    query = query.gte("served_at", `${start_date}T00:00:00Z`);
+  }
+  if (end_date) {
+    query = query.lte("served_at", `${end_date}T23:59:59Z`);
+  }
+  if (ticket_number) {
+    query = query.ilike("ticket_number", `%${ticket_number}%`);
+  }
+
+  const { data, error } = await query.order("served_at", { ascending: false });
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data || []);
+});
+
+
 // --- HELPER SMS ---
 async function triggerSms(phone: string, ticket: string, estName: string, customMsg?: string) {
   const rawId = process.env.SMSHUB_AUTH_ID ?? '';

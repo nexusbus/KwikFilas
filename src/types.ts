@@ -25,3 +25,14 @@ export interface Establishment {
 export interface QueueState {
   establishments: Establishment[];
 }
+
+export interface Subscription {
+  id: string;
+  created_at: string;
+  name: string;
+  nif: string;
+  admin_email: string;
+  admin_password: string;
+  logo_url?: string;
+  status: 'pending' | 'approved' | 'rejected';
+}

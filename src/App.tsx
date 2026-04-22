@@ -9,7 +9,7 @@ import {
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { Customer, Establishment } from "./types";
+import { Customer, Establishment, Subscription } from "./types";
 
 function cn(...inputs: ClassValue[]) { return twMerge(clsx(inputs)); }
 
@@ -65,9 +65,14 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
           <KLogo className="w-8 h-8 text-[#3451D1]" />
           <span className="font-bold text-xl tracking-tight text-[#0F172A]">KwikFilas</span>
         </div>
-        <button onClick={onLoginClick} className="btn-ghost text-sm">
-          Portal Parceiro
-        </button>
+        <div className="flex gap-4">
+          <button onClick={() => window.dispatchEvent(new CustomEvent('nav-subscribe'))} className="text-sm font-bold text-slate-500 hover:text-[#3451D1] transition-colors">
+            Adira à Rede
+          </button>
+          <button onClick={onLoginClick} className="btn-ghost text-sm">
+            Portal Parceiro
+          </button>
+        </div>
       </nav>
 
       <section className="pt-40 pb-20 px-6 md:px-12 max-w-5xl mx-auto flex flex-col items-center text-center">
@@ -81,11 +86,11 @@ const MarketingView = ({ onLoginClick }: { onLoginClick: () => void }) => {
             Elimine a espera física com alertas por SMS em tempo real. Dê liberdade aos seus clientes e eficiência ao seu negócio.
           </p>
           <div className="flex flex-col md:flex-row items-center justify-center gap-4 pt-4">
-            <button onClick={onLoginClick} className="btn-primary px-8 py-4 text-base w-full md:w-auto">
-              Começar agora
+            <button onClick={() => window.dispatchEvent(new CustomEvent('nav-subscribe'))} className="btn-primary px-8 py-4 text-base w-full md:w-auto">
+              Registar Estabelecimento
             </button>
-            <button className="btn-ghost px-8 py-4 text-base w-full md:w-auto">
-              Ver Demonstração
+            <button onClick={onLoginClick} className="btn-ghost px-8 py-4 text-base w-full md:w-auto">
+              Portal Parceiro
             </button>
           </div>
         </motion.div>
@@ -374,15 +379,136 @@ const LandingView = ({ onLogin, onBack }: { onLogin: (authData: AuthUser) => voi
   );
 };
 
+
+// --- 1.5. SUBSCRIPÇÃO: FORMULÁRIO ---
+const SubscribeView = ({ onBack, notify }: { onBack: () => void, notify: (m: string, t?: any) => void }) => {
+  const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" });
+  const [loading, setLoading] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    setLoading(true);
+    try {
+      const file = e.target.files[0];
+      const fileName = `sub-${Date.now()}-${file.name.replace(/[^a-zA-Z0-9]/g, '')}`;
+      const { data, error } = await supabase.storage.from('logos').upload(fileName, file);
+      if (!error) {
+         const { data: { publicUrl } } = supabase.storage.from('logos').getPublicUrl(data.path);
+         setFormData({ ...formData, logo_url: publicUrl });
+         notify("Logótipo Carregado");
+      }
+    } catch (e) { notify("Erro no Upload", 'error'); }
+    setLoading(false);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const res = await fetch("/api/subscriptions", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      });
+      if (res.ok) {
+        setSubmitted(true);
+        notify("Pedido enviado com sucesso!");
+      } else {
+        notify("Erro ao enviar pedido", 'error');
+      }
+    } catch (e) { notify("Erro de conexão", 'error'); }
+    setLoading(false);
+  };
+
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFD] flex items-center justify-center p-6">
+        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="card-premium p-10 max-w-sm text-center space-y-6">
+          <div className="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto">
+            <CheckCircle2 className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-bold">Pedido Recebido!</h2>
+          <p className="text-slate-500">A sua solicitação foi enviada para o nosso Super Admin. Irá receber um contacto assim que for aprovado.</p>
+          <button onClick={onBack} className="btn-primary w-full">Voltar ao Início</button>
+        </motion.div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#F8FAFD] p-6 flex flex-col items-center">
+      <div className="max-w-xl w-full space-y-8 mt-12">
+        <button onClick={onBack} className="flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-[#3451D1] transition-colors">
+          <ChevronLeft className="w-4 h-4"/> Voltar
+        </button>
+
+        <div className="card-premium p-8 md:p-12 space-y-8">
+          <div className="text-center space-y-2">
+            <KLogo className="w-12 h-12 mx-auto text-[#3451D1] mb-4" />
+            <h1 className="text-3xl font-bold">Registe o seu Negócio</h1>
+            <p className="text-slate-500">Junte-se à rede KwikFilas e modernize a sua gestão de filas.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="flex flex-col items-center">
+              <div className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden relative group">
+                  {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <Camera className="w-8 h-8 text-slate-300" />}
+                  <label className="absolute inset-0 bg-[#3451D1]/80 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all">
+                    <Camera className="w-6 h-6 text-white" />
+                    <input type="file" className="hidden" onChange={handleUpload} />
+                  </label>
+              </div>
+              <span className="text-[10px] font-bold text-slate-400 uppercase mt-2">Logótipo do Negócio</span>
+            </div>
+
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nome do Estabelecimento</label>
+                <input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-modern" placeholder="Ex: Restaurante Maré" required />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">NIF (Identificação Fiscal)</label>
+                <input value={formData.nif} onChange={e => setFormData({...formData, nif: e.target.value})} className="input-modern" placeholder="999 999 999" required />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email do Gestor</label>
+                  <input type="email" value={formData.admin_email} onChange={e => setFormData({...formData, admin_email: e.target.value})} className="input-modern" placeholder="gerente@exemplo.com" required />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Senha de Acesso</label>
+                  <input type="password" value={formData.admin_password} onChange={e => setFormData({...formData, admin_password: e.target.value})} className="input-modern" placeholder="••••••••" required />
+                </div>
+              </div>
+            </div>
+
+            <button type="submit" disabled={loading} className="btn-primary w-full py-5">
+              {loading ? "A enviar..." : "Enviar Candidatura"}
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- 2. SUPER ADMIN: GESTÃO ---
 const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [establishments, setEstablishments] = useState<Establishment[]>([]);
+  const [subs, setSubs] = useState<Subscription[]>([]);
+  const [history, setHistory] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<"lojas" | "pedidos" | "historico">("lojas");
+  const [statsView, setStatsView] = useState<"visitas" | "ranking">("visitas");
   const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const refresh = async () => {
+  // Filtros Histórico
+  const [filters, setFilters] = useState({ client: "", start_date: "", end_date: "", ticket_number: "" });
+
+  const refreshEsts = async () => {
     try {
       const res = await fetch("/api/admin/establishments");
       const data = await res.json();
@@ -390,7 +516,28 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
     } catch (e) { console.error("API error"); }
   };
 
-  useEffect(() => { refresh(); }, []);
+  const refreshSubs = async () => {
+    try {
+      const res = await fetch("/api/admin/subscriptions");
+      const data = await res.json();
+      setSubs(Array.isArray(data) ? data : []);
+    } catch (e) { console.error("API error"); }
+  };
+
+  const refreshStats = async () => {
+    try {
+      const q = new URLSearchParams(filters).toString();
+      const res = await fetch(`/api/admin/stats?${q}`);
+      const data = await res.json();
+      setHistory(Array.isArray(data) ? data : []);
+    } catch (e) { console.error("API error"); }
+  };
+
+  useEffect(() => { 
+    if (activeTab === "lojas") refreshEsts();
+    if (activeTab === "pedidos") refreshSubs();
+    if (activeTab === "historico") refreshStats();
+  }, [activeTab]);
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -413,7 +560,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
     setLoading(true);
     try {
       const isEdit = view === "edit" && editingId;
-      const url = isEdit ? "/api/admin/establishments" : "/api/admin/establishments";
+      const url = "/api/admin/establishments";
       const method = isEdit ? "PUT" : "POST";
       
       const payload = isEdit 
@@ -429,7 +576,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       });
 
       if (res.ok) { 
-        refresh(); 
+        refreshEsts(); 
         setView("list"); 
         notify(isEdit ? "Dados atualizados" : "Estabelecimento criado"); 
         setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); 
@@ -437,6 +584,26 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       }
       else { notify("Erro na operação", 'error'); }
     } catch (e) { notify("Erro Crítico", 'error'); }
+    setLoading(false);
+  };
+
+  const handleApproveSub = async (subId: string) => {
+    const pw = prompt("Senha Master para aprovar subscrição:");
+    if (!pw) return;
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/subscriptions/approve", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ subId, superPassword: pw })
+      });
+      if (res.ok) {
+        notify("Subscrição aprovada!");
+        refreshSubs();
+      } else {
+        notify("Falha na aprovação", 'error');
+      }
+    } catch (e) { notify("Erro de conexão", 'error'); }
     setLoading(false);
   };
 
@@ -459,132 +626,255 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
              <div className="space-y-1">
                 <span className="text-xs font-bold text-[#3451D1] uppercase tracking-widest">Consola Superadmin</span>
                 <h1 className="text-4xl font-bold text-[#0F172A]">Centro de Gestão</h1>
-                <p className="text-slate-500">Gira e monitorize todos os estabelecimentos do ecossistema.</p>
+                <p className="text-slate-500">Gira e monitorize todo o ecossistema KwikFilas.</p>
              </div>
              <div className="flex gap-3">
-               <button onClick={() => setView("create")} className="btn-ghost">
-                 <Plus className="w-4 h-4" /> Novo Estabelecimento
-               </button>
+               <div className="bg-white border border-slate-100 rounded-xl p-1 flex shadow-sm">
+                  <button onClick={() => setActiveTab("lojas")} className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", activeTab === 'lojas' ? "bg-[#3451D1] text-white" : "text-slate-400 hover:text-slate-600")}>Lojas</button>
+                  <button onClick={() => setActiveTab("pedidos")} className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all relative", activeTab === 'pedidos' ? "bg-[#3451D1] text-white" : "text-slate-400 hover:text-slate-600")}>
+                    Pedidos 
+                    {subs.filter(s => s.status === 'pending').length > 0 && <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-[8px] border-2 border-white">{subs.filter(s => s.status === 'pending').length}</span>}
+                  </button>
+                  <button onClick={() => setActiveTab("historico")} className={cn("px-4 py-2 text-xs font-bold rounded-lg transition-all", activeTab === 'historico' ? "bg-[#3451D1] text-white" : "text-slate-400 hover:text-slate-600")}>Controlo Global</button>
+               </div>
                <button onClick={onLogout} className="btn-ghost bg-red-50 text-red-500">
                  <LogOut className="w-4 h-4" /> Sair
                </button>
              </div>
           </header>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-             {[
-               { label: "Fluxo Total", value: "1,284", growth: "+15%", color: "text-[#0F172A]" },
-               { label: "Filas Ativas", value: establishments.length.toString(), growth: "Live", color: "text-[#0F172A]" },
-               { label: "Espera Média", value: "18m", growth: "-2m", color: "text-[#0F172A]" },
-               { label: "Uptime do Sistema", value: "99.98%", growth: "Estável", color: "text-white", bg: "bg-[#3451D1]" }
-             ].map((stat, i) => (
-               <div key={i} className={cn("card-premium flex flex-col justify-between h-32", stat.bg)}>
-                  <span className={cn("text-xs font-bold uppercase tracking-wider opacity-60", stat.bg ? "text-white" : "text-slate-400")}>{stat.label}</span>
-                  <div className="flex items-baseline justify-between mt-auto">
-                    <span className={cn("text-3xl font-bold", stat.color)}>{stat.value}</span>
-                    <span className={cn("text-[10px] font-bold px-2 py-0.5 rounded-full", stat.bg ? "bg-white/20 text-white" : "bg-green-50 text-green-600")}>{stat.growth}</span>
-                  </div>
-               </div>
-             ))}
-          </div>
-
           <main>
-            {view === "list" ? (
-               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {establishments.map(est => (
-                    <motion.div key={est.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card-premium space-y-6">
-                       <div className="flex justify-between items-start">
-                          <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 overflow-hidden">
-                             {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Building className="w-full h-full text-slate-300" />}
+            {activeTab === 'lojas' && (
+              <>
+                {view === "list" ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {establishments.map(est => (
+                        <motion.div key={est.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="card-premium space-y-6">
+                          <div className="flex justify-between items-start">
+                              <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 overflow-hidden">
+                                {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Building className="w-full h-full text-slate-300" />}
+                              </div>
+                              <span className={cn("badge", est.queues && est.queues.length > 0 ? "badge-live" : "badge-inactive")}>
+                                {est.queues && est.queues.length > 0 ? "LIVE" : "INATIVO"}
+                              </span>
                           </div>
-                          <span className={cn("badge", est.queues && est.queues.length > 0 ? "badge-live" : "badge-inactive")}>
-                            {est.queues && est.queues.length > 0 ? "LIVE" : "INATIVO"}
-                          </span>
-                       </div>
-                       <div>
-                          <h3 className="text-xl font-bold text-[#0F172A]">{est.name}</h3>
-                          <p className="text-sm text-slate-400 font-medium">Cod: {est.code} • NIF: {est.nif}</p>
-                       </div>
-                       <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
-                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{est.queues ? est.queues.length : 0} Clientes hoje</span>
-                          <div className="flex gap-2">
-                             <button 
-                               onClick={() => openEdit(est)}
-                               className="p-2 text-slate-400 hover:text-[#3451D1] hover:bg-slate-50 rounded-lg transition-colors"
-                             >
-                               <Pencil className="w-4 h-4" />
-                             </button>
-                             <button 
-                               onClick={async () => {
-                                 const pw = prompt("Senha Master para apagar:");
-                                 if (!pw) return;
-                                 const res = await fetch("/api/admin/establishments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetId: est.id, superPassword: pw }) });
-                                 if (res.ok) { notify("Estabelecimento removido"); refresh(); } else { notify("Falha na autenticação", 'error'); }
-                               }}
-                               className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                             >
-                               <Trash2 className="w-4 h-4" />
-                             </button>
-                             <button className="text-[#3451D1] text-xs font-bold flex items-center gap-1 hover:underline ml-2">
-                               Gerir <ArrowRight className="w-3 h-3" />
-                             </button>
+                          <div>
+                              <h3 className="text-xl font-bold text-[#0F172A]">{est.name}</h3>
+                              <p className="text-sm text-slate-400 font-medium">Cod: {est.code} • NIF: {est.nif}</p>
                           </div>
-                       </div>
-                    </motion.div>
-                  ))}
-                  <button onClick={() => setView("create")} className="card-premium border-2 border-dashed border-slate-200 bg-transparent flex flex-col items-center justify-center p-12 text-slate-400 hover:border-[#3451D1] hover:text-[#3451D1] transition-all gap-4">
-                     <Plus className="w-8 h-8" />
-                     <span className="font-bold text-sm uppercase tracking-widest">Adicionar Unidade</span>
-                  </button>
-               </div>
-            ) : (
-               <div className="max-w-2xl mx-auto">
-                 <div className="card-premium p-8 md:p-12 space-y-10">
-                    <div className="flex items-center justify-between">
-                       <h3 className="text-2xl font-bold">{view === 'edit' ? 'Editar Unidade' : 'Registo de Unidade'}</h3>
-                       <button onClick={() => { setView("list"); setEditingId(null); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                          <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
+                              <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{est.queues ? est.queues.length : 0} Clientes hoje</span>
+                              <div className="flex gap-2">
+                                <button onClick={() => openEdit(est)} className="p-2 text-slate-400 hover:text-[#3451D1] hover:bg-slate-50 rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
+                                <button onClick={async () => {
+                                      const pw = prompt("Senha Master para apagar:");
+                                      if (!pw) return;
+                                      const res = await fetch("/api/admin/establishments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetId: est.id, superPassword: pw }) });
+                                      if (res.ok) { notify("Estabelecimento removido"); refreshEsts(); } else { notify("Falha na autenticação", 'error'); }
+                                    }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                              </div>
+                          </div>
+                        </motion.div>
+                      ))}
+                      <button onClick={() => setView("create")} className="card-premium border-2 border-dashed border-slate-200 bg-transparent flex flex-col items-center justify-center p-12 text-slate-400 hover:border-[#3451D1] hover:text-[#3451D1] transition-all gap-4">
+                        <Plus className="w-8 h-8" />
+                        <span className="font-bold text-sm uppercase tracking-widest">Adicionar Unidade</span>
+                      </button>
+                  </div>
+                ) : (
+                  <div className="max-w-2xl mx-auto">
+                    <div className="card-premium p-8 md:p-12 space-y-10">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-2xl font-bold">{view === 'edit' ? 'Editar Unidade' : 'Registo de Unidade'}</h3>
+                          <button onClick={() => { setView("list"); setEditingId(null); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "" }); }} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                        </div>
+                        <form onSubmit={handleSubmit} className="space-y-6">
+                          <div className="flex flex-col items-center">
+                              <div className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden relative group">
+                                {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <Building className="w-10 h-10 text-slate-200" />}
+                                <label className="absolute inset-0 bg-[#3451D1]/80 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all">
+                                    <Camera className="w-6 h-6 text-white" />
+                                    <input type="file" className="hidden" onChange={handleUpload} />
+                                </label>
+                              </div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Nome Comercial</label><input value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="input-modern" required /></div>
+                              <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">NIF</label><input value={formData.nif} onChange={e => setFormData({...formData, nif: e.target.value})} className="input-modern" required /></div>
+                          </div>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Admin</label><input value={formData.admin_email} onChange={e => setFormData({...formData, admin_email: e.target.value})} className="input-modern" type="email" required /></div>
+                              <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Senha Admin</label><input value={formData.admin_password} onChange={e => setFormData({...formData, admin_password: e.target.value})} className="input-modern" type="password" required /></div>
+                          </div>
+                          <button type="submit" disabled={loading} className="btn-primary w-full py-4">{loading ? "A processar..." : "Salvar Estabelecimento"}</button>
+                        </form>
                     </div>
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                       <div className="flex flex-col items-center">
-                          <div className="w-24 h-24 bg-slate-50 border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center overflow-hidden relative group">
-                             {formData.logo_url ? <img src={formData.logo_url} className="w-full h-full object-cover" /> : <Building className="w-10 h-10 text-slate-200" />}
-                             <label className="absolute inset-0 bg-[#3451D1]/80 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-all">
-                                <Camera className="w-6 h-6 text-white" />
-                                <input type="file" className="hidden" onChange={handleUpload} />
-                             </label>
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-400 uppercase mt-2">Logótipo da Unidade</span>
-                       </div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Nome Comercial</label>
-                            <input value={formData.name} onChange={(e:any) => setFormData({...formData, name: e.target.value})} className="input-modern" placeholder="Ex: Barbearia Lux" required />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">NIF</label>
-                            <input value={formData.nif} onChange={(e:any) => setFormData({...formData, nif: e.target.value})} className="input-modern" placeholder="999 999 999" required />
-                          </div>
-                       </div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Email do Administrador</label>
-                            <input value={formData.admin_email} onChange={(e:any) => setFormData({...formData, admin_email: e.target.value})} className="input-modern" placeholder="admin@empresa.pt" type="email" required />
-                          </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Senha de Acesso</label>
-                            <input value={formData.admin_password} onChange={(e:any) => setFormData({...formData, admin_password: e.target.value})} className="input-modern" placeholder="••••••••" type="password" required />
-                          </div>
-                       </div>
-                       <button type="submit" disabled={loading} className="btn-primary w-full py-4 text-base mt-4">
-                         {loading ? "A processar..." : (view === 'edit' ? "Guardar Alterações" : "Ativar Unidade Digital")}
-                       </button>
-                    </form>
-                 </div>
-               </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {activeTab === 'pedidos' && (
+              <div className="card-premium p-0 overflow-hidden">
+                <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm">
+                  <h3 className="font-bold text-[#0F172A]">Pedidos de Adesão Pendentes</h3>
+                  <span className="badge badge-info">{subs.filter(s => s.status === 'pending').length} Novos</span>
+                </div>
+                <table className="w-full text-left">
+                  <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
+                    <tr>
+                      <th className="px-6 py-4">Estabelecimento</th>
+                      <th className="px-6 py-4">Contacto</th>
+                      <th className="px-6 py-4">Data</th>
+                      <th className="px-6 py-4">Status</th>
+                      <th className="px-6 py-4 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-50">
+                    {subs.map(sub => (
+                      <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="px-6 py-4 font-bold text-[#0F172A]">{sub.name} <div className="text-[10px] text-slate-400 font-medium tracking-widest">{sub.nif}</div></td>
+                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">{sub.admin_email}</td>
+                        <td className="px-6 py-4 text-sm text-slate-400">{new Date(sub.created_at).toLocaleDateString()}</td>
+                        <td className="px-6 py-4">
+                          <span className={cn("badge", sub.status === 'pending' ? "bg-amber-50 text-amber-600" : "badge-active")}>
+                            {sub.status === 'pending' ? "PENDENTE" : "APROVADO"}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {sub.status === 'pending' && (
+                            <button onClick={() => handleApproveSub(sub.id)} className="btn-primary py-1.5 px-4 text-xs">Aprovar</button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {subs.length === 0 && <tr><td colSpan={5} className="p-20 text-center text-slate-400 font-medium">Nenhum pedido de subscrição.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {activeTab === 'historico' && (
+              <div className="space-y-6">
+                <div className="card-premium p-6 flex flex-wrap gap-4 items-end bg-white/50 backdrop-blur-sm shadow-premium">
+                  <div className="flex-1 min-w-[200px] space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Buscar Cliente</label>
+                    <input value={filters.client} onChange={e => setFilters({...filters, client: e.target.value})} className="input-modern" placeholder="9XX XXX XXX" />
+                  </div>
+                  <div className="flex-1 min-w-[150px] space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Nº Senha</label>
+                    <input value={filters.ticket_number} onChange={e => setFilters({...filters, ticket_number: e.target.value})} className="input-modern" placeholder="Ex: MC0-001" />
+                  </div>
+                  <div className="flex-1 min-w-[150px] space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data Início</label>
+                    <input type="date" value={filters.start_date} onChange={e => setFilters({...filters, start_date: e.target.value})} className="input-modern" />
+                  </div>
+                  <div className="flex-1 min-w-[150px] space-y-1">
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Data Fim</label>
+                    <input type="date" value={filters.end_date} onChange={e => setFilters({...filters, end_date: e.target.value})} className="input-modern" />
+                  </div>
+                  <button onClick={refreshStats} className="btn-primary h-[50px] px-8"><Search className="w-4 h-4" /> Filtrar</button>
+                  <button onClick={() => setFilters({client: "", start_date: "", end_date: "", ticket_number: ""})} className="btn-ghost h-[50px]"><RefreshCcw className="w-4 h-4" /></button>
+                </div>
+
+                <div className="flex gap-4 mb-6">
+                   <button onClick={() => setStatsView("visitas")} className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", statsView === 'visitas' ? "bg-white shadow-premium text-[#3451D1]" : "text-slate-400")}>Relatório de Visitas</button>
+                   <button onClick={() => setStatsView("ranking")} className={cn("px-6 py-2 rounded-xl text-sm font-bold transition-all", statsView === 'ranking' ? "bg-white shadow-premium text-[#3451D1]" : "text-slate-400")}>Ranking de Clientes</button>
+                </div>
+
+                {statsView === 'visitas' ? (
+                  <div className="card-premium p-0 overflow-hidden shadow-2xl">
+                    <table className="w-full text-left">
+                      <thead className="bg-[#0F172A] text-white text-[10px] font-bold uppercase tracking-wider">
+                        <tr>
+                          <th className="px-6 py-6">Cliente & Fila</th>
+                          <th className="px-6 py-6">Estabelecimento</th>
+                          <th className="px-6 py-6">Data & Hora</th>
+                          <th className="px-6 py-6 text-right">Senha</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 bg-white">
+                        {history.map(row => (
+                          <tr key={row.id} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3451D1] font-bold text-xs">{row.name?.charAt(0) || 'C'}</div>
+                                <div>
+                                  <div className="font-bold text-[#0F172A]">{row.name || 'Desconhecido'}</div>
+                                  <div className="text-[10px] text-slate-400">{row.phone}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4"><span className="text-sm font-bold text-[#3451D1]">{row.establishments?.name}</span></td>
+                            <td className="px-6 py-4 text-xs text-slate-500 font-medium">{new Date(row.served_at).toLocaleString()}</td>
+                            <td className="px-6 py-4 text-right"><span className="font-mono font-bold bg-slate-100 px-3 py-1 rounded-lg text-slate-700">{row.ticket_number}</span></td>
+                          </tr>
+                        ))}
+                        {history.length === 0 && (
+                          <tr><td colSpan={4} className="p-20 text-center">
+                            <div className="space-y-4">
+                              <Search className="w-12 h-12 mx-auto text-slate-200" />
+                              <p className="text-slate-400 font-medium">Aplique filtros para ver os dados.</p>
+                            </div>
+                          </td></tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="card-premium p-0 overflow-hidden shadow-2xl">
+                    <table className="w-full text-left">
+                      <thead className="bg-[#3451D1] text-white text-[10px] font-bold uppercase tracking-wider">
+                        <tr>
+                          <th className="px-6 py-6">Cliente</th>
+                          <th className="px-6 py-6">Total de Atendimentos</th>
+                          <th className="px-6 py-6">Última Visita</th>
+                          <th className="px-6 py-6 text-right">Status Global</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-50 bg-white">
+                        {Array.from(history.reduce((acc, curr) => {
+                          const contact = acc.get(curr.phone) || { ...curr, count: 0 };
+                          contact.count += 1;
+                          if (new Date(curr.served_at).getTime() > new Date(contact.served_at).getTime()) {
+                            contact.served_at = curr.served_at;
+                          }
+                          acc.set(curr.phone, contact);
+                          return acc;
+                        }, new Map()).values())
+                        .sort((a: any, b: any) => b.count - a.count)
+                        .map((row: any) => (
+                          <tr key={row.phone} className="hover:bg-slate-50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3451D1] font-bold text-xs">{row.name?.charAt(0) || 'C'}</div>
+                                <div>
+                                  <div className="font-bold text-[#0F172A]">{row.name || 'Desconhecido'}</div>
+                                  <div className="text-[10px] text-slate-400">{row.phone}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="text-sm font-black text-[#3451D1]">{row.count} Senhas Recolhidas</span>
+                            </td>
+                            <td className="px-6 py-4 text-xs text-slate-500 font-medium">{new Date(row.served_at).toLocaleDateString()}</td>
+                            <td className="px-6 py-4 text-right">
+                              <span className="badge badge-live">RECORRENTE</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
             )}
           </main>
        </div>
     </div>
+  );
+};
+
   );
 };
 
@@ -1196,6 +1486,7 @@ export default function App() {
   });
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
+  const [showSubscribe, setShowSubscribe] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -1208,6 +1499,10 @@ export default function App() {
     const p = new URLSearchParams(window.location.search);
     const code = p.get("est");
     if (code) setClientEstCode(code);
+
+    const handleSubNav = () => setShowSubscribe(true);
+    window.addEventListener('nav-subscribe', handleSubNav);
+    return () => window.removeEventListener('nav-subscribe', handleSubNav);
   }, []);
 
   const handleLogin = (data: AuthUser) => { 
@@ -1226,6 +1521,8 @@ export default function App() {
         <ClientView estCode={clientEstCode} notify={showToast} /> 
       ) : auth ? ( 
         auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} notify={showToast} /> : <EstAdminView auth={auth} onLogout={handleLogout} notify={showToast} /> 
+      ) : showSubscribe ? (
+        <SubscribeView onBack={() => setShowSubscribe(false)} notify={showToast} />
       ) : showLogin ? (
         <LandingView onLogin={handleLogin} onBack={() => setShowLogin(false)} />
       ) : (
