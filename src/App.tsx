@@ -824,13 +824,50 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                           <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
                               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{est.queues ? est.queues.length : 0} Clientes hoje</span>
                               <div className="flex gap-2">
-                                <button onClick={() => openEdit(est)} className="p-2 text-slate-400 hover:text-[#3451D1] hover:bg-slate-50 rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
-                                <button onClick={async () => {
-                                      const pw = prompt("Senha Master para apagar:");
-                                      if (!pw) return;
-                                      const res = await fetch("/api/admin/establishments/delete", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ targetId: est.id, superPassword: pw }) });
-                                      if (res.ok) { notify("Estabelecimento removido"); refreshEsts(); } else { notify("Falha na autenticação", 'error'); }
-                                    }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
+                                 <button onClick={() => {
+                                   setShowConfirm({
+                                     title: est.is_active ? "Desativar Unidade" : "Ativar Unidade",
+                                     message: `Para ${est.is_active ? 'desativar' : 'ativar'} o acesso de ${est.name}, introduza a Senha Master.`,
+                                     showInput: true,
+                                     inputPlaceholder: "Senha Master",
+                                     inputType: "password",
+                                     onConfirm: async (pw: string) => {
+                                       if (!pw) return;
+                                       const res = await fetch("/api/admin/establishments", { 
+                                         method: "PUT", 
+                                         headers: { "Content-Type": "application/json" }, 
+                                         body: JSON.stringify({ targetId: est.id, superPassword: pw, updateData: { is_active: !est.is_active } }) 
+                                       });
+                                       if (res.ok) { notify("Estado atualizado"); refreshEsts(); }
+                                       else { notify("Senha Master Incorreta", 'error'); }
+                                       setShowConfirm(null);
+                                     }
+                                   });
+                                 }} className={cn("p-2 rounded-lg transition-colors", est.is_active ? "text-green-500 hover:bg-green-50" : "text-slate-400 hover:bg-slate-50")}>
+                                   {est.is_active ? <CheckCircle2 className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                                 </button>
+                                 <button onClick={() => openEdit(est)} className="p-2 text-slate-400 hover:text-[#3451D1] hover:bg-slate-50 rounded-lg transition-colors"><Pencil className="w-4 h-4" /></button>
+                                 <button onClick={() => {
+                                   setShowConfirm({
+                                     title: "Eliminar Unidade",
+                                     message: `Esta ação irá apagar PERMANENTEMENTE o estabelecimento ${est.name} e todos os seus dados. Introduza a Senha Master.`,
+                                     type: "danger",
+                                     showInput: true,
+                                     inputPlaceholder: "Senha Master",
+                                     inputType: "password",
+                                     icon: Trash2,
+                                     onConfirm: async (pw: string) => {
+                                       const res = await fetch("/api/admin/establishments/delete", { 
+                                         method: "POST", 
+                                         headers: { "Content-Type": "application/json" }, 
+                                         body: JSON.stringify({ targetId: est.id, superPassword: pw }) 
+                                       });
+                                       if (res.ok) { notify("Estabelecimento removido"); refreshEsts(); } 
+                                       else { notify("Falha na autenticação", 'error'); }
+                                       setShowConfirm(null);
+                                     }
+                                   });
+                                 }} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><Trash2 className="w-4 h-4" /></button>
                               </div>
                           </div>
                         </motion.div>
@@ -1190,9 +1227,32 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
 
   const handleCancel = async (ticketId: string) => {
     if (!est) return;
-    await fetch(`/api/establishments/${est.code}/cancel`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId }) });
-    notify("Ticket Cancelado", 'error');
-    refresh();
+    setShowConfirm({
+      title: "Cancelar Senha",
+      message: "Tem a certeza que deseja remover este cliente da fila de espera?",
+      type: "danger",
+      icon: Trash2,
+      onConfirm: async () => {
+        await fetch(`/api/establishments/${est.code}/cancel`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ticketId }) });
+        notify("Ticket Cancelado", 'error');
+        refresh();
+        setShowConfirm(null);
+      }
+    });
+  };
+
+  const handleFinish = async () => {
+    if (!est) return;
+    setLoading(true);
+    const res = await fetch(`/api/establishments/${est.code}/finish-current`, { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    if (res.ok) {
+      notify("Atendimento Finalizado");
+      refresh();
+    }
+    setLoading(false);
   };
 
   const handleClearQueue = async () => {
@@ -1392,6 +1452,16 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                        <p className="text-slate-400 font-medium">
                           {current ? `Em atendimento há ${Math.floor((Date.now() - new Date(current.called_at!).getTime()) / 60000)} mins` : "Aguardando próxima senha"}
                        </p>
+
+                       {current && (
+                          <button 
+                            onClick={handleFinish} 
+                            disabled={loading}
+                            className="flex items-center gap-2 text-xs font-black text-red-500 hover:text-red-600 transition-colors uppercase tracking-widest"
+                          >
+                             <CheckCircle2 className="w-4 h-4" /> Finalizar Atendimento
+                          </button>
+                       )}
                     </div>
 
                     <div className="space-y-6">
@@ -1649,19 +1719,35 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                              if (!campaignMsg) return notify("Escreva o conteúdo da SMS", 'error');
                              if ((est.sms_campaigns_balance || 0) <= 0) return notify("Saldo de campanhas esgotado este mês", 'error');
                              
-                             if (window.confirm(`Confirmar envio para ${contacts.length} clientes?`)) {
-                               setSendingCampaign(true);
-                               setTimeout(() => {
-                                 notify("Campanha enviada para processamento!");
-                                 setCampaignMsg("");
+                             setShowConfirm({
+                               title: "Enviar Campanha SMS",
+                               message: `Tem a certeza que deseja enviar esta mensagem para os ${contacts.length} clientes da sua base? Esta ação não pode ser anulada.`,
+                               icon: Mail,
+                               onConfirm: async () => {
+                                 setSendingCampaign(true);
+                                 try {
+                                   const res = await fetch(`/api/establishments/${est.code}/campaign`, {
+                                     method: "POST",
+                                     headers: { "Content-Type": "application/json" },
+                                     body: JSON.stringify({ message: campaignMsg })
+                                   });
+                                   if (res.ok) {
+                                     notify("Campanha enviada com sucesso!");
+                                     setCampaignMsg("");
+                                     refresh();
+                                   } else {
+                                     notify("Falha ao enviar campanha", 'error');
+                                   }
+                                 } catch (e) { notify("Erro de conexão", 'error'); }
                                  setSendingCampaign(false);
-                               }, 1500);
-                             }
+                                 setShowConfirm(null);
+                               }
+                             });
                           }}
-                          disabled={sendingCampaign || (est.sms_campaigns_balance || 0) <= 0}
-                          className="btn-primary w-full py-6 text-xl"
+                          disabled={sendingCampaign}
+                          className="btn-primary w-full py-6 text-lg"
                         >
-                           {sendingCampaign ? "A DISPARAR..." : "Enviar Campanha"}
+                           {sendingCampaign ? <div className="w-6 h-6 border-3 border-white/30 border-t-white animate-spin rounded-full"></div> : <><Mail className="w-5 h-5" /> Disparar Campanha Agora</>}
                         </button>
                      </div>
                   </div>

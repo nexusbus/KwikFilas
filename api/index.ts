@@ -49,7 +49,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/admin/establishments", async (req, res) => {
   const { role, estId } = req.query;
   
-  let query = supabase.from("establishments").select("id, name, nif, initials, code, is_active, plan, queue_mode, queues(*), services(*)");
+  let query = supabase.from("establishments").select("id, name, nif, initials, code, is_active, plan, queue_mode, admin_password, queues(*), services(*)");
   
   if (role === 'establishment' && estId) {
     query = query.eq("id", estId);
@@ -214,7 +214,7 @@ app.post("/api/queue/join", async (req, res) => {
     .select("id, ticket_number, status")
     .eq("est_id", est.id)
     .eq("phone", cleanPhone)
-    .in("status", ["waiting", "called"])
+    .eq("status", "waiting")
     .maybeSingle();
 
   if (checkError) {
@@ -396,6 +396,26 @@ app.post("/api/establishments/:code/cancel", async (req, res) => {
   const { ticketId } = req.body;
   await supabase.from("queues").delete().eq("id", ticketId);
   res.json({ success: true });
+});
+
+// 8.2 FINALIZAR ATENDIMENTO (Mover atual para histórico sem chamar próximo)
+app.post("/api/establishments/:code/finish-current", async (req, res) => {
+  const { code } = req.params;
+  const { data: est } = await supabase.from("establishments").select("id, name").eq("code", code).single();
+  if (!est) return res.status(404).json({ error: "Local não encontrado" });
+
+  const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
+  
+  if (current) {
+    await supabase.from("history").insert([{ 
+      ...current, 
+      served_at: new Date().toISOString(),
+      status: 'served'
+    }]);
+    await supabase.from("queues").delete().eq("id", current.id);
+    return res.json({ success: true });
+  }
+  res.status(404).json({ error: "Nenhum ticket em atendimento" });
 });
 
 // 8.1 ZERAR FILA
