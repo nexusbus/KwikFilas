@@ -979,6 +979,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   };
 
   const [fetchError, setFetchError] = useState(false);
+  const [debugInfo, setDebugInfo] = useState("");
 
   const refresh = async () => {
     try {
@@ -1012,10 +1013,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
         setEst(found);
         setFetchError(false);
       } else {
+        setDebugInfo(`ID ${targetId} não encontrado na lista (${Array.isArray(data) ? data.length : 0} itens)`);
         setFetchError(true);
       }
-    } catch (e) { 
+    } catch (e: any) { 
       console.error("Refresh Error", e);
+      setDebugInfo(`Erro: ${e.message || 'Desconhecido'}`);
       setFetchError(true);
     }
   };
@@ -1114,7 +1117,10 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
         </div>
         {fetchError && (
           <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
-            <p className="text-xs font-bold text-red-500 bg-red-50 px-4 py-2 rounded-lg">Não foi possível carregar os dados do seu estabelecimento.</p>
+            <p className="text-xs font-bold text-red-500 bg-red-50 px-4 py-2 rounded-lg">
+               Não foi possível carregar os dados do seu estabelecimento.
+               {debugInfo && <div className="mt-2 font-mono text-[10px] opacity-70 uppercase tracking-tighter">{debugInfo}</div>}
+            </p>
             <button onClick={() => window.location.reload()} className="btn-primary py-2 px-6 text-xs">Tentar Novamente</button>
           </div>
         )}

@@ -49,7 +49,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/admin/establishments", async (req, res) => {
   const { role, estId } = req.query;
   
-  let query = supabase.from("establishments").select("*, queues(*), services(*)");
+  let query = supabase.from("establishments").select("*");
   
   if (role === 'establishment' && estId) {
     query = query.eq("id", estId);
