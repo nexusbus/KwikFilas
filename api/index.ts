@@ -49,10 +49,12 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/admin/establishments", async (req, res) => {
   const { role, estId } = req.query;
   
-  let query = supabase.from("establishments").select("*");
+  let query = supabase.from("establishments").select("*, queues(*), services(*)");
   
   if (role === 'establishment' && estId) {
     query = query.eq("id", estId);
+  } else if (req.query.code) {
+    query = query.eq("code", req.query.code);
   }
 
   const { data, error } = await query;
@@ -167,6 +169,32 @@ app.put("/api/admin/establishments", async (req, res) => {
   if (error) return res.status(500).json({ error: error.message });
   res.json(data);
 });
+
+// 4.2 ATUALIZAR DEFINIÇÕES PELO PARCEIRO
+app.put("/api/establishments/:code", async (req, res) => {
+  const { code } = req.params;
+  const { adminPassword, updateData } = req.body;
+
+  const { data: est, error: authError } = await supabase
+    .from("establishments")
+    .select("id")
+    .eq("code", code)
+    .eq("admin_password", adminPassword)
+    .single();
+
+  if (authError || !est) return res.status(403).json({ error: "Senha incorreta ou acesso negado" });
+
+  const { data, error } = await supabase
+    .from("establishments")
+    .update(updateData)
+    .eq("id", est.id)
+    .select()
+    .single();
+
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
 
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {

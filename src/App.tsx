@@ -50,6 +50,30 @@ const ToastContainer = ({ toasts, remove }: { toasts: Toast[], remove: (id: stri
   </div>
 );
 
+const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean, onClose: () => void, title: string, children: React.ReactNode }) => (
+  <AnimatePresence>
+    {isOpen && (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <motion.div 
+          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"
+        />
+        <motion.div 
+          initial={{ scale: 0.9, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.9, opacity: 0, y: 20 }}
+          className="bg-white rounded-[32px] shadow-2xl w-full max-w-md overflow-hidden relative z-10"
+        >
+          <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+            <h3 className="text-xl font-bold text-[#0F172A]">{title}</h3>
+            <button onClick={onClose} className="p-2 hover:bg-slate-50 rounded-xl transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+          </div>
+          <div className="p-8">{children}</div>
+        </motion.div>
+      </div>
+    )}
+  </AnimatePresence>
+);
+
 const KLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={cn("text-[#3451D1] w-8 h-8", className)} fill="none">
     <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
@@ -972,6 +996,11 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [campaignMsg, setCampaignMsg] = useState("");
   const [sendingCampaign, setSendingCampaign] = useState(false);
 
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [newService, setNewService] = useState({ name: "", prefix: "" });
+  const [showModeModal, setShowModeModal] = useState<any>(null);
+  const [modeConfirmPass, setModeConfirmPass] = useState("");
+
   const refreshContacts = async () => {
     if (!est) return;
     const res = await fetch(`/api/establishments/${est.code}/contacts`);
@@ -1438,38 +1467,31 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                     </div>
 
                     <div className="space-y-6">
-                       <label className="text-sm font-bold text-slate-700">Modo de Funcionamento</label>
-                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {[
+                                           {[
                             { id: 'normal', title: 'Normal', desc: 'Fila única tradicional. Ideal para fluxos simples.', icon: <Timer className="w-5 h-5" /> },
                             { id: 'multi_service_single', title: 'Multi-Serviço', desc: 'Fila única mas com seleção de serviço pelo cliente.', icon: <Layers className="w-5 h-5" /> },
                             { id: 'multi_service_multi', title: 'Multi-Fila', desc: 'Filas independentes por serviço. Ideal para balcões múltiplos.', icon: <LayoutGrid className="w-5 h-5" /> }
                           ].map(mode => (
                             <button 
                               key={mode.id}
-                              onClick={async () => {
-                                const pass = prompt("Confirme a senha de Admin:");
-                                if (pass === est.admin_password) {
-                                  const res = await fetch("/api/admin/establishments", {
-                                    method: "PUT",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ targetId: est.id, superPassword: pass, updateData: { queue_mode: mode.id } })
-                                  });
-                                  if (res.ok) { notify("Modo atualizado!"); refresh(); }
-                                } else { notify("Senha incorreta", 'error'); }
+                              onClick={() => {
+                                 if (est.queue_mode === mode.id) return;
+                                 setShowModeModal(mode);
                               }}
                               className={cn(
-                                "p-6 rounded-2xl border-2 text-left transition-all space-y-3",
-                                est.queue_mode === mode.id ? "border-[#3451D1] bg-blue-50/50 shadow-sm" : "border-slate-100 hover:border-slate-200 bg-white"
+                                "p-6 rounded-2xl border-2 text-left transition-all space-y-4 group relative",
+                                est.queue_mode === mode.id ? "border-[#3451D1] bg-blue-50/50 shadow-md" : "border-slate-100 hover:border-slate-200 bg-white"
                               )}
                             >
-                               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", est.queue_mode === mode.id ? "bg-[#3451D1] text-white" : "bg-slate-50 text-slate-400")}>
+                               <div className={cn("w-12 h-12 rounded-xl flex items-center justify-center transition-colors", est.queue_mode === mode.id ? "bg-[#3451D1] text-white" : "bg-slate-50 text-slate-400 group-hover:bg-slate-100")}>
                                   {mode.icon}
                                </div>
                                <div>
-                                  <h4 className={cn("font-bold", est.queue_mode === mode.id ? "text-[#3451D1]" : "text-[#0F172A]")}>{mode.title}</h4>
-                                  <p className="text-xs text-slate-500 leading-relaxed mt-1">{mode.desc}</p>
+                                  <h4 className={cn("font-bold text-lg", est.queue_mode === mode.id ? "text-[#3451D1]" : "text-[#0F172A]")}>{mode.title}</h4>
+                                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1 mb-2">{est.queue_mode === mode.id ? "Ativo" : "Selecionar"}</p>
+                                  <p className="text-xs text-slate-500 leading-relaxed">{mode.desc}</p>
                                </div>
+                               {est.queue_mode === mode.id && <div className="absolute top-4 right-4 w-3 h-3 bg-[#3451D1] rounded-full border-4 border-white shadow-sm"></div>}
                             </button>
                           ))}
                        </div>
@@ -1482,17 +1504,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                              <p className="text-sm text-slate-500">Defina os tipos de atendimento disponíveis.</p>
                           </div>
                           <button 
-                            onClick={() => {
-                               const name = prompt("Nome do Serviço:");
-                               const prefix = prompt("Prefixo da Senha (ex: A, B, FIN):");
-                               if (name && prefix) {
-                                  fetch("/api/admin/services", {
-                                    method: "POST",
-                                    headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ est_id: est.id, name, prefix })
-                                  }).then(res => { if (res.ok) { notify("Serviço adicionado"); refresh(); } });
-                               }
-                            }}
+                            onClick={() => setShowServiceModal(true)}
                             className="btn-primary py-3 px-6 text-xs flex items-center gap-2"
                           >
                              <Plus className="w-4 h-4" /> Novo Serviço
@@ -1551,15 +1563,120 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                  </div>
               </div>
            )}
-       </main>
-       <div className="hidden">
-          <div id="main-qr-canvas">
-             <QRCodeSVG value={`${window.location.origin}/?est=${est.code}`} size={512} level="H" />
-          </div>
-       </div>
-    </div>
+        </main>
+
+        {/* Modal: Adicionar Serviço */}
+        <Modal 
+          isOpen={showServiceModal} 
+          onClose={() => setShowServiceModal(false)} 
+          title="Novo Serviço"
+        >
+           <div className="space-y-6">
+              <div className="space-y-2">
+                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Nome do Serviço</label>
+                 <input 
+                   type="text" 
+                   value={newService.name}
+                   onChange={e => setNewService(prev => ({ ...prev, name: e.target.value }))}
+                   className="input-modern" 
+                   placeholder="Ex: Geral, Tesouraria, Exames" 
+                 />
+              </div>
+              <div className="space-y-2">
+                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Prefixo da Senha</label>
+                 <input 
+                   type="text" 
+                   value={newService.prefix}
+                   onChange={e => setNewService(prev => ({ ...prev, prefix: e.target.value.toUpperCase() }))}
+                   className="input-modern" 
+                   placeholder="Ex: A, B, T, LAB" 
+                   maxLength={4}
+                 />
+              </div>
+              <button 
+                onClick={() => {
+                   if (!newService.name || !newService.prefix) return notify("Preencha todos os campos", 'error');
+                   fetch("/api/admin/services", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ est_id: est.id, name: newService.name, prefix: newService.prefix })
+                   }).then(res => { 
+                      if (res.ok) { 
+                        notify("Serviço adicionado!"); 
+                        setNewService({ name: "", prefix: "" });
+                        setShowServiceModal(false);
+                        refresh(); 
+                      } 
+                   });
+                }}
+                className="btn-primary w-full py-4"
+              >
+                 Criar Serviço
+              </button>
+           </div>
+        </Modal>
+
+        {/* Modal: Confirmar Alteração de Modo */}
+        <Modal 
+          isOpen={!!showModeModal} 
+          onClose={() => { setShowModeModal(null); setModeConfirmPass(""); }} 
+          title="Alterar Modo de Fila"
+        >
+           <div className="space-y-6">
+              <div className="p-4 bg-blue-50 rounded-2xl border border-blue-100 flex gap-4">
+                 <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-blue-500 shrink-0">
+                    <Info className="w-5 h-5" />
+                 </div>
+                 <p className="text-xs text-blue-700 leading-relaxed">
+                    Está prestes a mudar para o modo <strong>{showModeModal?.title}</strong>. 
+                    Isto alterará a forma como os clientes entram na fila e como as senhas são geradas.
+                 </p>
+              </div>
+              <div className="space-y-2">
+                 <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Senha de Administrador</label>
+                 <input 
+                   type="password" 
+                   value={modeConfirmPass}
+                   onChange={e => setModeConfirmPass(e.target.value)}
+                   className="input-modern" 
+                   placeholder="Digite a sua senha para confirmar" 
+                 />
+              </div>
+              <button 
+                onClick={async () => {
+                   if (modeConfirmPass === est.admin_password) {
+                      const res = await fetch(`/api/establishments/${est.code}`, {
+                         method: "PUT",
+                         headers: { "Content-Type": "application/json" },
+                         body: JSON.stringify({ adminPassword: modeConfirmPass, updateData: { queue_mode: showModeModal.id } })
+                      });
+                      if (res.ok) { 
+                         notify("Modo de fila atualizado!"); 
+                         setShowModeModal(null);
+                         setModeConfirmPass("");
+                         refresh(); 
+                      } else {
+                         notify("Erro na atualização", 'error');
+                      }
+                   } else {
+                      notify("Senha incorreta", 'error');
+                   }
+                }}
+                className="btn-primary w-full py-4"
+              >
+                 Confirmar Alteração
+              </button>
+           </div>
+        </Modal>
+
+        {/* Elemento oculto para geração do QR Code de impressão */}
+        <div className="hidden">
+           <div id="main-qr-canvas">
+              <QRCodeSVG value={`${window.location.origin}/?est=${est.code}`} size={512} level="H" />
+           </div>
+        </div>
+     </div>
   );
-};
 
 // --- 3.5 PUBLIC DISPLAY: MONITOR TV ---
 const PublicDisplayView = ({ estCode }: { estCode: string }) => {
@@ -1568,12 +1685,15 @@ const PublicDisplayView = ({ estCode }: { estCode: string }) => {
 
   const refresh = async () => {
     try {
-      const res = await fetch(`/api/admin/establishments`);
+      const res = await fetch(`/api/admin/establishments?code=${estCode}`);
+      if (!res.ok) return;
       const data = await res.json();
-      const found = data.find((e: any) => e.code === estCode);
-      if (found) setEst(found);
-    } catch (e) {}
-    setLoading(false);
+      const found = Array.isArray(data) ? data[0] : null;
+      if (found) {
+        setEst(found);
+        setLoading(false);
+      }
+    } catch (e) { console.error("Monitor refresh error", e); }
   };
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 5000); return () => clearInterval(itv); }, []);
