@@ -208,16 +208,29 @@ app.post("/api/queue/join", async (req, res) => {
   const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
   if (!cleanPhone || cleanPhone.length < 9) return res.status(400).json({ error: "Número de telefone inválido" });
 
-  const { data: exists } = await supabase
-    .from("queues")
-    .select("id, ticket_number")
+  console.log(`[JOIN DEBUG] Attempting join: Est=${est.id}, Phone=${cleanPhone}`);
+
+  const { data: existing, error: checkError } = await supabase.from("queues")
+    .select("id, ticket_number, status")
     .eq("est_id", est.id)
     .eq("phone", cleanPhone)
     .in("status", ["waiting", "called"])
     .maybeSingle();
 
-  if (exists) return res.status(400).json({ error: `Já se encontra na fila com a senha #${exists.ticket_number.split('-').pop()}` });
+  if (checkError) {
+    console.error("[JOIN DEBUG] Check Error:", checkError);
+  }
 
+  console.log(`[JOIN DEBUG] Existing check for ${cleanPhone}:`, existing);
+
+  if (existing) {
+    console.log(`[JOIN DEBUG] Blocking: Already in queue with status ${existing.status}`);
+    return res.status(400).json({ 
+      error: `Este número já possui a senha #${existing.ticket_number.split('-').pop()} (${existing.status === 'called' ? 'EM ATENDIMENTO' : 'EM ESPERA'}).` 
+    });
+  }
+  
+  console.log("[JOIN DEBUG] No active ticket found. Proceeding to generate new one...");
   let servicePrefix = '';
   let serviceName = '';
   if (serviceId) {
@@ -394,9 +407,14 @@ app.post("/api/establishments/:code/clear-queue", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
   if (est.admin_password !== adminPassword) return res.status(403).json({ error: "Senha incorreta" });
 
+  // Remove TUDO da fila (waiting e called)
   const { error } = await supabase.from("queues").delete().eq("est_id", est.id);
-  if (error) return res.status(500).json({ error: error.message });
-  
+  if (error) {
+    console.error("[CLEAR DEBUG] Delete Error:", error);
+    return res.status(500).json({ error: "Erro ao limpar fila: " + error.message });
+  }
+
+  console.log(`[CLEAR DEBUG] Queue cleared for establishment ${est.id}`);
   res.json({ success: true });
 });
 
