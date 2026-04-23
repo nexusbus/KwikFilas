@@ -16,6 +16,7 @@ export interface Establishment {
   nif: string;
   admin_email: string;
   admin_password: string;
+  phone?: string;
   logo_url?: string;
   plan?: string;
   average_wait_time?: number;
@@ -34,6 +35,7 @@ export interface Subscription {
   nif: string;
   admin_email: string;
   admin_password: string;
+  phone?: string;
   logo_url?: string;
   plan?: string;
   status: 'pending' | 'approved' | 'rejected';

@@ -344,14 +344,20 @@ app.post("/api/establishments/:code/contacts", async (req, res) => {
 
 // 12. SUBSCREVER (Pendente de Aprovação)
 app.post("/api/subscriptions", async (req, res) => {
-  const { name, nif, admin_email, admin_password, logo_url, plan } = req.body;
+  const { name, nif, admin_email, admin_password, logo_url, plan, phone } = req.body;
   const { data, error } = await supabase
     .from("subscriptions")
-    .insert([{ name, nif, admin_email, admin_password, logo_url, plan: plan || 'KFmini', status: 'pending' }])
+    .insert([{ name, nif, admin_email, admin_password, logo_url, plan: plan || 'KFmini', phone, status: 'pending' }])
     .select()
     .single();
 
   if (error) return res.status(500).json({ error: error.message });
+  
+  // Enviar SMS de confirmação (pendente)
+  if (phone) {
+    await triggerSms(phone, "", name, `Olá ${name}! O seu pedido de adesão ao KwikFilas foi recebido e está aguardando aprovação comercial. Contactaremos em breve.`);
+  }
+
   res.json(data);
 });
 
@@ -398,6 +404,7 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
       admin_password: sub.admin_password, 
       logo_url: sub.logo_url, 
       plan: sub.plan || 'KFmini',
+      phone: sub.phone,
       initials, 
       code, 
       role: 'establishment' 
@@ -407,6 +414,11 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
 
   // Atualizar status da subscrição
   await supabase.from("subscriptions").update({ status: 'approved' }).eq("id", subId);
+
+  // Enviar SMS de aprovação
+  if (sub.phone) {
+    await triggerSms(sub.phone, "", sub.name, `Parabéns! O estabelecimento ${sub.name} foi aprovado no KwikFilas. Use o seu email e senha para aceder ao painel. Bem-vindo!`);
+  }
 
   res.json({ success: true });
 });

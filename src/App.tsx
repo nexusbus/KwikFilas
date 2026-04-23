@@ -387,6 +387,7 @@ const SubscribeView = ({ onBack, notify, initialPlan }: { onBack: () => void, no
     nif: "", 
     admin_email: "", 
     admin_password: "", 
+    phone: "",
     logo_url: "",
     plan: initialPlan || "KFmini"
   });
@@ -487,6 +488,14 @@ const SubscribeView = ({ onBack, notify, initialPlan }: { onBack: () => void, no
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Senha de Acesso</label>
                   <input type="password" value={formData.admin_password} onChange={e => setFormData({...formData, admin_password: e.target.value})} className="input-modern" placeholder="••••••••" required />
                 </div>
+              </div>
+              <div className="space-y-1.5">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider ml-1">Telemóvel (para notificações)</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">+244</span>
+                    <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="input-modern pl-14" type="tel" placeholder="9xxxxxxxx" required />
+                  </div>
+                  <p className="text-[10px] text-slate-400 px-1">Receberá um SMS assim que o seu pedido for analisado pela nossa equipa.</p>
               </div>
             </div>
 
@@ -752,7 +761,10 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                       <tr key={sub.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="px-6 py-4 font-bold text-[#0F172A]">{sub.name} <div className="text-[10px] text-slate-400 font-medium tracking-widest">{sub.nif}</div></td>
                         <td className="px-6 py-4"><span className="text-[10px] font-black px-2 py-1 bg-blue-50 text-[#3451D1] rounded-md border border-blue-100">{sub.plan}</span></td>
-                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">{sub.admin_email}</td>
+                        <td className="px-6 py-4 text-sm text-slate-500 font-medium">
+                            <div className="font-bold text-[#3451D1]">{sub.phone}</div>
+                            <div className="text-[10px] text-slate-400">{sub.admin_email}</div>
+                         </td>
                         <td className="px-6 py-4 text-sm text-slate-400">{new Date(sub.created_at).toLocaleDateString()}</td>
                         <td className="px-6 py-4">
                           <span className={cn("badge", sub.status === 'pending' ? "bg-amber-50 text-amber-600" : "badge-active")}>
@@ -898,9 +910,11 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [est, setEst] = useState<Establishment | null>(null);
   const [manualPhone, setManualPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"queue" | "crm">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "crm" | "marketing">("queue");
   const [contacts, setContacts] = useState<any[]>([]);
   const [newContactPhone, setNewContactPhone] = useState("");
+  const [campaignMsg, setCampaignMsg] = useState("");
+  const [sendingCampaign, setSendingCampaign] = useState(false);
 
   const refreshContacts = async () => {
     if (!est) return;
@@ -1024,200 +1038,269 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
              <div>
                 <h4 className="font-bold text-[#0F172A] leading-tight">{est.name}</h4>
                 <div className="flex items-center gap-2">
-                   <div className="w-1.5 h-1.5 rounded-full bg-green-500"></div>
-                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Sistema Online</span>
-                </div>
-             </div>
+                    <span className={cn(
+                      "text-[8px] font-black px-2 py-0.5 rounded uppercase tracking-tighter border",
+                      est.plan === 'KFmax' ? "bg-slate-900 text-white border-slate-800" : 
+                      est.plan === 'KFmed' ? "bg-blue-600 text-white border-blue-700" :
+                      "bg-slate-100 text-slate-500 border-slate-200"
+                    )}>
+                      {est.plan || 'KFmini'}
+                    </span>
+                    <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                 </div>
+              </div>
+           </div>
+           <button onClick={onLogout} className="p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+              <LogOut className="w-5 h-5" />
+           </button>
+        </nav>
+        
+        {/* Dashboard Navigation (Professional UX) */}
+        <div className="bg-white border-b border-slate-100 px-6 overflow-x-auto no-scrollbar">
+          <div className="max-w-6xl mx-auto flex items-center gap-1">
+             <button onClick={() => setActiveTab("queue")} className={cn(
+               "px-6 py-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap", 
+               activeTab === "queue" ? "border-[#3451D1] text-[#3451D1]" : "border-transparent text-slate-400 hover:text-slate-600"
+             )}>
+                <Timer className="w-4 h-4" /> Gestão de Fila
+             </button>
+             <button onClick={() => setActiveTab("crm")} className={cn(
+               "px-6 py-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap", 
+               activeTab === "crm" ? "border-[#3451D1] text-[#3451D1]" : "border-transparent text-slate-400 hover:text-slate-600"
+             )}>
+                <Users className="w-4 h-4" /> Base de Clientes
+             </button>
+             {est.plan !== 'KFmini' && (
+               <button onClick={() => setActiveTab("marketing")} className={cn(
+                 "px-6 py-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap", 
+                 activeTab === "marketing" ? "border-[#3451D1] text-[#3451D1]" : "border-transparent text-slate-400 hover:text-slate-600"
+               )}>
+                  <Mail className="w-4 h-4" /> Marketing SMS
+                  <span className="bg-blue-50 text-[#3451D1] text-[8px] font-black px-1.5 py-0.5 rounded ml-1 border border-blue-100">PRO</span>
+               </button>
+             )}
           </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden md:flex bg-slate-50 rounded-lg p-1">
-               <button onClick={() => setActiveTab("queue")} className={cn("px-4 py-1.5 text-xs font-bold rounded-md transition-all", activeTab === "queue" ? "bg-white text-[#3451D1] shadow-sm" : "text-slate-500")}>Fila Digital</button>
-               <button onClick={() => setActiveTab("crm")} className={cn("px-4 py-1.5 text-xs font-bold rounded-md transition-all", activeTab === "crm" ? "bg-white text-[#3451D1] shadow-sm" : "text-slate-500")}>Base de Clientes</button>
-            </div>
-            <button onClick={onLogout} className="p-2.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors"><LogOut className="w-5 h-5" /></button>
-          </div>
-       </nav>
+        </div>
 
        <main className="p-6 lg:p-12 max-w-6xl mx-auto">
-          {activeTab === 'queue' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-             
-             {/* Left Column: Controls */}
-             <div className="lg:col-span-5 space-y-8">
-                <div className="card-premium p-10 flex flex-col items-center text-center space-y-6">
-                   <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">A chamar agora</span>
-                   <div className="text-[120px] font-bold text-[#0F172A] leading-none tracking-tighter">
-                      #{current ? current.ticket_number.split('-').pop() : '--'}
-                   </div>
-                   <p className="text-slate-400 font-medium">
-                      {current ? `Chamado há ${Math.floor((Date.now() - new Date(current.called_at!).getTime()) / 60000)} mins` : "Aguardando próximo"}
-                   </p>
-                </div>
+          {activeTab === 'queue' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+                 {/* Left Column: Controls */}
+                 <div className="lg:col-span-5 space-y-8">
+                    <div className="card-premium p-10 flex flex-col items-center text-center space-y-6">
+                       <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">A chamar agora</span>
+                       <div className="text-[120px] font-bold text-[#0F172A] leading-none tracking-tighter">
+                          #{current ? current.ticket_number.split('-').pop() : '--'}
+                       </div>
+                       <p className="text-slate-400 font-medium">
+                          {current ? `Em atendimento há ${Math.floor((Date.now() - new Date(current.called_at!).getTime()) / 60000)} mins` : "Fila parada"}
+                       </p>
+                    </div>
 
-                <div className="space-y-4">
-                   <button 
-                     onClick={handleNext} 
-                     disabled={waiting.length === 0 || loading} 
-                     className="btn-primary w-full py-6 text-xl"
-                   >
-                      <ChevronRight className="w-6 h-6" />
-                      {loading ? "A PROCESSAR..." : "Chamar Próximo"}
-                   </button>
+                    <div className="space-y-4">
+                       <button onClick={handleNext} disabled={waiting.length === 0 || loading} className="btn-primary w-full py-6 text-xl">
+                          {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white animate-spin rounded-full"></div> : <><ChevronRight className="w-6 h-6" /> Chamar Próximo</>}
+                       </button>
 
-                   <div className="grid grid-cols-2 gap-4">
-                      <button onClick={() => current && handleRecall(current.id, current.ticket_number)} disabled={!current} className="btn-ghost flex-col py-6 gap-2">
-                         <Mail className="w-5 h-5" />
-                         <span className="text-[10px] uppercase font-bold tracking-wider">Re-notificar SMS</span>
-                      </button>
-                      <button className="btn-ghost flex-col py-6 gap-2 text-red-500 bg-red-50">
-                         <X className="w-5 h-5" />
-                         <span className="text-[10px] uppercase font-bold tracking-wider">Pausar Fila</span>
-                      </button>
-                   </div>
-                </div>
+                       <div className="grid grid-cols-2 gap-4">
+                          <button onClick={() => current && handleRecall(current.id, current.ticket_number)} disabled={!current} className="btn-ghost flex-col py-6 gap-2">
+                             <Bell className="w-5 h-5 text-blue-500" />
+                             <span className="text-[10px] uppercase font-bold tracking-wider">Lembrar (SMS)</span>
+                          </button>
+                          <button onClick={handlePrintQR} className="btn-ghost flex-col py-6 gap-2">
+                             <Printer className="w-5 h-5 text-slate-500" />
+                             <span className="text-[10px] uppercase font-bold tracking-wider">Imprimir QR</span>
+                          </button>
+                       </div>
+                    </div>
 
-                <div className="card-premium p-8 space-y-6">
-                   <div className="flex items-center gap-2 mb-4">
-                      <Plus className="w-4 h-4 text-[#3451D1]" />
-                      <h3 className="font-bold text-[#0F172A]">Entrada Manual</h3>
-                   </div>
-                   <form onSubmit={handleManualJoin} className="space-y-4">
-                      <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="input-modern text-center text-2xl font-bold py-4" placeholder="9XX XXX XXX" />
-                      <button type="submit" disabled={loading} className="btn-primary w-full">Gerar Senha</button>
-                   </form>
-                </div>
-             </div>
+                    <div className="card-premium p-8 space-y-6 bg-slate-50/50 border-dashed border-2">
+                       <div className="flex items-center gap-2 mb-4">
+                          <Plus className="w-4 h-4 text-[#3451D1]" />
+                          <h3 className="font-bold text-[#0F172A]">Adicionar Manualmente</h3>
+                       </div>
+                       <form onSubmit={handleManualJoin} className="space-y-4">
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">+244</span>
+                            <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="input-modern pl-16 text-xl font-bold py-4" placeholder="9XX XXX XXX" />
+                          </div>
+                          <button type="submit" disabled={loading} className="btn-primary w-full py-4">Gerar Senha</button>
+                       </form>
+                    </div>
+                 </div>
 
-             {/* Right Column: List & Stats */}
-             <div className="lg:col-span-7 space-y-8">
-                <div className="grid grid-cols-2 gap-6">
-                   <div className="card-premium py-6 flex flex-col items-center">
-                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Em Espera</span>
-                     <span className="text-4xl font-bold text-[#0F172A]">{waiting.length}</span>
-                   </div>
-                   <div className="card-premium py-6 flex flex-col items-center">
-                     <span className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Total Atendidos</span>
-                     <span className="text-4xl font-bold text-[#0F172A]">{(est.queues || []).filter(q => q.status === 'served').length}</span>
+                 {/* Right Column: List & Stats */}
+                 <div className="lg:col-span-7 space-y-8">
+                    <div className="grid grid-cols-2 gap-6">
+                       <div className="card-premium py-8 flex flex-col items-center">
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Em Espera</span>
+                         <span className="text-5xl font-bold text-[#0F172A]">{waiting.length}</span>
+                       </div>
+                       <div className="card-premium py-8 flex flex-col items-center">
+                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] mb-2">Atendidos Hoje</span>
+                         <span className="text-5xl font-bold text-[#0F172A]">{(est.queues || []).filter(q => q.status === 'served').length}</span>
+                       </div>
+                    </div>
+
+                    <div className="card-premium p-0 overflow-hidden">
+                       <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                          <h3 className="font-bold text-[#0F172A]">Fila de Espera</h3>
+                          <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tempo Real</span>
+                          </div>
+                       </div>
+                       <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
+                          {waiting.map((q, i) => (
+                             <div key={q.id} className="p-6 flex items-center justify-between hover:bg-slate-50/80 transition-all group">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-14 h-14 rounded-xl bg-slate-50 border border-slate-100 flex flex-col items-center justify-center font-black group-hover:border-[#3451D1] group-hover:bg-blue-50 transition-all">
+                                      <span className="text-[8px] text-slate-400 uppercase font-black">Senha</span>
+                                      <span className="text-lg text-[#3451D1]">#{q.ticket_number.split('-').pop()}</span>
+                                   </div>
+                                   <div>
+                                     <div className="font-bold text-[#0F172A] flex items-center gap-2 text-base">
+                                       {q.phone}
+                                       {i === 0 && <span className="bg-green-100 text-green-600 text-[8px] px-1.5 py-0.5 rounded font-black uppercase">Próximo</span>}
+                                     </div>
+                                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Aguardando há {Math.floor((Date.now() - new Date(q.joined_at).getTime()) / 60000)}m</div>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2">
+                                   <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-3 text-slate-400 hover:text-[#3451D1] hover:bg-white shadow-sm border border-transparent hover:border-slate-100 rounded-xl transition-all"><Bell className="w-5 h-5" /></button>
+                                   <button onClick={() => handleCancel(q.id)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-white shadow-sm border border-transparent hover:border-slate-100 rounded-xl transition-all"><Trash2 className="w-5 h-5" /></button>
+                                </div>
+                             </div>
+                          ))}
+                          {waiting.length === 0 && (
+                            <div className="p-20 text-center space-y-4">
+                               <Timer className="w-12 h-12 mx-auto text-slate-100" />
+                               <p className="text-slate-400 font-bold uppercase text-[10px] tracking-widest">Fila Vazia</p>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+                 </div>
+              </div>
+           )}
+
+           {activeTab === 'crm' && (
+              <div className="space-y-8">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                   <div className="card-premium p-6">
+                      <div className="flex items-center gap-4">
+                         <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[#3451D1]"><Users className="w-6 h-6" /></div>
+                         <div>
+                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Base Total</p>
+                            <h3 className="text-2xl font-bold">{contacts.length} Clientes</h3>
+                         </div>
+                      </div>
                    </div>
                 </div>
 
                 <div className="card-premium p-0 overflow-hidden">
-                   <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                      <h3 className="font-bold text-[#0F172A]">Fila de Espera</h3>
-                      <div className="flex gap-2">
-                        <span className="badge badge-live">Live</span>
-                      </div>
+                   <div className="p-8 border-b border-slate-50 flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-[#0F172A]">Relação de Clientes</h3>
+                      <button className="btn-ghost text-xs">Exportar</button>
                    </div>
-                   <div className="divide-y divide-slate-50">
-                      {waiting.map((q, i) => (
-                         <div key={q.id} className="p-6 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-4">
-                               <div className="w-12 h-12 rounded-lg bg-slate-50 border border-slate-100 flex items-center justify-center font-bold text-[#3451D1]">
-                                 #{q.ticket_number.split('-').pop()}
-                               </div>
-                               <div>
-                                 <div className="font-bold text-[#0F172A]">{q.phone}</div>
-                                 <div className="text-xs text-slate-400 font-medium">{i === 0 ? "Próximo a ser chamado" : `${i + 1}º na fila`}</div>
-                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                               <button onClick={() => handleRecall(q.id, q.ticket_number)} className="p-2.5 text-slate-400 hover:text-[#3451D1] hover:bg-blue-50 rounded-lg transition-all"><Bell className="w-4 h-4" /></button>
-                               <button onClick={() => handleCancel(q.id)} className="p-2.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"><Trash2 className="w-4 h-4" /></button>
-                            </div>
-                         </div>
-                      ))}
-                      {waiting.length === 0 && (
-                        <div className="p-20 text-center space-y-4">
-                           <Timer className="w-12 h-12 mx-auto text-slate-200" />
-                           <p className="text-slate-400 font-medium">A fila está vazia no momento.</p>
-                        </div>
-                      )}
+                   <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                       <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 tracking-[0.2em]">
+                          <tr>
+                             <th className="px-8 py-5">Cliente</th>
+                             <th className="px-8 py-5">Recorrência</th>
+                             <th className="px-8 py-5">Última Presença</th>
+                             <th className="px-8 py-5 text-right">Ação</th>
+                          </tr>
+                       </thead>
+                       <tbody className="divide-y divide-slate-50">
+                          {contacts.map((c, i) => (
+                             <tr key={i} className="hover:bg-slate-50/50 transition-colors">
+                                <td className="px-8 py-6">
+                                   <div className="flex items-center gap-4">
+                                      <div className="w-12 h-12 rounded-2xl bg-white border border-slate-100 shadow-sm flex items-center justify-center text-[#3451D1] text-sm font-black">
+                                        {(c.name || 'C').charAt(0).toUpperCase()}
+                                      </div>
+                                      <div className="flex flex-col">
+                                        <span className="font-bold text-[#0F172A] text-base">{c.name || 'Cliente'}</span>
+                                        <span className="text-xs font-bold text-slate-400 tracking-wider">{c.phone}</span>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6">
+                                   <div className="flex flex-col gap-1">
+                                      <span className="text-sm font-black text-[#3451D1]">{c.visit_count} Visitas</span>
+                                      <div className="w-24 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                         <div className="h-full bg-blue-500" style={{ width: `${Math.min(c.visit_count * 10, 100)}%` }}></div>
+                                      </div>
+                                   </div>
+                                </td>
+                                <td className="px-8 py-6 text-sm font-bold text-slate-500">
+                                   {new Date(c.last_visit).toLocaleDateString('pt-PT')}
+                                </td>
+                                <td className="px-8 py-6 text-right">
+                                   <button className="btn-ghost p-3 text-[#3451D1] hover:bg-blue-50 border border-transparent hover:border-blue-100 rounded-xl"><Mail className="w-4 h-4" /></button>
+                                </td>
+                             </tr>
+                          ))}
+                       </tbody>
+                    </table>
                    </div>
                 </div>
+              </div>
+           )}
 
-                <div className="card-premium flex items-center justify-between p-6">
-                    <div className="flex items-center gap-4">
-                       <QrCode className="w-6 h-6 text-slate-300" />
+           {activeTab === 'marketing' && (
+              <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div className="card-premium p-10 space-y-8">
+                    <div className="flex justify-between items-start">
+                       <div className="space-y-1">
+                          <h3 className="text-3xl font-bold text-[#0F172A]">Nova Campanha SMS</h3>
+                          <p className="text-slate-500">Comunique instantaneamente com toda a sua base.</p>
+                       </div>
+                       <div className="bg-slate-900 text-white rounded-2xl p-4 text-center">
+                          <p className="text-[8px] font-black uppercase tracking-widest opacity-50 mb-1">Campanhas / Mês</p>
+                          <p className="text-3xl font-black">{est.sms_campaigns_balance || 0}</p>
+                       </div>
+                    </div>
+
+                    <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-6">
+                       <div className="bg-white p-3 rounded-xl shadow-sm text-[#3451D1]"><Users className="w-6 h-6" /></div>
                        <div>
-                          <h4 className="font-bold text-[#0F172A]">QR Code de Entrada</h4>
-                          <p className="text-xs text-slate-400">Imprima o cartaz para os seus clientes.</p>
+                          <h4 className="font-bold text-[#0F172A]">Alcance Estimado</h4>
+                          <p className="text-sm text-slate-500">Sua mensagem chegará a <span className="font-black text-[#3451D1]">{contacts.length}</span> contactos.</p>
                        </div>
-                    </div>
-                    
-                    <div className="flex flex-col items-center gap-2">
-                       <div className="p-2 bg-white rounded-lg shadow-sm border border-slate-100">
-                          <QRCodeSVG 
-                            value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
-                            size={80} 
-                            imageSettings={{
-                              src: est.logo_url,
-                              height: 20,
-                              width: 20,
-                              excavate: true,
-                            }}
-                          />
-                       </div>
-                       <button onClick={handlePrintQR} className="btn-ghost text-[10px] h-auto py-1">Imprimir Cartaz</button>
                     </div>
 
-                    <div id="main-qr-canvas" className="hidden">
-                       <QRCodeSVG 
-                         value={`https://kwikfilas.vercel.app/?est=${est.code}`} 
-                         size={1024} 
-                         level="H"
-                         imageSettings={{
-                           src: est.logo_url,
-                           height: 200,
-                           width: 200,
-                           excavate: true,
+                    <div className="space-y-4">
+                       <div className="space-y-1.5">
+                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Corpo da Mensagem</label>
+                          <textarea 
+                            value={campaignMsg} 
+                            onChange={e => setCampaignMsg(e.target.value)} 
+                            className="input-modern min-h-[160px] resize-none py-6 leading-relaxed" 
+                            placeholder="Ex: Olá! Hoje temos 20% de desconto para os nossos clientes habituais. Visitem-nos!"
+                          />
+                          <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase px-1">
+                             <span>{campaignMsg.length} caracteres</span>
+                             <span>{Math.ceil(campaignMsg.length / 160)} SMS p/ cliente</span>
+                          </div>
+                       </div>
+                       
+                       <button 
+                         onClick={() => {
+                            if (!campaignMsg) return notify("Escreva o conteúdo da SMS", 'error');
+                            if ((est.sms_campaigns_balance || 0) <= 0) return notify("Saldo de campanhas esgotado este mês", 'error');
+                            
+                            if (window.confirm(`Confirmar envio para ${contacts.length} clientes?`)) {
+                              setSendingCampaign(true);
+                              setTimeout(() => {
+                                notify("Campanha enviada para processamento!");
+                                setCampaignMsg("");
+                                setSendingCampaign(false);
+                              }, 1500);
+                            }
                          }}
-                       />
-                    </div>
-                 </div>
-             </div>
-          </div>
-          ) : (
-             <div className="card-premium p-0 overflow-hidden">
-                <div className="p-6 border-b border-slate-50 flex items-center justify-between">
-                   <h3 className="font-bold text-[#0F172A]">Base de Dados de Clientes</h3>
-                   <span className="text-xs font-bold text-slate-400">{contacts.length} Contactos</span>
-                </div>
-                <table className="w-full text-left">
-                   <thead className="bg-slate-50/50 text-[10px] font-bold uppercase text-slate-400 tracking-wider">
-                      <tr>
-                         <th className="px-6 py-4">Cliente</th>
-                         <th className="px-6 py-4">Frequência</th>
-                         <th className="px-6 py-4">Última Atividade</th>
-                         <th className="px-6 py-4 text-right">Status</th>
-                      </tr>
-                   </thead>
-                   <tbody className="divide-y divide-slate-50">
-                      {contacts.map((c, i) => (
-                         <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                            <td className="px-6 py-4">
-                               <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#3451D1] text-xs font-bold">
-                                    {(c.name || 'C').charAt(0).toUpperCase()}
-                                  </div>
-                                  <div className="flex flex-col">
-                                    <span className="font-bold text-[#0F172A]">{c.name || 'Cliente'}</span>
-                                    <span className="text-[10px] text-slate-400 font-medium">{c.phone}</span>
-                                  </div>
-                               </div>
-                            </td>
-                            <td className="px-6 py-4">
-                               <span className="text-xs font-bold text-[#3451D1] bg-blue-50 px-2 py-1 rounded-md">{c.visit_count} Visitas</span>
-                            </td>
-                            <td className="px-6 py-4 text-sm font-medium text-slate-500">
-                               {new Date(c.last_visit).toLocaleDateString()} às {new Date(c.last_visit).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                               <span className="badge badge-active">Ativo</span>
-                            </td>
-                         </tr>
-                      ))}
-                   </tbody>
-                </table>
              </div>
           )}
        </main>
