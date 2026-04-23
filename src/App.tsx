@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
   LayoutDashboard, Lock, LogOut, Mail, Pencil, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, Printer,
-  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw, LayoutGrid, Layers, Monitor
+  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw, LayoutGrid, Layers, Monitor, Settings
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
@@ -954,6 +954,8 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
               </div>
             )}
           </main>
+
+
        </div>
     </div>
   );
@@ -964,7 +966,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [est, setEst] = useState<Establishment | null>(null);
   const [manualPhone, setManualPhone] = useState("");
   const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"queue" | "crm" | "marketing">("queue");
+  const [activeTab, setActiveTab] = useState<"queue" | "crm" | "marketing" | "settings">("queue");
   const [contacts, setContacts] = useState<any[]>([]);
   const [newContactPhone, setNewContactPhone] = useState("");
   const [campaignMsg, setCampaignMsg] = useState("");
@@ -980,10 +982,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     try {
       const targetId = auth.estId || (auth as any).id;
       const resArr = await fetch(`/api/admin/establishments?role=establishment&estId=${targetId}`);
-      if (!resArr.ok) throw new Error("API Fail");
+      if (!resArr.ok) return;
       const data = await resArr.json();
-      const found = data.find((e: any) => e.id === targetId);
+      // Usar comparação flexível (==) para evitar problemas de tipo (string vs number)
+      const found = Array.isArray(data) ? data.find((e: any) => e.id == targetId) : null;
       if (found) setEst(found);
+      else if (Array.isArray(data) && data.length > 0) setEst(data[0]); // Fallback se o ID não bater exatamente mas houver dados
     } catch (e) { console.error("Refresh Error", e); }
   };
 
@@ -1503,6 +1507,11 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
               </div>
            )}
        </main>
+       <div className="hidden">
+          <div id="main-qr-canvas">
+             <QRCodeSVG value={`${window.location.origin}/?est=${est.code}`} size={512} level="H" />
+          </div>
+       </div>
     </div>
   );
 };
