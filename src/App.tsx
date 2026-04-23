@@ -1527,7 +1527,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                              <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="input-modern pl-16 text-xl font-bold py-4" placeholder="9XX XXX XXX" />
                            </div>
                            
-                           {est.queue_mode === 'multi_service_multi' && (est.services || []).length > 0 && (
+                           {est.queue_mode !== 'normal' && (est.services || []).length > 0 && (
                               <div className="space-y-1.5">
                                  <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Vincular ao Serviço</label>
                                  <select 
