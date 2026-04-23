@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
-  LayoutDashboard, Lock, LogOut, Mail, Pencil, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, 
+  LayoutDashboard, Lock, LogOut, Mail, Pencil, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, Printer,
   Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -1301,8 +1301,24 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                               }, 1500);
                             }
                          }}
-             </div>
-          )}
+                         disabled={sendingCampaign || (est.sms_campaigns_balance || 0) <= 0}
+                         className="btn-primary w-full py-6 text-xl"
+                       >
+                          {sendingCampaign ? "A DISPARAR..." : "Enviar Campanha"}
+                       </button>
+                    </div>
+                 </div>
+
+                 <div className="card-premium bg-slate-900 border-none p-8 flex items-center justify-between text-white overflow-hidden relative group">
+                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20 -mr-32 -mt-32 group-hover:opacity-40 transition-opacity"></div>
+                    <div className="space-y-2 relative z-10">
+                       <h4 className="text-lg font-bold">Plano {est.plan}</h4>
+                       <p className="text-blue-200 text-xs">Inclui {est.plan === 'KFmax' ? 4 : 2} disparos em massa por mês.</p>
+                    </div>
+                    <button className="btn-ghost bg-white text-slate-900 hover:bg-blue-50 relative z-10 h-auto py-3 px-6 text-xs font-black">UPGRADE</button>
+                 </div>
+              </div>
+           )}
        </main>
     </div>
   );
@@ -1492,7 +1508,6 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
                       <button onClick={handleLeave} disabled={loading} className="btn-primary bg-red-500 hover:bg-red-600 border-none py-4">Sim, desejo sair</button>
                       <button onClick={() => setShowAbandonModal(false)} disabled={loading} className="text-xs font-bold text-slate-400 uppercase tracking-widest py-2">Cancelar</button>
                     </div>
-            <button onClick={() => setShowAbandonModal(true)} disabled={loading} className="w-full py-4 text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Abandonar Fila</button>
                   </motion.div>
                 </div>
               )}
