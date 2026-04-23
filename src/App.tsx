@@ -1467,7 +1467,9 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                     </div>
 
                     <div className="space-y-6">
-                                           {[
+                        <label className="text-sm font-bold text-slate-700">Modo de Funcionamento</label>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           {[
                             { id: 'normal', title: 'Normal', desc: 'Fila única tradicional. Ideal para fluxos simples.', icon: <Timer className="w-5 h-5" /> },
                             { id: 'multi_service_single', title: 'Multi-Serviço', desc: 'Fila única mas com seleção de serviço pelo cliente.', icon: <Layers className="w-5 h-5" /> },
                             { id: 'multi_service_multi', title: 'Multi-Fila', desc: 'Filas independentes por serviço. Ideal para balcões múltiplos.', icon: <LayoutGrid className="w-5 h-5" /> }
@@ -1677,6 +1679,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
         </div>
      </div>
   );
+};
 
 // --- 3.5 PUBLIC DISPLAY: MONITOR TV ---
 const PublicDisplayView = ({ estCode }: { estCode: string }) => {
@@ -1722,7 +1725,7 @@ const PublicDisplayView = ({ estCode }: { estCode: string }) => {
              </div>
           </div>
           <div className="text-right">
-             <div className="text-4xl font-black text-blue-500">{new Date().toLocaleTimeString('pt-PT', { hour: '2xl', minute: '2-digit' })}</div>
+             <div className="text-4xl font-black text-blue-500">{new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
              <div className="text-slate-400 font-bold uppercase tracking-widest">{new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
           </div>
        </div>
