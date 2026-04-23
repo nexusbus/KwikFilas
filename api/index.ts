@@ -56,7 +56,14 @@ app.get("/api/admin/establishments", async (req, res) => {
   }
 
   const { data, error } = await query;
-  if (error) return res.status(500).json({ error: error.message });
+  if (error) {
+    console.error("Establishment Fetch Error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
+  if (role === 'establishment' && estId && (!data || data.length === 0)) {
+    return res.status(404).json({ error: "Estabelecimento não encontrado para este ID." });
+  }
   
   const formatted = (data || []).map(est => ({
     ...est,

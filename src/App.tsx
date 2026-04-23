@@ -978,17 +978,46 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     if (res.ok) setContacts(await res.json());
   };
 
+  const [fetchError, setFetchError] = useState(false);
+
   const refresh = async () => {
     try {
       const targetId = auth.estId || (auth as any).id;
+      if (!targetId) {
+        console.error("No targetId found in auth", auth);
+        setFetchError(true);
+        return;
+      }
+
+      // Tentar busca filtrada primeiro
       const resArr = await fetch(`/api/admin/establishments?role=establishment&estId=${targetId}`);
-      if (!resArr.ok) return;
+      if (!resArr.ok) {
+        setFetchError(true);
+        return;
+      }
+
       const data = await resArr.json();
-      // Usar comparação flexível (==) para evitar problemas de tipo (string vs number)
-      const found = Array.isArray(data) ? data.find((e: any) => e.id == targetId) : null;
-      if (found) setEst(found);
-      else if (Array.isArray(data) && data.length > 0) setEst(data[0]); // Fallback se o ID não bater exatamente mas houver dados
-    } catch (e) { console.error("Refresh Error", e); }
+      let found = Array.isArray(data) ? data.find((e: any) => String(e.id) === String(targetId)) : null;
+
+      // Fallback: Se não encontrou filtrado, tenta buscar todos (se permitido) e filtrar localmente
+      if (!found) {
+        const resAll = await fetch(`/api/admin/establishments`);
+        if (resAll.ok) {
+          const allData = await resAll.json();
+          found = Array.isArray(allData) ? allData.find((e: any) => String(e.id) === String(targetId)) : null;
+        }
+      }
+
+      if (found) {
+        setEst(found);
+        setFetchError(false);
+      } else {
+        setFetchError(true);
+      }
+    } catch (e) { 
+      console.error("Refresh Error", e);
+      setFetchError(true);
+    }
   };
 
   useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
@@ -1077,9 +1106,19 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   };
 
   if (!est) return (
-     <div className="min-h-screen flex flex-col items-center justify-center bg-white space-y-4">
-        <div className="w-8 h-8 border-4 border-[#3451D1] border-t-transparent animate-spin rounded-full"></div>
-        <p className="text-sm font-bold text-slate-400">A carregar painel...</p>
+     <div className="min-h-screen flex flex-col items-center justify-center bg-white p-6 text-center space-y-6">
+        <div className="w-12 h-12 border-4 border-[#3451D1] border-t-transparent animate-spin rounded-full"></div>
+        <div className="space-y-2">
+          <p className="text-lg font-bold text-slate-800">A carregar painel...</p>
+          <p className="text-sm text-slate-400 max-w-xs mx-auto">Estamos a preparar o seu ambiente de gestão de filas.</p>
+        </div>
+        {fetchError && (
+          <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4">
+            <p className="text-xs font-bold text-red-500 bg-red-50 px-4 py-2 rounded-lg">Não foi possível carregar os dados do seu estabelecimento.</p>
+            <button onClick={() => window.location.reload()} className="btn-primary py-2 px-6 text-xs">Tentar Novamente</button>
+          </div>
+        )}
+        <button onClick={onLogout} className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest pt-10">Sair da Conta</button>
      </div>
   );
 
