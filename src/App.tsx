@@ -1678,6 +1678,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
             )}
 
             {activeTab === 'marketing' && (
+               <>
                <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="card-premium p-10 space-y-8">
                      <div className="flex justify-between items-start">
@@ -1761,9 +1762,10 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                      <button className="btn-ghost bg-white text-slate-900 hover:bg-blue-50 relative z-10 h-auto py-3 px-6 text-xs font-black">UPGRADE</button>
                   </div>
                </div>
-            )}
+               </>
+             )}
 
-            {activeTab === 'settings' && (
+             {activeTab === 'settings' && (
               <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                  <div className="card-premium p-10 space-y-10">
                     <div className="space-y-1">
