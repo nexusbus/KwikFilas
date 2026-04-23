@@ -74,6 +74,75 @@ const Modal = ({ isOpen, onClose, title, children }: { isOpen: boolean, onClose:
   </AnimatePresence>
 );
 
+const ConfirmModal = ({ isOpen, onClose, onConfirm, title, message, type = 'info', showInput = false, inputPlaceholder = "", inputType = "text", icon: Icon = ShieldCheck }: any) => {
+  const [inputValue, setInputValue] = useState("");
+  
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-[10000] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+          />
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="bg-white rounded-[40px] shadow-2xl w-full max-w-md overflow-hidden relative z-10 border border-slate-100"
+          >
+            <div className="p-10 space-y-8 text-center">
+              <div className={cn(
+                "w-20 h-20 rounded-3xl mx-auto flex items-center justify-center",
+                type === 'danger' ? "bg-red-50 text-red-500" : "bg-blue-50 text-[#3451D1]"
+              )}>
+                <Icon className="w-10 h-10" />
+              </div>
+              
+              <div className="space-y-2">
+                <h3 className="text-2xl font-black text-[#0F172A]">{title}</h3>
+                <p className="text-sm text-slate-500 font-bold leading-relaxed">{message}</p>
+              </div>
+
+              {showInput && (
+                <div className="space-y-2">
+                  <input 
+                    type={inputType}
+                    value={inputValue}
+                    onChange={e => setInputValue(e.target.value)}
+                    placeholder={inputPlaceholder}
+                    className="input-modern py-5 text-center text-xl tracking-[0.3em] font-black placeholder:tracking-normal placeholder:font-bold"
+                    autoFocus
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => { setInputValue(""); onClose(); }}
+                  className="flex-1 py-5 text-xs font-black text-slate-400 uppercase tracking-widest hover:bg-slate-50 rounded-2xl transition-all"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={() => { onConfirm(inputValue); setInputValue(""); }}
+                  className={cn(
+                    "flex-[1.5] py-5 text-xs font-black text-white uppercase tracking-widest rounded-2xl shadow-xl transition-all",
+                    type === 'danger' ? "bg-red-500 hover:bg-red-600 shadow-red-200" : "bg-[#3451D1] hover:bg-blue-700 shadow-blue-200"
+                  )}
+                >
+                  Confirmar
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
+  );
+};
+
 const KLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={cn("text-[#3451D1] w-8 h-8", className)} fill="none">
     <path d="M25 15 L25 85 M25 50 L75 15 M25 50 L75 85 M70 15 L80 15 M70 85 L80 85" stroke="currentColor" strokeWidth="10" strokeLinecap="round" />
@@ -545,6 +614,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
     name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", 
     plan: "KFmini", sms_campaigns_balance: 2, is_active: true, phone: ""
   });
+  const [showConfirm, setShowConfirm] = useState<any>(null); // { title, message, onConfirm, showInput, ... }
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -600,6 +670,23 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const isEdit = view === "edit" && editingId;
+    
+    if (isEdit) {
+      setShowConfirm({
+        title: "Confirmar Alteração",
+        message: "Para alterar os dados deste estabelecimento, introduza a Senha Master.",
+        showInput: true,
+        inputPlaceholder: "Senha Master",
+        inputType: "password",
+        onConfirm: (pw: string) => executeSubmit(pw)
+      });
+    } else {
+      executeSubmit();
+    }
+  };
+
+  const executeSubmit = async (superPassword?: string) => {
     setLoading(true);
     try {
       const isEdit = view === "edit" && editingId;
@@ -607,10 +694,10 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       const method = isEdit ? "PUT" : "POST";
       
       const payload = isEdit 
-        ? { targetId: editingId, superPassword: prompt("Confirme a Senha Master para alterar:"), updateData: formData }
+        ? { targetId: editingId, superPassword, updateData: formData }
         : formData;
 
-      if (isEdit && !payload.superPassword) { setLoading(false); return; }
+      if (isEdit && !payload.superPassword) { setShowConfirm(null); setLoading(false); return; }
 
       const res = await fetch(url, { 
         method, 
@@ -630,27 +717,37 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       }
       else { notify("Erro na operação", 'error'); }
     } catch (e) { notify("Erro Crítico", 'error'); }
+    setShowConfirm(null);
     setLoading(false);
   };
 
   const handleApproveSub = async (subId: string) => {
-    const pw = prompt("Senha Master para aprovar subscrição:");
-    if (!pw) return;
-    setLoading(true);
-    try {
-      const res = await fetch("/api/admin/subscriptions/approve", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ subId, superPassword: pw })
-      });
-      if (res.ok) {
-        notify("Subscrição aprovada!");
-        refreshSubs();
-      } else {
-        notify("Falha na aprovação", 'error');
+    setShowConfirm({
+      title: "Aprovar Subscrição",
+      message: "Introduza a Senha Master para aprovar esta subscrição e criar o estabelecimento.",
+      showInput: true,
+      inputPlaceholder: "Senha Master",
+      inputType: "password",
+      onConfirm: async (pw: string) => {
+        if (!pw) return;
+        setLoading(true);
+        try {
+          const res = await fetch("/api/admin/subscriptions/approve", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ subId, superPassword: pw })
+          });
+          if (res.ok) {
+            notify("Subscrição aprovada!");
+            refreshSubs();
+          } else {
+            notify("Falha na aprovação", 'error');
+          }
+        } catch (e) { notify("Erro de conexão", 'error'); }
+        setShowConfirm(null);
+        setLoading(false);
       }
-    } catch (e) { notify("Erro de conexão", 'error'); }
-    setLoading(false);
+    });
   };
 
   const openEdit = (est: Establishment) => {
@@ -979,7 +1076,18 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
             )}
           </main>
 
-
+          <ConfirmModal 
+            isOpen={!!showConfirm} 
+            onClose={() => setShowConfirm(null)} 
+            onConfirm={showConfirm?.onConfirm}
+            title={showConfirm?.title}
+            message={showConfirm?.message}
+            type={showConfirm?.type}
+            showInput={showConfirm?.showInput}
+            inputPlaceholder={showConfirm?.showInput ? showConfirm?.inputPlaceholder : ""}
+            inputType={showConfirm?.inputType || "text"}
+            icon={showConfirm?.icon}
+          />
        </div>
     </div>
   );
@@ -1001,6 +1109,7 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   const [newService, setNewService] = useState({ name: "", prefix: "" });
   const [showModeModal, setShowModeModal] = useState<any>(null);
   const [modeConfirmPass, setModeConfirmPass] = useState("");
+  const [showConfirm, setShowConfirm] = useState<any>(null);
 
   const refreshContacts = async () => {
     if (!est) return;
@@ -1088,25 +1197,34 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
 
   const handleClearQueue = async () => {
     if (!est) return;
-    const pw = prompt("Confirme com a sua senha de administrador para ZERAR A FILA:");
-    if (pw !== est.admin_password) return notify("Senha Incorreta", 'error');
+    setShowConfirm({
+      title: "Zerar Fila de Espera",
+      message: "Esta ação irá APAGAR TODAS as senhas em espera e em atendimento. Introduza a sua senha para confirmar.",
+      type: "danger",
+      showInput: true,
+      inputPlaceholder: "Senha Administrativa",
+      inputType: "password",
+      icon: Trash2,
+      onConfirm: async (pw: string) => {
+        if (pw !== est.admin_password) return notify("Senha Incorreta", 'error');
 
-    if (!confirm("Tem a certeza que deseja APAGAR TODA A FILA de espera? Esta ação não pode ser desfeita.")) return;
-
-    setLoading(true);
-    const res = await fetch(`/api/establishments/${est.code}/clear-queue`, { 
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminPassword: pw })
+        setLoading(true);
+        const res = await fetch(`/api/establishments/${est.code}/clear-queue`, { 
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ adminPassword: pw })
+        });
+        
+        if (res.ok) {
+          notify("Fila Zerada com Sucesso!");
+          refresh();
+        } else {
+          notify("Erro ao zerar fila", 'error');
+        }
+        setShowConfirm(null);
+        setLoading(false);
+      }
     });
-    
-    if (res.ok) {
-      notify("Fila Zerada com Sucesso!");
-      refresh();
-    } else {
-      notify("Erro ao zerar fila", 'error');
-    }
-    setLoading(false);
   };
 
   const handleManualJoin = async (e: React.FormEvent) => {
@@ -1629,10 +1747,19 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                                 <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                                    <button 
                                      onClick={() => {
-                                       if (window.confirm("Remover este serviço?")) {
-                                          fetch(`/api/admin/services/${svc.id}`, { method: "DELETE" }).then(res => { if (res.ok) { notify("Serviço removido"); refresh(); } });
-                                       }
-                                     }}
+                                        setShowConfirm({
+                                          title: "Remover Serviço",
+                                          message: `Tem a certeza que deseja remover o serviço ${svc.name}?`,
+                                          type: "danger",
+                                          icon: Trash2,
+                                          onConfirm: () => {
+                                            fetch(`/api/admin/services/${svc.id}`, { method: "DELETE" }).then(res => { 
+                                              if (res.ok) { notify("Serviço removido"); refresh(); } 
+                                              setShowConfirm(null);
+                                            });
+                                          }
+                                        });
+                                      }}
                                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
                                    >
                                       <Trash2 className="w-4 h-4" />
@@ -1771,6 +1898,19 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
               </button>
            </div>
         </Modal>
+
+        <ConfirmModal 
+           isOpen={!!showConfirm} 
+           onClose={() => setShowConfirm(null)} 
+           onConfirm={showConfirm?.onConfirm}
+           title={showConfirm?.title}
+           message={showConfirm?.message}
+           type={showConfirm?.type}
+           showInput={showConfirm?.showInput}
+           inputPlaceholder={showConfirm?.showInput ? showConfirm?.inputPlaceholder : ""}
+           inputType={showConfirm?.inputType || "text"}
+           icon={showConfirm?.icon}
+        />
 
         {/* Elemento oculto para geração do QR Code de impressão */}
         <div className="hidden">
