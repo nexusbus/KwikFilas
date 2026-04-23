@@ -49,7 +49,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/admin/establishments", async (req, res) => {
   const { role, estId } = req.query;
   
-  let query = supabase.from("establishments").select("*, queues(*)");
+  let query = supabase.from("establishments").select("*, queues(*), services(*)");
   
   if (role === 'establishment' && estId) {
     query = query.eq("id", estId);
@@ -64,6 +64,29 @@ app.get("/api/admin/establishments", async (req, res) => {
   }));
   
   res.json(formatted);
+});
+
+// 2.1 GESTÃO DE SERVIÇOS
+app.post("/api/admin/services", async (req, res) => {
+  const { est_id, name, prefix } = req.body;
+  const { data, error } = await supabase.from("services").insert([{ est_id, name, prefix, is_active: true }]).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.put("/api/admin/services/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, prefix, is_active } = req.body;
+  const { data, error } = await supabase.from("services").update({ name, prefix, is_active }).eq("id", id).select().single();
+  if (error) return res.status(500).json({ error: error.message });
+  res.json(data);
+});
+
+app.delete("/api/admin/services/:id", async (req, res) => {
+  const { id } = req.params;
+  const { error } = await supabase.from("services").delete().eq("id", id);
+  if (error) return res.status(500).json({ error: error.message });
+  res.json({ success: true });
 });
 
 // 3. CRIAR (Com Lógica de Iniciais e NIF único)
@@ -140,33 +163,55 @@ app.put("/api/admin/establishments", async (req, res) => {
 
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {
-  const { phone, estCode, name } = req.body;
-  const { data: est } = await supabase.from("establishments").select("id, initials, is_active").eq("code", estCode).single();
+  const { phone, estCode, name, serviceId } = req.body;
+  const { data: est } = await supabase.from("establishments").select("id, initials, is_active, queue_mode").eq("code", estCode).single();
   if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
   if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
 
   const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).single();
   if (exists) return res.status(400).json({ error: "Já está nesta fila" });
 
+  let servicePrefix = '';
+  let serviceName = '';
+  if (serviceId) {
+    const { data: svc } = await supabase.from("services").select("*").eq("id", serviceId).single();
+    if (svc) {
+      servicePrefix = svc.prefix;
+      serviceName = svc.name;
+    }
+  }
+
   const today = new Date().toISOString().split('T')[0];
   
-  // Contar senhas geradas HOJE para este estabelecimento
-  const { count: qCount } = await supabase.from("queues")
-    .select("id", { count: "exact", head: true })
-    .eq("est_id", est.id)
-    .gte("joined_at", `${today}T00:00:00Z`);
+  // Contagem para ticket depende do modo
+  let qCount, hCount;
 
-  const { count: hCount } = await supabase.from("history")
-    .select("id", { count: "exact", head: true })
-    .eq("est_id", est.id)
-    .gte("served_at", `${today}T00:00:00Z`);
+  if (est.queue_mode === 'multi_service_multi' && serviceId) {
+    const qRes = await supabase.from("queues").select("id", { count: "exact", head: true }).eq("est_id", est.id).eq("service_id", serviceId).gte("joined_at", `${today}T00:00:00Z`);
+    const hRes = await supabase.from("history").select("id", { count: "exact", head: true }).eq("est_id", est.id).eq("service_id", serviceId).gte("served_at", `${today}T00:00:00Z`);
+    qCount = qRes.count;
+    hCount = hRes.count;
+  } else {
+    const qRes = await supabase.from("queues").select("id", { count: "exact", head: true }).eq("est_id", est.id).gte("joined_at", `${today}T00:00:00Z`);
+    const hRes = await supabase.from("history").select("id", { count: "exact", head: true }).eq("est_id", est.id).gte("served_at", `${today}T00:00:00Z`);
+    qCount = qRes.count;
+    hCount = hRes.count;
+  }
   
   const seq = (qCount || 0) + (hCount || 0) + 1;
-  const ticket = `${est.initials}-${seq.toString().padStart(3, '0')}`;
+  const basePrefix = servicePrefix || est.initials;
+  const ticket = `${basePrefix}-${seq.toString().padStart(3, '0')}`;
 
   const { data, error } = await supabase
     .from("queues")
-    .insert([{ est_id: est.id, phone, name, ticket_number: ticket }])
+    .insert([{ 
+      est_id: est.id, 
+      phone, 
+      name, 
+      ticket_number: ticket,
+      service_id: serviceId,
+      service_name: serviceName
+    }])
     .select().single();
 
   if (error) return res.status(500).json({ error: error.message });
@@ -206,33 +251,46 @@ app.get("/api/check-phone/:phone", async (req, res) => {
 // 6. CHAMAR PRÓXIMO + DISPARO SMS
 app.post("/api/establishments/:code/next", async (req, res) => {
   const { code } = req.params;
-  const { data: est } = await supabase.from("establishments").select("id, name").eq("code", code).single();
+  const { serviceId } = req.body;
+  const { data: est } = await supabase.from("establishments").select("id, name, queue_mode").eq("code", code).single();
   if (!est) return res.status(404).json({ error: "Local não encontrado" });
 
-  const { data: current } = await supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called").single();
+  // 1. Finalizar chamada atual (se houver) para este estabelecimento e serviço (se multi_queue)
+  let currentQuery = supabase.from("queues").select("*").eq("est_id", est.id).eq("status", "called");
+  if (est.queue_mode === 'multi_service_multi' && serviceId) {
+    currentQuery = currentQuery.eq("service_id", serviceId);
+  }
+  
+  const { data: current } = await currentQuery.limit(1).maybeSingle();
+
   if (current) {
-    // Tentar mover para histórico (se falhar, removemos da fila na mesma para não bloquear, mas tentamos ser robustos)
     const histPayload: any = {
       est_id: est.id,
       phone: current.phone,
       name: current.name,
-      ticket_number: current.ticket_number
+      ticket_number: current.ticket_number,
+      service_id: current.service_id,
+      service_name: current.service_name,
+      served_at: new Date().toISOString()
     };
-    
-    // Adicionar served_at apenas se existir ou usar joined_at como fallback
-    histPayload.served_at = new Date().toISOString();
-
     await supabase.from("history").insert([histPayload]);
     await supabase.from("queues").delete().eq("id", current.id);
   }
 
-  const { data: next } = await supabase.from("queues")
+  // 2. Chamar o próximo
+  let nextQuery = supabase.from("queues")
     .select("*")
     .eq("est_id", est.id)
-    .eq("status", "waiting")
+    .eq("status", "waiting");
+  
+  if (serviceId) {
+    nextQuery = nextQuery.eq("service_id", serviceId);
+  }
+
+  const { data: next } = await nextQuery
     .order("joined_at", { ascending: true })
     .limit(1)
-    .single();
+    .maybeSingle();
   
   if (next) {
     await supabase.from("queues").update({ status: "called" }).eq("id", next.id);

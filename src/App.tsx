@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { 
   Bell, Building, Camera, CheckCircle2, ChevronLeft, ChevronRight, Clock, ExternalLink, Image as ImageIcon, 
   LayoutDashboard, Lock, LogOut, Mail, Pencil, Phone as PhoneIcon, Plus, QrCode, Search, Smartphone, Store, Timer, Trash2, Printer,
-  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw
+  Upload, User, UserCheck, Users, X, Info, ArrowRight, ShieldCheck, Ticket, AlertCircle, History, RefreshCcw, LayoutGrid, Layers, Monitor
 } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import { clsx, type ClassValue } from "clsx";
@@ -1133,6 +1133,12 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                   <span className="bg-blue-50 text-[#3451D1] text-[8px] font-black px-1.5 py-0.5 rounded ml-1 border border-blue-100">PRO</span>
                </button>
              )}
+             <button onClick={() => setActiveTab("settings")} className={cn(
+               "px-6 py-4 text-xs font-bold transition-all border-b-2 flex items-center gap-2 whitespace-nowrap", 
+               activeTab === "settings" ? "border-[#3451D1] text-[#3451D1]" : "border-transparent text-slate-400 hover:text-slate-600"
+             )}>
+                <Settings className="w-4 h-4" /> Definições
+             </button>
           </div>
         </div>
 
@@ -1297,83 +1303,310 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                                 </td>
                              </tr>
                           ))}
-                       </tbody>
-                    </table>
-                   </div>
-                </div>
-              </div>
-           )}
-
-           {activeTab === 'marketing' && (
-              <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                 <div className="card-premium p-10 space-y-8">
-                    <div className="flex justify-between items-start">
-                       <div className="space-y-1">
-                          <h3 className="text-3xl font-bold text-[#0F172A]">Nova Campanha SMS</h3>
-                          <p className="text-slate-500">Comunique instantaneamente com toda a sua base.</p>
-                       </div>
-                       <div className="bg-slate-900 text-white rounded-2xl p-4 text-center">
-                          <p className="text-[8px] font-black uppercase tracking-widest opacity-50 mb-1">Campanhas / Mês</p>
-                          <p className="text-3xl font-black">{est.sms_campaigns_balance || 0}</p>
-                       </div>
-                    </div>
-
-                    <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-6">
-                       <div className="bg-white p-3 rounded-xl shadow-sm text-[#3451D1]"><Users className="w-6 h-6" /></div>
-                       <div>
-                          <h4 className="font-bold text-[#0F172A]">Alcance Estimado</h4>
-                          <p className="text-sm text-slate-500">Sua mensagem chegará a <span className="font-black text-[#3451D1]">{contacts.length}</span> contactos.</p>
-                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                       <div className="space-y-1.5">
-                          <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Corpo da Mensagem</label>
-                          <textarea 
-                            value={campaignMsg} 
-                            onChange={e => setCampaignMsg(e.target.value)} 
-                            className="input-modern min-h-[160px] resize-none py-6 leading-relaxed" 
-                            placeholder="Ex: Olá! Hoje temos 20% de desconto para os nossos clientes habituais. Visitem-nos!"
-                          />
-                          <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase px-1">
-                             <span>{campaignMsg.length} caracteres</span>
-                             <span>{Math.ceil(campaignMsg.length / 160)} SMS p/ cliente</span>
-                          </div>
-                       </div>
-                       
-                       <button 
-                         onClick={() => {
-                            if (!campaignMsg) return notify("Escreva o conteúdo da SMS", 'error');
-                            if ((est.sms_campaigns_balance || 0) <= 0) return notify("Saldo de campanhas esgotado este mês", 'error');
-                            
-                            if (window.confirm(`Confirmar envio para ${contacts.length} clientes?`)) {
-                              setSendingCampaign(true);
-                              setTimeout(() => {
-                                notify("Campanha enviada para processamento!");
-                                setCampaignMsg("");
-                                setSendingCampaign(false);
-                              }, 1500);
-                            }
-                         }}
-                         disabled={sendingCampaign || (est.sms_campaigns_balance || 0) <= 0}
-                         className="btn-primary w-full py-6 text-xl"
-                       >
-                          {sendingCampaign ? "A DISPARAR..." : "Enviar Campanha"}
-                       </button>
+                        </tbody>
+                     </table>
                     </div>
                  </div>
+               </div>
+            )}
 
-                 <div className="card-premium bg-slate-900 border-none p-8 flex items-center justify-between text-white overflow-hidden relative group">
-                    <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20 -mr-32 -mt-32 group-hover:opacity-40 transition-opacity"></div>
-                    <div className="space-y-2 relative z-10">
-                       <h4 className="text-lg font-bold">Plano {est.plan}</h4>
-                       <p className="text-blue-200 text-xs">Inclui {est.plan === 'KFmax' ? 4 : 2} disparos em massa por mês.</p>
+            {activeTab === 'marketing' && (
+               <div className="max-w-3xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="card-premium p-10 space-y-8">
+                     <div className="flex justify-between items-start">
+                        <div className="space-y-1">
+                           <h3 className="text-3xl font-bold text-[#0F172A]">Nova Campanha SMS</h3>
+                           <p className="text-slate-500">Comunique instantaneamente com toda a sua base.</p>
+                        </div>
+                        <div className="bg-slate-900 text-white rounded-2xl p-4 text-center">
+                           <p className="text-[8px] font-black uppercase tracking-widest opacity-50 mb-1">Campanhas / Mês</p>
+                           <p className="text-3xl font-black">{est.sms_campaigns_balance || 0}</p>
+                        </div>
+                     </div>
+
+                     <div className="p-6 bg-blue-50 rounded-2xl border border-blue-100 flex items-center gap-6">
+                        <div className="bg-white p-3 rounded-xl shadow-sm text-[#3451D1]"><Users className="w-6 h-6" /></div>
+                        <div>
+                           <h4 className="font-bold text-[#0F172A]">Alcance Estimado</h4>
+                           <p className="text-sm text-slate-500">Sua mensagem chegará a <span className="font-black text-[#3451D1]">{contacts.length}</span> contactos.</p>
+                        </div>
+                     </div>
+
+                     <div className="space-y-4">
+                        <div className="space-y-1.5">
+                           <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Corpo da Mensagem</label>
+                           <textarea 
+                              value={campaignMsg} 
+                              onChange={e => setCampaignMsg(e.target.value)} 
+                              className="input-modern min-h-[160px] resize-none py-6 leading-relaxed" 
+                              placeholder="Ex: Olá! Hoje temos 20% de desconto para os nossos clientes habituais. Visitem-nos!"
+                           />
+                           <div className="flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase px-1">
+                              <span>{campaignMsg.length} caracteres</span>
+                              <span>{Math.ceil(campaignMsg.length / 160)} SMS p/ cliente</span>
+                           </div>
+                        </div>
+                        
+                        <button 
+                          onClick={() => {
+                             if (!campaignMsg) return notify("Escreva o conteúdo da SMS", 'error');
+                             if ((est.sms_campaigns_balance || 0) <= 0) return notify("Saldo de campanhas esgotado este mês", 'error');
+                             
+                             if (window.confirm(`Confirmar envio para ${contacts.length} clientes?`)) {
+                               setSendingCampaign(true);
+                               setTimeout(() => {
+                                 notify("Campanha enviada para processamento!");
+                                 setCampaignMsg("");
+                                 setSendingCampaign(false);
+                               }, 1500);
+                             }
+                          }}
+                          disabled={sendingCampaign || (est.sms_campaigns_balance || 0) <= 0}
+                          className="btn-primary w-full py-6 text-xl"
+                        >
+                           {sendingCampaign ? "A DISPARAR..." : "Enviar Campanha"}
+                        </button>
+                     </div>
+                  </div>
+
+                  <div className="card-premium bg-slate-900 border-none p-8 flex items-center justify-between text-white overflow-hidden relative group">
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500 rounded-full blur-[100px] opacity-20 -mr-32 -mt-32 group-hover:opacity-40 transition-opacity"></div>
+                     <div className="space-y-2 relative z-10">
+                        <h4 className="text-lg font-bold">Plano {est.plan}</h4>
+                        <p className="text-blue-200 text-xs">Inclui {est.plan === 'KFmax' ? 4 : 2} disparos em massa por mês.</p>
+                     </div>
+                     <button className="btn-ghost bg-white text-slate-900 hover:bg-blue-50 relative z-10 h-auto py-3 px-6 text-xs font-black">UPGRADE</button>
+                  </div>
+               </div>
+            )}
+
+            {activeTab === 'settings' && (
+              <div className="max-w-4xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                 <div className="card-premium p-10 space-y-10">
+                    <div className="space-y-1">
+                       <h3 className="text-3xl font-bold text-[#0F172A]">Definições do Sistema</h3>
+                       <p className="text-slate-500">Configure o modo de operação e os serviços da sua unidade.</p>
                     </div>
-                    <button className="btn-ghost bg-white text-slate-900 hover:bg-blue-50 relative z-10 h-auto py-3 px-6 text-xs font-black">UPGRADE</button>
+
+                    <div className="space-y-6">
+                       <label className="text-sm font-bold text-slate-700">Modo de Funcionamento</label>
+                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {[
+                            { id: 'normal', title: 'Normal', desc: 'Fila única tradicional. Ideal para fluxos simples.', icon: <Timer className="w-5 h-5" /> },
+                            { id: 'multi_service_single', title: 'Multi-Serviço', desc: 'Fila única mas com seleção de serviço pelo cliente.', icon: <Layers className="w-5 h-5" /> },
+                            { id: 'multi_service_multi', title: 'Multi-Fila', desc: 'Filas independentes por serviço. Ideal para balcões múltiplos.', icon: <LayoutGrid className="w-5 h-5" /> }
+                          ].map(mode => (
+                            <button 
+                              key={mode.id}
+                              onClick={async () => {
+                                const pass = prompt("Confirme a senha de Admin:");
+                                if (pass === est.admin_password) {
+                                  const res = await fetch("/api/admin/establishments", {
+                                    method: "PUT",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ targetId: est.id, superPassword: pass, updateData: { queue_mode: mode.id } })
+                                  });
+                                  if (res.ok) { notify("Modo atualizado!"); refresh(); }
+                                } else { notify("Senha incorreta", 'error'); }
+                              }}
+                              className={cn(
+                                "p-6 rounded-2xl border-2 text-left transition-all space-y-3",
+                                est.queue_mode === mode.id ? "border-[#3451D1] bg-blue-50/50 shadow-sm" : "border-slate-100 hover:border-slate-200 bg-white"
+                              )}
+                            >
+                               <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center", est.queue_mode === mode.id ? "bg-[#3451D1] text-white" : "bg-slate-50 text-slate-400")}>
+                                  {mode.icon}
+                               </div>
+                               <div>
+                                  <h4 className={cn("font-bold", est.queue_mode === mode.id ? "text-[#3451D1]" : "text-[#0F172A]")}>{mode.title}</h4>
+                                  <p className="text-xs text-slate-500 leading-relaxed mt-1">{mode.desc}</p>
+                               </div>
+                            </button>
+                          ))}
+                       </div>
+                    </div>
+
+                    <div className="pt-10 border-t border-slate-50 space-y-8">
+                       <div className="flex items-center justify-between">
+                          <div className="space-y-1">
+                             <h4 className="text-xl font-bold text-[#0F172A]">Gestão de Serviços</h4>
+                             <p className="text-sm text-slate-500">Defina os tipos de atendimento disponíveis.</p>
+                          </div>
+                          <button 
+                            onClick={() => {
+                               const name = prompt("Nome do Serviço:");
+                               const prefix = prompt("Prefixo da Senha (ex: A, B, FIN):");
+                               if (name && prefix) {
+                                  fetch("/api/admin/services", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify({ est_id: est.id, name, prefix })
+                                  }).then(res => { if (res.ok) { notify("Serviço adicionado"); refresh(); } });
+                               }
+                            }}
+                            className="btn-primary py-3 px-6 text-xs flex items-center gap-2"
+                          >
+                             <Plus className="w-4 h-4" /> Novo Serviço
+                          </button>
+                       </div>
+
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {(est.services || []).map(svc => (
+                             <div key={svc.id} className="p-5 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-between group">
+                                <div className="flex items-center gap-4">
+                                   <div className="w-12 h-12 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-[#3451D1]">
+                                      {svc.prefix}
+                                   </div>
+                                   <div>
+                                      <h5 className="font-bold text-[#0F172A]">{svc.name}</h5>
+                                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Ativo</p>
+                                   </div>
+                                </div>
+                                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                   <button 
+                                     onClick={() => {
+                                       if (window.confirm("Remover este serviço?")) {
+                                          fetch(`/api/admin/services/${svc.id}`, { method: "DELETE" }).then(res => { if (res.ok) { notify("Serviço removido"); refresh(); } });
+                                       }
+                                     }}
+                                     className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                   >
+                                      <Trash2 className="w-4 h-4" />
+                                   </button>
+                                </div>
+                             </div>
+                          ))}
+                          {(est.services || []).length === 0 && (
+                            <div className="col-span-full py-12 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                               <Layers className="w-8 h-8 mx-auto text-slate-200 mb-2" />
+                               <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">Nenhum serviço configurado</p>
+                            </div>
+                          )}
+                       </div>
+                    </div>
+
+                    <div className="pt-10 border-t border-slate-50 flex items-center justify-between">
+                       <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-green-50 flex items-center justify-center text-green-500">
+                             <Monitor className="w-5 h-5" />
+                          </div>
+                          <div>
+                             <h4 className="font-bold text-[#0F172A]">Monitor de Senhas</h4>
+                             <p className="text-xs text-slate-500">Link público para televisores/monitores.</p>
+                          </div>
+                       </div>
+                       <button onClick={() => window.open(`/?display=${est.code}`, '_blank')} className="btn-ghost py-3 px-6 text-xs flex items-center gap-2">
+                          <ExternalLink className="w-4 h-4" /> Abrir Monitor
+                       </button>
+                    </div>
                  </div>
               </div>
            )}
        </main>
+    </div>
+  );
+};
+
+// --- 3.5 PUBLIC DISPLAY: MONITOR TV ---
+const PublicDisplayView = ({ estCode }: { estCode: string }) => {
+  const [est, setEst] = useState<Establishment | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  const refresh = async () => {
+    try {
+      const res = await fetch(`/api/admin/establishments`);
+      const data = await res.json();
+      const found = data.find((e: any) => e.code === estCode);
+      if (found) setEst(found);
+    } catch (e) {}
+    setLoading(false);
+  };
+
+  useEffect(() => { refresh(); const itv = setInterval(refresh, 5000); return () => clearInterval(itv); }, []);
+
+  if (loading || !est) return (
+    <div className="min-h-screen bg-[#0F172A] flex items-center justify-center">
+       <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent animate-spin rounded-full"></div>
+    </div>
+  );
+
+  const called = (est.queues || []).filter(q => q.status === 'called').sort((a,b) => new Date(b.called_at!).getTime() - new Date(a.called_at!).getTime());
+  const current = called[0];
+  const history = called.slice(1, 5);
+
+  return (
+    <div className="min-h-screen bg-[#0F172A] text-white p-12 flex flex-col gap-12 overflow-hidden">
+       {/* Header */}
+       <div className="flex items-center justify-between">
+          <div className="flex items-center gap-6">
+             <div className="w-20 h-20 bg-white rounded-3xl p-4">
+                <img src={est.logo_url} className="w-full h-full object-contain" />
+             </div>
+             <div>
+                <h1 className="text-6xl font-black tracking-tight">{est.name}</h1>
+                <p className="text-2xl text-slate-400 font-bold uppercase tracking-[0.3em]">Monitor de Chamadas</p>
+             </div>
+          </div>
+          <div className="text-right">
+             <div className="text-4xl font-black text-blue-500">{new Date().toLocaleTimeString('pt-PT', { hour: '2xl', minute: '2-digit' })}</div>
+             <div className="text-slate-400 font-bold uppercase tracking-widest">{new Date().toLocaleDateString('pt-PT', { weekday: 'long', day: 'numeric', month: 'long' })}</div>
+          </div>
+       </div>
+
+       {/* Main Content */}
+       <div className="flex-1 grid grid-cols-12 gap-12">
+          {/* Current Ticket */}
+          <div className="col-span-8 bg-blue-600 rounded-[60px] shadow-2xl flex flex-col items-center justify-center text-center p-20 animate-pulse-subtle relative overflow-hidden">
+             <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none"></div>
+             <span className="text-4xl font-black uppercase tracking-[0.5em] opacity-50 mb-8">Senha Atual</span>
+             <div className="text-[320px] font-black leading-none tracking-tighter drop-shadow-2xl">
+                {current ? current.ticket_number.split('-').pop() : '--'}
+             </div>
+             <div className="mt-12 space-y-4">
+                <div className="text-5xl font-black uppercase tracking-widest">
+                   {current?.service_name || 'Atendimento'}
+                </div>
+                {current?.name && (
+                   <div className="text-3xl text-blue-100 font-bold">
+                      {current.name}
+                   </div>
+                )}
+             </div>
+          </div>
+
+          {/* History */}
+          <div className="col-span-4 flex flex-col gap-8">
+             <h2 className="text-3xl font-black uppercase tracking-widest text-slate-400 pl-4">Últimas Chamadas</h2>
+             <div className="flex-1 flex flex-col gap-6">
+                {history.map((h, i) => (
+                   <motion.div 
+                     initial={{ x: 50, opacity: 0 }} 
+                     animate={{ x: 0, opacity: 1 }} 
+                     transition={{ delay: i * 0.1 }}
+                     key={h.id} 
+                     className="bg-slate-800/50 border border-slate-700/50 rounded-[40px] p-8 flex items-center justify-between"
+                   >
+                      <div className="text-7xl font-black text-slate-300">
+                         {h.ticket_number.split('-').pop()}
+                      </div>
+                      <div className="text-right">
+                         <div className="text-xl font-black text-blue-400 uppercase tracking-widest">{h.service_name || 'Geral'}</div>
+                         <div className="text-sm text-slate-500 font-bold">{new Date(h.called_at!).toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit' })}</div>
+                      </div>
+                   </motion.div>
+                ))}
+                {history.length === 0 && (
+                   <div className="flex-1 border-4 border-dashed border-slate-800 rounded-[40px] flex items-center justify-center">
+                      <p className="text-slate-700 font-black uppercase tracking-widest text-xl">Aguardando...</p>
+                   </div>
+                )}
+             </div>
+             <div className="bg-slate-900 rounded-[40px] p-10 flex flex-col items-center justify-center text-center gap-4">
+                <QrCode className="w-24 h-24 text-blue-500 opacity-20" />
+                <p className="text-slate-500 font-bold text-sm uppercase tracking-[0.2em]">Escaneie o QR Code no balcão para entrar na fila</p>
+             </div>
+          </div>
+       </div>
     </div>
   );
 };
@@ -1387,6 +1620,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [myTicket, setMyTicket] = useState<Customer | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedServiceId, setSelectedServiceId] = useState<string | null>(null);
 
   const refresh = async () => {
     try {
@@ -1448,7 +1682,7 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     const res = await fetch("/api/queue/join", { 
       method: "POST", 
       headers: { "Content-Type": "application/json" }, 
-      body: JSON.stringify({ phone, estCode, name: userName }) 
+      body: JSON.stringify({ phone, estCode, name: userName, serviceId: selectedServiceId }) 
     });
     if (res.ok) { 
       localStorage.setItem(`kw_phone_${estCode}`, phone); 
@@ -1571,8 +1805,46 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
     );
   }
 
+  if (est.queue_mode !== 'normal' && !selectedServiceId && (est.services || []).length > 0) {
+    return (
+      <div className="min-h-screen bg-[#F8FAFD] relative overflow-x-hidden">
+         <div className="absolute top-0 left-0 right-0 h-64 overflow-hidden pointer-events-none">
+            <img src={est.logo_url} className="w-full h-full object-cover blur-3xl opacity-20 scale-125" />
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F8FAFD]/50 to-[#F8FAFD]" />
+         </div>
+         <div className="relative z-10 p-6 flex flex-col items-center justify-center min-h-screen">
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-sm space-y-8">
+               <div className="text-center space-y-2">
+                  <div className="w-16 h-16 bg-white rounded-2xl mx-auto shadow-sm border border-slate-50 p-3 mb-6">
+                     <img src={est.logo_url} className="w-full h-full object-contain" />
+                  </div>
+                  <h1 className="text-3xl font-bold text-[#0F172A] tracking-tight">O que deseja hoje?</h1>
+                  <p className="text-slate-500 font-medium">Selecione o serviço para entrar na fila.</p>
+               </div>
+               <div className="grid grid-cols-1 gap-4">
+                  {(est.services || []).map(svc => (
+                     <button 
+                       key={svc.id}
+                       onClick={() => setSelectedServiceId(svc.id)}
+                       className="card-premium p-8 text-left hover:border-[#3451D1] transition-all group flex items-center justify-between"
+                     >
+                        <div>
+                           <h3 className="text-xl font-bold text-[#0F172A] group-hover:text-[#3451D1]">{svc.name}</h3>
+                           <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mt-1">Prefixo {svc.prefix}</p>
+                        </div>
+                        <ArrowRight className="w-6 h-6 text-slate-200 group-hover:text-[#3451D1] transform group-hover:translate-x-1 transition-all" />
+                     </button>
+                  ))}
+               </div>
+            </motion.div>
+         </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#F8FAFD] relative overflow-x-hidden">
+
        {/* Foto de Capa Ofuscada */}
        <div className="absolute top-0 left-0 right-0 h-64 overflow-hidden pointer-events-none">
           <img 
@@ -1652,6 +1924,7 @@ export default function App() {
     return null;
   });
   const [clientEstCode, setClientEstCode] = useState<string | null>(null);
+  const [displayCode, setDisplayCode] = useState<string | null>(null);
   const [showLogin, setShowLogin] = useState(false);
   const [showSubscribe, setShowSubscribe] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<string | undefined>(undefined);
@@ -1667,6 +1940,8 @@ export default function App() {
     const p = new URLSearchParams(window.location.search);
     const code = p.get("est");
     if (code) setClientEstCode(code);
+    const dCode = p.get("display");
+    if (dCode) setDisplayCode(dCode);
 
     const handleSubNav = (e: any) => {
       setSelectedPlan(e.detail?.plan);
@@ -1688,7 +1963,9 @@ export default function App() {
     <div className="bg-[#F8FAFD] min-h-screen selection:bg-[#3451D1]/10 overflow-x-hidden relative antialiased">
       <ToastContainer toasts={toasts} remove={(id) => setToasts(prev => prev.filter(t => t.id !== id))} />
 
-      {clientEstCode ? ( 
+      {displayCode ? (
+        <PublicDisplayView estCode={displayCode} />
+      ) : clientEstCode ? ( 
         <ClientView estCode={clientEstCode} notify={showToast} /> 
       ) : auth ? ( 
         auth.role === 'super' ? <SuperAdminView onLogout={handleLogout} notify={showToast} /> : <EstAdminView auth={auth} onLogout={handleLogout} notify={showToast} /> 
