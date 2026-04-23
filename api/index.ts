@@ -203,8 +203,18 @@ app.post("/api/queue/join", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
   if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
 
-  const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).in("status", ["waiting", "called"]).maybeSingle();
-  if (exists) return res.status(400).json({ error: "Já se encontra na fila de espera." });
+  const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
+  if (!cleanPhone || cleanPhone.length < 9) return res.status(400).json({ error: "Número de telefone inválido" });
+
+  const { data: exists } = await supabase
+    .from("queues")
+    .select("id, ticket_number")
+    .eq("est_id", est.id)
+    .eq("phone", cleanPhone)
+    .in("status", ["waiting", "called"])
+    .maybeSingle();
+
+  if (exists) return res.status(400).json({ error: `Já se encontra na fila com a senha #${exists.ticket_number.split('-').pop()}` });
 
   let servicePrefix = '';
   let serviceName = '';
@@ -249,13 +259,17 @@ app.post("/api/queue/join", async (req, res) => {
     }])
     .select().single();
 
-  if (error) return res.status(500).json({ error: error.message });
+    if (error) {
+    console.error("Join Error:", error);
+    return res.status(500).json({ error: error.message });
+  }
+
   res.json(data);
 });
 
 // 5.1 VERIFICAR NOME POR TELEFONE
 app.get("/api/check-phone/:phone", async (req, res) => {
-  const { phone } = req.params;
+  const phone = req.params.phone.replace(/\D/g, '');
   
   // No histórico (mais recente)
   const { data: hist } = await supabase

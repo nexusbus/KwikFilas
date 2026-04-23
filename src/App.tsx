@@ -1914,12 +1914,15 @@ const ClientView = ({ estCode, notify }: { estCode: string, notify: (m: string, 
       body: JSON.stringify({ phone, estCode, name: userName, serviceId: selectedServiceId }) 
     });
     if (res.ok) { 
-      localStorage.setItem(`kw_phone_${estCode}`, phone); 
-      if (userName) localStorage.setItem(`kw_name_${phone}`, userName);
+      const clean = phone.replace(/\D/g, '');
+      localStorage.setItem(`kw_phone_${estCode}`, clean); 
+      if (userName) localStorage.setItem(`kw_name_${clean}`, userName);
       refresh(); 
       notify("Entrou na fila!"); 
+    } else { 
+      const err = await res.json();
+      notify(err.error || "Erro ao entrar na fila", 'error'); 
     }
-    else { notify("Já se encontra na fila", 'error'); }
     setLoading(false);
   };
 
