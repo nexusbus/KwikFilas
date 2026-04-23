@@ -704,8 +704,8 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                               <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 overflow-hidden">
                                 {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Building className="w-full h-full text-slate-300" />}
                               </div>
-                              <span className="badge badge-active">
-                                ATIVO
+                              <span className={cn("badge", est.is_active ? "badge-active" : "bg-red-50 text-red-500 border-red-100")}>
+                                {est.is_active ? "ATIVO" : "DESATIVADO"}
                               </span>
                           </div>
                           <div>
@@ -790,7 +790,25 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                             </div>
                           </div>
 
-                          {/* is_active missing in DB */}
+                          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <button 
+                              type="button"
+                              onClick={() => setFormData({...formData, is_active: !formData.is_active})}
+                              className={cn(
+                                "w-12 h-6 rounded-full relative transition-colors duration-200 focus:outline-none",
+                                formData.is_active ? "bg-[#3451D1]" : "bg-slate-300"
+                              )}
+                            >
+                              <div className={cn(
+                                "absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                formData.is_active ? "left-7" : "left-1"
+                              )} />
+                            </button>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-700">Estabelecimento Ativo</span>
+                              <span className="text-[10px] text-slate-400 font-medium">Define se a loja pode operar e receber clientes</span>
+                            </div>
+                          </div>
                           <button type="submit" disabled={loading} className="btn-primary w-full py-4">{loading ? "A processar..." : "Salvar Estabelecimento"}</button>
                         </form>
                     </div>
