@@ -203,8 +203,8 @@ app.post("/api/queue/join", async (req, res) => {
   if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
   if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
 
-  const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).single();
-  if (exists) return res.status(400).json({ error: "Já está nesta fila" });
+  const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).in("status", ["waiting", "called"]).maybeSingle();
+  if (exists) return res.status(400).json({ error: "Já se encontra na fila de espera." });
 
   let servicePrefix = '';
   let serviceName = '';

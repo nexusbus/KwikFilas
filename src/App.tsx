@@ -1055,10 +1055,14 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
   useEffect(() => { refresh(); const itv = setInterval(refresh, 3000); return () => clearInterval(itv); }, []);
   useEffect(() => { if (activeTab === 'crm') refreshContacts(); }, [activeTab, est]);
 
-  const handleNext = async () => {
+  const handleNext = async (serviceId?: string) => {
     if (!est) return;
     setLoading(true);
-    const res = await fetch(`/api/establishments/${est.code}/next`, { method: "POST" });
+    const res = await fetch(`/api/establishments/${est.code}/next`, { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ serviceId })
+    });
     if (res.ok) { 
       const resJson = await res.json();
       if (resJson.next) notify(`Chamando Senha ${resJson.next.ticket_number.split('-').pop()}`);
@@ -1225,22 +1229,70 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                  {/* Left Column: Controls */}
                  <div className="lg:col-span-5 space-y-8">
-                    <div className="card-premium p-10 flex flex-col items-center text-center space-y-6">
+                    <div className="card-premium p-10 flex flex-col items-center text-center space-y-6 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 p-4">
+                          <div className="flex items-center gap-2">
+                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Painel Ativo</span>
+                          </div>
+                       </div>
                        <span className="text-xs font-bold text-blue-500 uppercase tracking-widest">A chamar agora</span>
-                       <div className="text-[120px] font-bold text-[#0F172A] leading-none tracking-tighter">
-                          #{current ? current.ticket_number.split('-').pop() : '--'}
+                       <div className="space-y-1">
+                          <div className="text-[120px] font-bold text-[#0F172A] leading-none tracking-tighter">
+                             #{current ? current.ticket_number.split('-').pop() : '--'}
+                          </div>
+                          {current?.service_name && (
+                             <div className="text-sm font-black text-blue-600 uppercase tracking-widest bg-blue-50 px-4 py-1.5 rounded-full inline-block">
+                                {current.service_name}
+                             </div>
+                          )}
                        </div>
                        <p className="text-slate-400 font-medium">
-                          {current ? `Em atendimento há ${Math.floor((Date.now() - new Date(current.called_at!).getTime()) / 60000)} mins` : "Fila parada"}
+                          {current ? `Em atendimento há ${Math.floor((Date.now() - new Date(current.called_at!).getTime()) / 60000)} mins` : "Aguardando próxima senha"}
                        </p>
                     </div>
 
-                    <div className="space-y-4">
-                       <button onClick={handleNext} disabled={waiting.length === 0 || loading} className="btn-primary w-full py-6 text-xl">
-                          {loading ? <div className="w-6 h-6 border-2 border-white/30 border-t-white animate-spin rounded-full"></div> : <><ChevronRight className="w-6 h-6" /> Chamar Próximo</>}
-                       </button>
+                    <div className="space-y-6">
+                        {est.queue_mode === 'multi_service_multi' ? (
+                           <div className="space-y-4">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Chamar por Serviço</label>
+                              <div className="grid grid-cols-1 gap-3">
+                                 {(est.services || []).map(svc => {
+                                    const svcWaiting = waiting.filter(w => w.service_id === svc.id);
+                                    return (
+                                       <button 
+                                          key={svc.id}
+                                          onClick={() => handleNext(svc.id)} 
+                                          disabled={svcWaiting.length === 0 || loading}
+                                          className="flex items-center justify-between p-5 bg-white border border-slate-100 rounded-2xl hover:border-[#3451D1] hover:bg-blue-50/30 transition-all group disabled:opacity-50 disabled:grayscale"
+                                       >
+                                          <div className="flex items-center gap-4">
+                                             <div className="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center font-black text-[#3451D1] group-hover:bg-white">
+                                                {svc.prefix}
+                                             </div>
+                                             <div className="text-left">
+                                                <h5 className="font-bold text-[#0F172A]">{svc.name}</h5>
+                                                <p className="text-[10px] text-slate-400 font-bold uppercase">{svcWaiting.length} em espera</p>
+                                             </div>
+                                          </div>
+                                          <ChevronRight className="w-5 h-5 text-slate-300 group-hover:text-[#3451D1]" />
+                                       </button>
+                                    );
+                                 })}
+                                 {(est.services || []).length === 0 && (
+                                    <div className="p-6 text-center border-2 border-dashed border-slate-100 rounded-2xl">
+                                       <p className="text-xs text-slate-400 font-bold uppercase">Configure serviços nas Definições</p>
+                                    </div>
+                                 )}
+                              </div>
+                           </div>
+                        ) : (
+                           <button onClick={() => handleNext()} disabled={waiting.length === 0 || loading} className="btn-primary w-full py-7 text-2xl shadow-xl shadow-blue-500/20">
+                              {loading ? <div className="w-8 h-8 border-3 border-white/30 border-t-white animate-spin rounded-full"></div> : <><ChevronRight className="w-8 h-8" /> Chamar Próximo</>}
+                           </button>
+                        )}
 
-                       <div className="grid grid-cols-2 gap-4">
+                        <div className="grid grid-cols-2 gap-4">
                           <button onClick={() => current && handleRecall(current.id, current.ticket_number)} disabled={!current} className="btn-ghost flex-col py-6 gap-2">
                              <Bell className="w-5 h-5 text-blue-500" />
                              <span className="text-[10px] uppercase font-bold tracking-wider">Lembrar (SMS)</span>
