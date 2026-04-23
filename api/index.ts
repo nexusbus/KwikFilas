@@ -385,6 +385,21 @@ app.post("/api/establishments/:code/cancel", async (req, res) => {
   res.json({ success: true });
 });
 
+// 8.1 ZERAR FILA
+app.post("/api/establishments/:code/clear-queue", async (req, res) => {
+  const { code } = req.params;
+  const { adminPassword } = req.body;
+  
+  const { data: est } = await supabase.from("establishments").select("id, admin_password").eq("code", code).single();
+  if (!est) return res.status(404).json({ error: "Local não encontrado" });
+  if (est.admin_password !== adminPassword) return res.status(403).json({ error: "Senha incorreta" });
+
+  const { error } = await supabase.from("queues").delete().eq("est_id", est.id);
+  if (error) return res.status(500).json({ error: error.message });
+  
+  res.json({ success: true });
+});
+
 // 9. CONFIRMAR CHEGADA (Client Side)
 app.post("/api/queue/confirm-arrival", async (req, res) => {
   const { ticketId } = req.body;

@@ -989,6 +989,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
 const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: () => void, notify: (m: string, t?: any) => void }) => {
   const [est, setEst] = useState<Establishment | null>(null);
   const [manualPhone, setManualPhone] = useState("");
+  const [manualServiceId, setManualServiceId] = useState<string>("");
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<"queue" | "crm" | "marketing" | "settings">("queue");
   const [contacts, setContacts] = useState<any[]>([]);
@@ -1085,6 +1086,29 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
     refresh();
   };
 
+  const handleClearQueue = async () => {
+    if (!est) return;
+    const pw = prompt("Confirme com a sua senha de administrador para ZERAR A FILA:");
+    if (pw !== est.admin_password) return notify("Senha Incorreta", 'error');
+
+    if (!confirm("Tem a certeza que deseja APAGAR TODA A FILA de espera? Esta ação não pode ser desfeita.")) return;
+
+    setLoading(true);
+    const res = await fetch(`/api/establishments/${est.code}/clear-queue`, { 
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ adminPassword: pw })
+    });
+    
+    if (res.ok) {
+      notify("Fila Zerada com Sucesso!");
+      refresh();
+    } else {
+      notify("Erro ao zerar fila", 'error');
+    }
+    setLoading(false);
+  };
+
   const handleManualJoin = async (e: React.FormEvent) => {
      e.preventDefault();
      if (!est || !manualPhone) return;
@@ -1100,10 +1124,10 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
      const res = await fetch("/api/queue/join", { 
        method: "POST", 
        headers: { "Content-Type": "application/json" }, 
-       body: JSON.stringify({ phone: manualPhone, estCode: est.code, name: autoName })
+       body: JSON.stringify({ phone: manualPhone, estCode: est.code, name: autoName, serviceId: manualServiceId })
       });
 
-      if (res.ok) { setManualPhone(""); refresh(); notify("Senha Manual Gerada"); }
+      if (res.ok) { setManualPhone(""); setManualServiceId(""); refresh(); notify("Senha Manual Gerada"); }
      else { notify("Cliente já na Fila", 'error'); }
      setLoading(false);
   };
@@ -1307,15 +1331,32 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                     <div className="card-premium p-8 space-y-6 bg-slate-50/50 border-dashed border-2">
                        <div className="flex items-center gap-2 mb-4">
                           <Plus className="w-4 h-4 text-[#3451D1]" />
-                          <h3 className="font-bold text-[#0F172A]">Adicionar Manualmente</h3>
-                       </div>
-                       <form onSubmit={handleManualJoin} className="space-y-4">
-                          <div className="relative">
-                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">+244</span>
-                            <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="input-modern pl-16 text-xl font-bold py-4" placeholder="9XX XXX XXX" />
-                          </div>
-                          <button type="submit" disabled={loading} className="btn-primary w-full py-4">Gerar Senha</button>
-                       </form>
+                           <h3 className="font-bold text-[#0F172A]">Adicionar Manualmente</h3>
+                        </div>
+                        <form onSubmit={handleManualJoin} className="space-y-4">
+                           <div className="relative">
+                             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">+244</span>
+                             <input disabled={loading} value={manualPhone} onChange={e => setManualPhone(e.target.value)} className="input-modern pl-16 text-xl font-bold py-4" placeholder="9XX XXX XXX" />
+                           </div>
+                           
+                           {est.queue_mode === 'multi_service_multi' && (est.services || []).length > 0 && (
+                              <div className="space-y-1.5">
+                                 <label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">Vincular ao Serviço</label>
+                                 <select 
+                                    value={manualServiceId} 
+                                    onChange={e => setManualServiceId(e.target.value)}
+                                    className="input-modern appearance-none font-bold"
+                                    required
+                                 >
+                                    <option value="">Selecionar Serviço...</option>
+                                    {est.services?.map(s => (
+                                       <option key={s.id} value={s.id}>{s.name} ({s.prefix})</option>
+                                    ))}
+                                 </select>
+                              </div>
+                           )}
+                           <button type="submit" disabled={loading} className="btn-primary w-full py-4">Gerar Senha</button>
+                        </form>
                     </div>
                  </div>
 
@@ -1333,13 +1374,21 @@ const EstAdminView = ({ auth, onLogout, notify }: { auth: AuthUser, onLogout: ()
                     </div>
 
                     <div className="card-premium p-0 overflow-hidden">
-                       <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
-                          <h3 className="font-bold text-[#0F172A]">Fila de Espera</h3>
-                          <div className="flex items-center gap-2">
-                             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                             <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tempo Real</span>
-                          </div>
-                       </div>
+                        <div className="p-6 border-b border-slate-50 flex items-center justify-between bg-white/50 backdrop-blur-sm sticky top-0 z-10">
+                           <h3 className="font-bold text-[#0F172A]">Fila de Espera</h3>
+                           <div className="flex items-center gap-4">
+                              <button 
+                                 onClick={handleClearQueue}
+                                 className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider hover:bg-red-100 transition-colors"
+                              >
+                                 <Trash2 className="w-3.5 h-3.5" /> Zerar Fila
+                              </button>
+                              <div className="flex items-center gap-2">
+                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                 <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Tempo Real</span>
+                              </div>
+                           </div>
+                        </div>
                        <div className="divide-y divide-slate-50 max-h-[600px] overflow-y-auto">
                           {waiting.map((q, i) => (
                              <div key={q.id} className="p-6 flex items-center justify-between hover:bg-slate-50/80 transition-all group">
