@@ -19,6 +19,8 @@ export interface Establishment {
   phone?: string;
   logo_url?: string;
   plan?: string;
+  sms_campaigns_balance?: number;
+  is_active?: boolean;
   average_wait_time?: number;
   queues?: Customer[];
   history?: Customer[];

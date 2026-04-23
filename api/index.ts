@@ -37,6 +37,11 @@ app.post("/api/auth/login", async (req, res) => {
     .single();
 
   if (error || !data) return res.status(401).json({ error: "Credenciais inválidas" });
+  
+  if (data.role === 'establishment' && data.is_active === false) {
+    return res.status(403).json({ error: "Este estabelecimento está desativado. Contacte o administrador." });
+  }
+
   res.json(data);
 });
 
@@ -72,10 +77,16 @@ app.post("/api/admin/establishments", async (req, res) => {
   const countRes = await supabase.from("establishments").select("id", { count: "exact", head: true });
   const code = `${initials}-${(countRes.count || 0) + 1}`;
 
+  const balance = req.body.plan === 'KFmax' ? 4 : 2;
+
   const { data, error } = await supabase
     .from("establishments")
     .insert([{ 
-      name, nif, admin_email, admin_password, logo_url, initials, code, role: 'establishment', plan: req.body.plan || 'KFmini'
+      name, nif, admin_email, admin_password, logo_url, initials, code, 
+      role: 'establishment', 
+      plan: req.body.plan || 'KFmini',
+      sms_campaigns_balance: balance,
+      is_active: true
     }])
     .select()
     .single();
@@ -130,8 +141,9 @@ app.put("/api/admin/establishments", async (req, res) => {
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {
   const { phone, estCode, name } = req.body;
-  const { data: est } = await supabase.from("establishments").select("id, initials").eq("code", estCode).single();
+  const { data: est } = await supabase.from("establishments").select("id, initials, is_active").eq("code", estCode).single();
   if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
+  if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
 
   const { data: exists } = await supabase.from("queues").select("id").eq("est_id", est.id).eq("phone", phone).single();
   if (exists) return res.status(400).json({ error: "Já está nesta fila" });
@@ -395,6 +407,8 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
   const countRes = await supabase.from("establishments").select("id", { count: "exact", head: true });
   const code = `${initials}-${(countRes.count || 0) + 1}`;
 
+  const balance = sub.plan === 'KFmax' ? 4 : 2;
+
   const { error: estError } = await supabase
     .from("establishments")
     .insert([{ 
@@ -405,6 +419,8 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
       logo_url: sub.logo_url, 
       plan: sub.plan || 'KFmini',
       phone: sub.phone,
+      sms_campaigns_balance: balance,
+      is_active: true,
       initials, 
       code, 
       role: 'establishment' 

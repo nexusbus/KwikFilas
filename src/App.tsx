@@ -517,7 +517,10 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
   const [activeTab, setActiveTab] = useState<"lojas" | "pedidos" | "historico">("lojas");
   const [statsView, setStatsView] = useState<"visitas" | "ranking">("visitas");
   const [view, setView] = useState<"list" | "create" | "edit">("list");
-  const [formData, setFormData] = useState({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", plan: "KFmini" });
+  const [formData, setFormData] = useState({ 
+    name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", 
+    plan: "KFmini", sms_campaigns_balance: 2, is_active: true 
+  });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -595,7 +598,10 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
         refreshEsts(); 
         setView("list"); 
         notify(isEdit ? "Dados atualizados" : "Estabelecimento criado"); 
-        setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", plan: "KFmini" }); 
+        setFormData({ 
+          name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", 
+          plan: "KFmini", sms_campaigns_balance: 2, is_active: true 
+        }); 
         setEditingId(null);
       }
       else { notify("Erro na operação", 'error'); }
@@ -631,7 +637,9 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       admin_email: est.admin_email,
       admin_password: est.admin_password,
       logo_url: est.logo_url || "",
-      plan: est.plan || "KFmini"
+      plan: est.plan || "KFmini",
+      sms_campaigns_balance: est.sms_campaigns_balance || 0,
+      is_active: est.is_active ?? true
     });
     setView("edit");
   };
@@ -671,13 +679,19 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                               <div className="w-12 h-12 rounded-xl bg-slate-50 border border-slate-100 p-2 overflow-hidden">
                                 {est.logo_url ? <img src={est.logo_url} className="w-full h-full object-cover" /> : <Building className="w-full h-full text-slate-300" />}
                               </div>
-                              <span className={cn("badge", est.queues && est.queues.length > 0 ? "badge-live" : "badge-inactive")}>
-                                {est.queues && est.queues.length > 0 ? "LIVE" : "INATIVO"}
+                              <span className={cn("badge", est.is_active ? "badge-active" : "bg-red-50 text-red-500 border-red-100")}>
+                                {est.is_active ? "ATIVO" : "DESATIVADO"}
                               </span>
                           </div>
                           <div>
                               <h3 className="text-xl font-bold text-[#0F172A]">{est.name}</h3>
-                              <p className="text-sm text-slate-400 font-medium">Cod: {est.code} • NIF: {est.nif} • Plano: <span className="text-[#3451D1] font-bold">{est.plan || 'KFmini'}</span></p>
+                              <p className="text-sm text-slate-400 font-medium">
+                                Cod: {est.code} • NIF: {est.nif} • Plano: <span className="text-[#3451D1] font-bold">{est.plan || 'KFmini'}</span>
+                              </p>
+                              <div className="mt-2 flex items-center gap-2">
+                                <Bell className="w-3 h-3 text-slate-300" />
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Saldo SMS: {est.sms_campaigns_balance || 0}</span>
+                              </div>
                           </div>
                           <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
                               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{est.queues ? est.queues.length : 0} Clientes hoje</span>
@@ -723,13 +737,39 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                               <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Admin</label><input value={formData.admin_email} onChange={e => setFormData({...formData, admin_email: e.target.value})} className="input-modern" type="email" required /></div>
                               <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Senha Admin</label><input value={formData.admin_password} onChange={e => setFormData({...formData, admin_password: e.target.value})} className="input-modern" type="password" required /></div>
                           </div>
-                          <div className="space-y-1.5">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plano de Subscrição</label>
-                            <select value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} className="input-modern appearance-none">
-                              <option value="KFmini">KFmini (Plano Inicial)</option>
-                              <option value="KFmed">KFmed (Plano Intermédio)</option>
-                              <option value="KFmax">KFmax (Plano Completo)</option>
-                            </select>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Plano de Subscrição</label>
+                              <select value={formData.plan} onChange={e => setFormData({...formData, plan: e.target.value})} className="input-modern appearance-none">
+                                <option value="KFmini">KFmini (Plano Inicial)</option>
+                                <option value="KFmed">KFmed (Plano Intermédio)</option>
+                                <option value="KFmax">KFmax (Plano Completo)</option>
+                              </select>
+                            </div>
+                            <div className="space-y-1.5">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Saldo Campanhas SMS</label>
+                              <input type="number" value={formData.sms_campaigns_balance} onChange={e => setFormData({...formData, sms_campaigns_balance: parseInt(e.target.value) || 0})} className="input-modern" />
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-2xl border border-slate-100">
+                            <button 
+                              type="button"
+                              onClick={() => setFormData({...formData, is_active: !formData.is_active})}
+                              className={cn(
+                                "w-12 h-6 rounded-full relative transition-colors duration-200 focus:outline-none",
+                                formData.is_active ? "bg-[#3451D1]" : "bg-slate-300"
+                              )}
+                            >
+                              <div className={cn(
+                                "absolute top-1 w-4 h-4 bg-white rounded-full transition-transform duration-200",
+                                formData.is_active ? "left-7" : "left-1"
+                              )} />
+                            </button>
+                            <div className="flex flex-col">
+                              <span className="text-sm font-bold text-slate-700">Estabelecimento Ativo</span>
+                              <span className="text-[10px] text-slate-400 font-medium">Define se a loja pode operar e receber clientes</span>
+                            </div>
                           </div>
                           <button type="submit" disabled={loading} className="btn-primary w-full py-4">{loading ? "A processar..." : "Salvar Estabelecimento"}</button>
                         </form>
