@@ -38,9 +38,10 @@ app.post("/api/auth/login", async (req, res) => {
 
   if (error || !data) return res.status(401).json({ error: "Credenciais inválidas" });
   
-  if (data.role === 'establishment' && data.is_active === false) {
-    return res.status(403).json({ error: "Este estabelecimento está desativado. Contacte o administrador." });
-  }
+  // is_active missing in DB
+  // if (data.role === 'establishment' && data.is_active === false) {
+  //   return res.status(403).json({ error: "Este estabelecimento está desativado. Contacte o administrador." });
+  // }
 
   res.json(data);
 });
@@ -49,7 +50,7 @@ app.post("/api/auth/login", async (req, res) => {
 app.get("/api/admin/establishments", async (req, res) => {
   const { role, estId } = req.query;
   
-  let query = supabase.from("establishments").select("*, queues(*), services(*)");
+  let query = supabase.from("establishments").select("id, name, nif, initials, code, plan, queue_mode, queues(*), services(*)");
   
   if (role === 'establishment' && estId) {
     query = query.eq("id", estId);
@@ -59,9 +60,10 @@ app.get("/api/admin/establishments", async (req, res) => {
 
   const { data, error } = await query;
   if (error) {
-    console.error("Establishment Fetch Error:", error);
-    return res.status(500).json({ error: error.message });
+    console.error("[CRITICAL] Establishment Fetch Error:", JSON.stringify(error, null, 2));
+    return res.status(500).json({ error: "Erro na base de dados: " + error.message });
   }
+
 
   if (role === 'establishment' && estId && (!data || data.length === 0)) {
     return res.status(404).json({ error: "Estabelecimento não encontrado para este ID." });
@@ -159,9 +161,11 @@ app.put("/api/admin/establishments", async (req, res) => {
 
   if (!isSuper) return res.status(403).json({ error: "Acesso negado" });
 
+  const { is_active, ...cleanUpdateData } = updateData;
+
   const { data, error } = await supabase
     .from("establishments")
-    .update(updateData)
+    .update(cleanUpdateData)
     .eq("id", targetId)
     .select()
     .single();
@@ -199,9 +203,10 @@ app.put("/api/establishments/:code", async (req, res) => {
 // 5. ENTRAR NA FILA (Garantir Unicidade e Ticket)
 app.post("/api/queue/join", async (req, res) => {
   const { phone, estCode, name, serviceId } = req.body;
-  const { data: est } = await supabase.from("establishments").select("id, initials, is_active, queue_mode").eq("code", estCode).single();
-  if (!est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
-  if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
+  const { data: est, error: estError } = await supabase.from("establishments").select("id, initials, queue_mode").eq("code", estCode).single();
+  if (estError || !est) return res.status(404).json({ error: "Estabelecimento não encontrado" });
+  // is_active column missing in DB, assuming true
+  // if (est.is_active === false) return res.status(403).json({ error: "Este estabelecimento está temporariamente indisponível." });
 
   const cleanPhone = phone ? phone.replace(/\D/g, '') : '';
   if (!cleanPhone || cleanPhone.length < 9) return res.status(400).json({ error: "Número de telefone inválido" });
@@ -527,7 +532,6 @@ app.post("/api/admin/subscriptions/approve", async (req, res) => {
       plan: sub.plan || 'KFmini',
       phone: sub.phone,
       sms_campaigns_balance: balance,
-      is_active: true,
       initials, 
       code, 
       role: 'establishment' 
