@@ -519,7 +519,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
   const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [formData, setFormData] = useState({ 
     name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", 
-    plan: "KFmini", sms_campaigns_balance: 2, is_active: true 
+    plan: "KFmini", sms_campaigns_balance: 2, is_active: true, phone: ""
   });
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -600,7 +600,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
         notify(isEdit ? "Dados atualizados" : "Estabelecimento criado"); 
         setFormData({ 
           name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", 
-          plan: "KFmini", sms_campaigns_balance: 2, is_active: true 
+          plan: "KFmini", sms_campaigns_balance: 2, is_active: true, phone: ""
         }); 
         setEditingId(null);
       }
@@ -639,7 +639,8 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
       logo_url: est.logo_url || "",
       plan: est.plan || "KFmini",
       sms_campaigns_balance: est.sms_campaigns_balance || 0,
-      is_active: est.is_active ?? true
+      is_active: est.is_active ?? true,
+      phone: est.phone || ""
     });
     setView("edit");
   };
@@ -688,9 +689,15 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                               <p className="text-sm text-slate-400 font-medium">
                                 Cod: {est.code} • NIF: {est.nif} • Plano: <span className="text-[#3451D1] font-bold">{est.plan || 'KFmini'}</span>
                               </p>
-                              <div className="mt-2 flex items-center gap-2">
-                                <Bell className="w-3 h-3 text-slate-300" />
-                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Saldo SMS: {est.sms_campaigns_balance || 0}</span>
+                              <div className="mt-2 flex flex-wrap gap-3">
+                                <div className="flex items-center gap-1.5">
+                                  <PhoneIcon className="w-3 h-3 text-slate-300" />
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{est.phone || 'Sem Telefone'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5">
+                                  <Bell className="w-3 h-3 text-slate-300" />
+                                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Saldo SMS: {est.sms_campaigns_balance || 0}</span>
+                                </div>
                               </div>
                           </div>
                           <div className="pt-4 border-t border-slate-50 flex items-center justify-between">
@@ -717,7 +724,7 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                     <div className="card-premium p-8 md:p-12 space-y-10">
                         <div className="flex items-center justify-between">
                           <h3 className="text-2xl font-bold">{view === 'edit' ? 'Editar Unidade' : 'Registo de Unidade'}</h3>
-                          <button onClick={() => { setView("list"); setEditingId(null); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", plan: "KFmini" }); }} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
+                          <button onClick={() => { setView("list"); setEditingId(null); setFormData({ name: "", nif: "", admin_email: "", admin_password: "", logo_url: "", plan: "KFmini", sms_campaigns_balance: 2, is_active: true, phone: "" }); }} className="p-2 hover:bg-slate-50 rounded-full transition-colors"><X className="w-5 h-5" /></button>
                         </div>
                         <form onSubmit={handleSubmit} className="space-y-6">
                           <div className="flex flex-col items-center">
@@ -736,6 +743,13 @@ const SuperAdminView = ({ onLogout, notify }: { onLogout: () => void, notify: (m
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Admin</label><input value={formData.admin_email} onChange={e => setFormData({...formData, admin_email: e.target.value})} className="input-modern" type="email" required /></div>
                               <div className="space-y-1.5"><label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Senha Admin</label><input value={formData.admin_password} onChange={e => setFormData({...formData, admin_password: e.target.value})} className="input-modern" type="password" required /></div>
+                          </div>
+                          <div className="space-y-1.5">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Telefone de Contacto</label>
+                              <div className="relative">
+                                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">+244</span>
+                                 <input value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="input-modern pl-14" type="tel" placeholder="9xxxxxxxx" />
+                              </div>
                           </div>
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-1.5">
